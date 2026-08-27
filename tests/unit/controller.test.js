@@ -6,7 +6,7 @@ import { JSDOM } from "jsdom";
 import { createDocument, createIdGenerator } from "../../dist/core/model/factories.js";
 import { createEditor } from "../../dist/editor-web/controller/index.js";
 import { domToAst } from "../../dist/editor-web/view/parse.js";
-import { renderDocumentToHtml } from "../../dist/editor-web/view/index.js";
+import { renderBlocksToHtml } from "../../dist/editor-web/view/index.js";
 
 function setup() {
   const dom = new JSDOM(`<!DOCTYPE html><body><div id="ed"></div></body>`, { pretendToBeVisual: true });
@@ -119,7 +119,7 @@ test("controller: domToAst round-trip preserves structure", () => {
   assert(parsed.root.children.length === 0);
 
   // Now render to DOM and parse back
-  el.innerHTML = renderDocumentToHtml(doc).replace(/^<div[^>]*>/, "").replace(/<\/div>$/, "");
+  el.innerHTML = renderBlocksToHtml(doc);
   const round = domToAst(el, doc, createIdGenerator("rt2"));
   assert(round.root.children.length === 4);
   const h = round.root.children[0];
@@ -148,7 +148,7 @@ test("controller: table round-trip with col widths and spans", () => {
       { id: "r2", cells: [{ id: "b1", colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: "pb1", children: [{ type: "text", id: "tb1", text: "c1" }] }] }, { id: "b2", colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: "pb2", children: [] }] }] },
     ],
   });
-  el.innerHTML = renderDocumentToHtml(doc).replace(/^<div[^>]*>/, "").replace(/<\/div>$/, "");
+  el.innerHTML = renderBlocksToHtml(doc);
   const round = domToAst(el, doc, createIdGenerator("rt3"));
   const tbl = round.root.children[0];
   assert(tbl.type === "table");

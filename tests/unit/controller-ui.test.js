@@ -106,6 +106,9 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   assert(table, "table rendered");
   // Click table -> menu
   table.dispatchEvent(ev(dom.window, "click", { target: table }));
+  const gear = root.querySelector(".pde-table-btn");
+  assert(gear, "table button present");
+  gear.click();
   const menu = root.querySelector(".pde-table-menu");
   assert(menu, "table menu present");
   // Insert row below
