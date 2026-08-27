@@ -45,18 +45,7 @@ function canonicalizeInlineIds(root: RootNode): void {
           for (const cell of row.cells) {
             cell.id = `${b.id}_r${ri}c${ci}`;
             ci += cell.colSpan ?? 1;
-            for (let bi = 0; bi < cell.blocks.length; bi++) {
-              const cb = cell.blocks[bi]!;
-              if (cb.type === "paragraph" || cb.type === "heading" || cb.type === "quote") {
-                cb.id = `${cell.id}_b${bi}`;
-                canonicalizeInlineArray(cb.children, cb.id);
-              } else if (cb.type === "list") {
-                for (const item of cb.items ?? []) {
-                  canonicalizeInlineArray(item.content, item.id);
-                  if (item.nested) walkBlocks([item.nested]);
-                }
-              }
-            }
+            walkBlocks(cell.blocks);
           }
         }
       } else if (b.type === "columns") {
