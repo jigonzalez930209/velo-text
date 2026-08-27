@@ -18,7 +18,7 @@ features:
   - title: Pure core, no DOM
     details: Canonical JSON AST, immutable transactions, selection, history, validation and canonical hash. Zero window/document/fs in core.
   - title: Rich editor
-    details: contenteditable reconciler, MutationObserver, IME, keyboard, tables, clipboard allowlist, a11y, 28 recolorable SVG icons.
+    details: contenteditable reconciler, MutationObserver, IME, keyboard, tables (cell edit, align, col/row resize), columns, clipboard allowlist, a11y, 28 recolorable SVG icons.
   - title: Template engine
     details: Typed VariableNode &#123;&#123;path | format ?? "fallback"&#125;&#125;, safe resolver, currency/date formatters, repeat-row alias with limit.
   - title: Deterministic export

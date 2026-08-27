@@ -6,7 +6,8 @@
 | heading h1-h6 | ✅ | ✅ size | ✅ text:h | ✅ w:pStyle Heading{n} | outline level |
 | quote | ✅ | ✅ italic | ✅ Quotation | ✅ w:pStyle Quote | — |
 | list ordered/unordered | ✅ | ✅ •/1. | ✅ text:list | ✅ w:numPr | nested futuro |
-| table (span, header) | ✅ | ✅ | ✅ table:table | ✅ w:tbl | repeat via materialize |
+| table (span, header) | ✅ edit cells, align, col/row resize | ✅ grid + cell text, row Y advance | ✅ table:table | ✅ w:tbl | repeat via materialize; `widthUm` / `heightUm` |
+| columns | ✅ `.pde-columns` | ✅ side-by-side boxes | ✅ table-like | ✅ w:tbl | `createColumns` |
 | image block PNG/JPEG | ✅ | ✅ directo | ✅ draw:image | ✅ wp:inline | WebP→PNG fallback |
 | image block WebP | ✅ | ⚠️ variant | ✅ preserva | ✅ +fallback PNG | ver 8.3 |
 | image block SVG | ✅ sanitized | ⚠️ subset | ✅ preserva | ✅ +fallback PNG | 5.1.3 |
