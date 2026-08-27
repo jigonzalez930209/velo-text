@@ -136,22 +136,23 @@ export function createEquationBlock(idGen: IdGenerator, latex: string, label?: s
   return { type: "equation-block", id: idGen.next(), latex, ...(label ? { label } : {}) };
 }
 
-export function createColumns(idGen: IdGenerator, count = 2): ColumnsNode {
-  const n = Math.max(2, Math.min(4, count));
-  const widthPct = Math.round(100 / n);
+export function createColumns(idGen: IdGenerator, countOrPcts: number | number[] = 2): ColumnsNode {
+  let pcts: number[];
+  if (Array.isArray(countOrPcts)) {
+    pcts = countOrPcts.filter((n) => n > 0);
+    if (pcts.length < 2) pcts = [50, 50];
+  } else {
+    const n = Math.max(2, Math.min(4, countOrPcts));
+    const even = Math.floor(100 / n);
+    pcts = Array.from({ length: n }, (_, i) => (i === n - 1 ? 100 - even * (n - 1) : even));
+  }
   return {
     type: "columns",
     id: idGen.next(),
-    columns: Array.from({ length: n }, () => ({
+    columns: pcts.map((widthPct) => ({
       id: idGen.next(),
       widthPct,
-      blocks: [
-        {
-          type: "paragraph",
-          id: idGen.next(),
-          children: [{ type: "text", id: idGen.next(), text: "" }],
-        },
-      ],
+      blocks: [{ type: "paragraph" as const, id: idGen.next(), children: [{ type: "text" as const, id: idGen.next(), text: "" }] }],
     })),
   };
 }
