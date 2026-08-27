@@ -134,15 +134,10 @@
     },
     "blockNode": {
       "oneOf": [
-        { "$ref": "#/definitions/paragraphNode" },
-        { "$ref": "#/definitions/headingNode" },
-        { "$ref": "#/definitions/quoteNode" },
-        { "$ref": "#/definitions/listNode" },
-        { "$ref": "#/definitions/tableNode" },
-        { "$ref": "#/definitions/imageBlockNode" },
-        { "$ref": "#/definitions/pageBreakNode" },
-        { "$ref": "#/definitions/horizontalRuleNode" },
-        { "$ref": "#/definitions/equationBlockNode" }
+        { "$ref": "#/definitions/paragraphNode" }, { "$ref": "#/definitions/headingNode" }, { "$ref": "#/definitions/quoteNode" },
+        { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
+        { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
+        { "$ref": "#/definitions/columnsNode" }
       ]
     },
     "paragraphNode": {
@@ -232,6 +227,11 @@
         "id": { "type": "string" },
         "latex": { "type": "string", "minLength": 1, "maxLength": 2000 }, "label": { "type": "string" }
       }
+    },
+    "columnsNode": {
+      "type": "object",
+      "required": ["type", "id", "columns"],
+      "properties": { "type": { "const": "columns" }, "id": { "type": "string" }, "columns": { "type": "array" }, "gapUm": { "type": "integer" } }
     },
     "assetRef": {
       "type": "object",
