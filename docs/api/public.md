@@ -3,11 +3,10 @@
 `src/public-api/index.ts` — minimal surface, see `docs/api-report.md` for full list (64 exports).
 
 ```ts
-export { createDocument, createIdGenerator, ... } from "../core/model/factories.js";
-export { validateDocument, canonicalStringify, ... } from "../core/schema";
+export { createDocument, createIdGenerator, createTable, createColumns, ... } from "../core/model/factories.js";
+export { createEditor, renderDocumentToHtml, renderBlocksToHtml } from "../editor-web";
 export { exportDocument, PdfWriter, ... } from "../export";
-export { getIconSvg, validateLatex, ... } from "../assets|core/equation";
-export { themes, renderDocumentToHtml, registerCommand } from "../theme|editor-web";
+export { themes, setTheme } from "../theme";
 ```
 
 Plugins via `registerNodeType`, `registerFormatter`, `registerCommand`, `registerPlugin` (see `src/core/plugin`).

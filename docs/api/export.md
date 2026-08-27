@@ -6,11 +6,11 @@
 
 `src/export/layout/*` — `units` (µm), `text` (`breakLines`, `getFontMetrics`), `pagination` (`paginateDocument` widows/orphans, diagnostics), `buildLayout`.
 
-`src/export/pdf/writer.ts` — `PdfWriter` (catalog/pages/streams/xref/trailer, base fonts, `$latex$`).
+`src/export/pdf/writer.ts` — `PdfWriter` (`layout-pages.ts`, `stream.ts`, `assemble.ts`, `pdf-model.ts`). Tables draw closed cell rects and advance Y per row; images as XObjects (`/Im` + sanitized id).
 
 `src/export/odt/writer.ts` — `OdtWriter` (ODF 1.3 package, manifest, `Equation` style).
 
-`src/export/docx/writer.ts` — `DocxWriter` (OpenXML, rels, EMU, DrawingML, SVG/WebP + PNG fallback).
+`src/export/docx/writer.ts` — `DocxWriter` (`document-xml.ts`, `package-parts.ts`). OpenXML, rels, EMU, DrawingML; `columns` as a one-row table.
 
 `src/export/index.ts` — `exportDocument({document,data,format,sink,assets,options})` pipeline, `validatePdf/Odt/Docx` in `validate.ts`, `normalizeXml`.
 

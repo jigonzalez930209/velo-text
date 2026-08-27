@@ -1,6 +1,10 @@
 # Editor Web
 
-`src/editor-web/view/index.ts` — `renderDocumentToHtml`, `reconcileDom`, `attachMutationObserver`, `buildNodeMap`, `domSelectionToLogical`/`logicalToDomSelection` (atomic `variable`/`equation`).
+`src/editor-web/controller/index.ts` — `createEditor(container, opts)` → `{ getDocument, setDocument, setTheme, undo/redo, commands, destroy }`. Commands: `toggleMark`, `setHeading`, `setAlign`, `insertTable`, `insertColumns`, `insertVariable`, `insertEquation`, `insertImage`, `insertBlock`, `deleteCurrentBlock`.
+
+`src/editor-web/controller/table-ui.ts` + `table-resize.ts` — table chrome (menu button beside the table), column width drag (`widthUm`), row height drag (`heightUm`).
+
+`src/editor-web/view/index.ts` — `renderDocumentToHtml`, `renderBlocksToHtml`, `reconcileDom`, `attachMutationObserver`, `buildNodeMap`, `domSelectionToLogical`/`logicalToDomSelection` (atomic `variable`/`equation`). Paragraphs emit `style="text-align:…"`. Tables emit `col` + `data-col-id` / `data-col-width-um` and `tr` `data-height-um`.
 
 `src/editor-web/input/index.ts` — `InputIntent`, `defaultShortcuts`, `eventToShortcut`, `beforeInputToIntent`, `intentToOperation`, `attachInputPipeline` (IME, `compositionstart/end`).
 
