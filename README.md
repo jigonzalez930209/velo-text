@@ -51,7 +51,7 @@ const pdfBytes = getBuffer(); // Uint8Array
 </script>
 ```
 
-See `examples/vanilla-web.html`, `examples/backend.mjs`, `examples/postgres.mjs`, `examples/s3.mjs`.
+See `examples/vanilla-web.html`, `examples/backend.mjs`, `examples/postgres.mjs`, `examples/s3.mjs`, and `docs/playground/`.
 
 ## Features
 
@@ -81,6 +81,7 @@ pnpm run fuzz -- --iterations=5000
 pnpm run benchmark
 pnpm run api:report
 pnpm run build            # tsc → dist/
+pnpm playground:dev       # Vite playground (imports dist/)
 ```
 
 ## Zero dependencies
