@@ -132,6 +132,19 @@ export class OdtWriter {
         w.close();
         break;
       }
+      case "columns": {
+        w.open("table:table", { "table:name": block.id as string, "table:style-name": "Table1" });
+        for (const _col of (block.columns as unknown[]) ?? []) w.selfClose("table:table-column", { "table:style-name": "TableColumn" });
+        w.open("table:table-row");
+        for (const col of (block.columns as Array<Record<string, unknown>>) ?? []) {
+          w.open("table:table-cell", { "table:style-name": "TableCell" });
+          for (const b of (col.blocks as Array<Record<string, unknown>>) ?? []) this.writeBlock(w, b, doc);
+          w.close();
+        }
+        w.close();
+        w.close();
+        break;
+      }
       case "image": {
         const asset = doc.assets[block.assetId as string];
         if (!asset) {
