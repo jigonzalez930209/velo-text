@@ -15,7 +15,14 @@ if (!fs.existsSync(apiPath)) {
 }
 
 const dts = fs.readFileSync(apiPath, "utf8");
-const exports = [...dts.matchAll(/export\s+(?:declare\s+)?(?:function|class|const|interface|type)\s+(\w+)/g)].map((m) => m[1]);
+const src = fs.readFileSync("src/public-api/index.ts", "utf8");
+// d.ts may re-export via `export { X } from "..."` — capture both forms
+const fromDts = [...dts.matchAll(/export\s+(?:declare\s+)?(?:function|class|const|interface|type)\s+(\w+)/g)].map((m) => m[1]);
+const fromSrc = [...src.matchAll(/export\s+(?:\{([^}]+)\}|type\s+\{([^}]+)\})/g)].flatMap((m) => {
+  const body = (m[1] ?? m[2] ?? "").split(",").map((s) => s.trim().split(" as ")[0].trim()).filter(Boolean);
+  return body;
+});
+const exports = [...fromDts, ...fromSrc];
 const unique = [...new Set(exports)].sort();
 
 const report = `# Public API Report — ${pkg.name} v${pkg.version}
