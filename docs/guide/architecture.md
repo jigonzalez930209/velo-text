@@ -28,5 +28,8 @@ Each module declares needed capabilities (e.g. DOCX exporter needs `AssetResolve
 - No pasted HTML execution, no `javascript:` URLs, no prototype pollution, magic-signature image check, XML/PDF escaping.
 - Isolated core (`pnpm run lint` fails if `window`/`document` appears in `src/core`).
 
+## Source file size
+Each **source** file (`src/**/*.ts`, `themes/*.css`, `tests/unit/*.js`, `schemas/portable-doc-v1.json`) stays at **≤ 250 lines**. Large JSON fixtures (`tests/fixtures/22-large.json`, `23-big-table.json`) are data, not split.
+
 ## Repo structure
-See `src/` — `core/model|operations|selection|history|normalize|schema|events`, `template/parser|resolver`, `editor-web/view|input|clipboard|toolbar|tables|images|accessibility`, `export/layout|pdf|odt|docx|xml|zip`, `assets/sniff|dimensions|svg|hashing|icons|store`, `adapters/browser|backend|postgres-contract|s3-compatible`, `theme`, `public-api`.
+See `src/` — `core/model|operations|selection|history|normalize|schema|events`, `template/parser|resolver`, `editor-web/controller|view|input|clipboard|toolbar|tables|images|accessibility`, `export/layout|pdf|odt|docx|xml|zip`, `assets/sniff|dimensions|svg|hashing|icons|store`, `adapters/browser|backend|postgres-contract|s3-compatible`, `theme`, `public-api`.

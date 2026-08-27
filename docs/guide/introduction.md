@@ -1,7 +1,7 @@
 # Introduction
 
 ## Goal
-`portable-doc-editor` is a self-contained, zero-runtime-dependency document platform that edits rich text, inserts variables `&#123;&#123;name&#125;&#125;`, handles tables/images/LaTeX and exports the same document to **PDF, ODT and DOCX** from browser or backend.
+`portable-doc-editor` is a self-contained, zero-runtime-dependency document platform that edits rich text, inserts variables `&#123;&#123;name&#125;&#125;`, handles tables (including cell alignment and column/row resize), column layouts, images and LaTeX, and exports the same document to **PDF, ODT and DOCX** from browser or backend.
 
 ## Zero-dependency contract
 `package.json:dependencies === {}` — verified by `pnpm run check:zero-deps` and CI. Only standard JS, Web APIs and code inside the repo. Dev tools (`typescript`, `vitepress`, `c8`) are devDeps only.

@@ -19,7 +19,7 @@ interface PortableDocument {
 - Colors as `#RRGGBBAA`, IDs opaque & unique, dates UTC.
 
 ## Nodes
-- **Block**: `paragraph`, `heading` (1-6), `quote`, `list` (ordered/unordered), `table`, `image`, `page-break`, `horizontal-rule`, `equation-block`.
+- **Block**: `paragraph` (optional `align`: left/center/right/justify), `heading` (1-6), `quote`, `list` (ordered/unordered), `table`, `columns`, `image`, `page-break`, `horizontal-rule`, `equation-block`.
 - **Inline**: `text` (+`marks`), `variable` (atomic), `link`, `inline-image`, `hard-break`, `equation` (inline).
 
 Variable example:
@@ -31,9 +31,18 @@ User writes `&#123;&#123;name&#125;&#125;` but parser produces `VariableNode` wi
 ## Tables
 ```ts
 interface TableNode { columns: TableColumn[]; rows: TableRow[]; repeat?: { path, alias, templateRowId } }
+interface TableColumn { id: string; widthUm: number }
+interface TableRow { id: NodeId; cells: TableCell[]; header?: boolean; heightUm?: number }
 interface TableCell { colSpan, rowSpan, blocks: BlockNode[] }
 ```
-Repeat row clones `templateRowId` for each `alias` in collection `path` (see template engine).
+Cell `blocks` are nested documents (usually a `paragraph`). Repeat row clones `templateRowId` for each `alias` in collection `path` (see template engine).
+
+## Columns
+```ts
+interface ColumnsNode { type: "columns"; id: NodeId; columns: ColumnSlot[]; gapUm?: number }
+interface ColumnSlot { id: NodeId; blocks: BlockNode[]; widthPct?: number }
+```
+Factory: `createColumns(idGen, count)`.
 
 ## Assets
 ```ts
@@ -53,4 +62,4 @@ Selection is ephemeral (`RangeSelection { anchor, focus: Point { nodeId, offset,
 ## Validation
 `validateDocument(doc, {strict})` returns `{valid, errors: {path, code, severity}[]}` with JSON Pointer. Migrations are sequential `v1→v2`.
 
-See `src/core/model/types.ts`, `factories.ts`, `src/core/schema/validator.ts`, `canonical.ts`, `src/core/normalize/normalize.ts`.
+See `src/core/model/types.ts` (re-exports `primitives`, `inline`, `block`, `document`), `factories.ts`, `src/core/schema/validator.ts`, `canonical.ts`, `src/core/normalize/normalize.ts`.
