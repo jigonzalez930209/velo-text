@@ -1,6 +1,6 @@
 /**
- * Adaptador S3 compatible — Fase 5.2 / 8.2
- * Firma para URLs prefirmadas, upload directo con checksum, confirmación server-side
+ * S3-compatible adapter — Phase 5.2 / 8.2
+ * Presigned URL signing, direct upload with checksum, server-side confirmation
  */
 export interface S3Config {
   endpoint: string;
@@ -33,7 +33,7 @@ export interface S3Adapter {
 }
 
 /**
- * Implementación fake para tests (sin red real)
+ * Fake implementation for tests (no real network)
  */
 export function createFakeS3Adapter(_config?: S3Config): S3Adapter & { storage: Map<string, Uint8Array> } {
   const storage = new Map<string, Uint8Array>();

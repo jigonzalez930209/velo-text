@@ -27,6 +27,7 @@ export const formatters: Record<FormatterName, FormatterFn> = {
 };
 
 export function registerFormatter(name: string, _fn: FormatterFn): void {
-  // registro dinámico futuro; por ahora no-op tipado
-  void name; void _fn;
+  // Future dynamic registry; no-op with typing for now
+  void name;
+  void _fn;
 }

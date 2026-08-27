@@ -1,6 +1,6 @@
 /**
- * Parser de variables — Fase 3.1
- * Gramática mínima:
+ * Variable parser — Phase 3.1
+ * Minimal grammar:
  * variable = "{{", ws, path, [ws, "|", ws, format], [ws, "??", ws, string], ws, "}}"
  * path = identifier, { ".", identifier | "[", integer, "]" }
  */

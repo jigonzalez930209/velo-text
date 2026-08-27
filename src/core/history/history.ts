@@ -1,6 +1,6 @@
 /**
- * Historial — Fase 2.2.3
- * Undo/redo con coalescing por tiempo e intención, checkpoints, límite memoria
+ * History — Phase 2.2.3
+ * Undo/redo with coalescing by time and intent, checkpoints, memory limit
  */
 import type { PortableDocument } from "../model/types.js";
 import type { Operation } from "../operations/operations.js";

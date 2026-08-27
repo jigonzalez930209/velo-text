@@ -1,6 +1,6 @@
 /**
- * Asset sniffing — Fase 5.1.1
- * Detección por firma mágica, validación MIME declarado vs real, límites
+ * Asset sniffing — Phase 5.1.1
+ * Magic-signature detection, declared vs real MIME validation, limits
  */
 export type MediaType = "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml";
 

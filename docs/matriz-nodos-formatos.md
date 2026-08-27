@@ -22,6 +22,8 @@
 | color/background | ✅ token CSS | ⚠️ pending | ✅ | ✅ w:color | — |
 | link | ✅ | ✅ annot? | ✅ text:a | ✅ w:hyperlink | block javascript: |
 | hard-break | ✅ | ✅ | ✅ line-break | ✅ w:br | — |
-| hard-break | ✅ | ✅ | ✅ | ✅ | — |
+| equation inline `equation` | ✅ atomic, `latexToHtml` frac/sqrt | ✅ `$latex$` text | ✅ text:span Equation | ✅ w:r italic `$latex$` | simple subset, atomic |
+| equation block `equation-block` | ✅ centered display | ✅ centered `$latex$` | ✅ text:p Equation | ✅ w:p centered italic | block LaTeX, no OMML v1 |
+| toolbar icons SVG | ✅ inline 16px currentColor | — | — | — | all in `src/assets/icons/index.ts:12`, color via `currentColor`/`--pde-icon-color` |
 
 ✅ = soportado en Hito A | ⚠️ = fallback/limitado | ❌ = fuera de alcance v1 (ver 2.2)

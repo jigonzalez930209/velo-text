@@ -1,0 +1,71 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_1024",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_001025",
+    "children": [
+      {
+        "type": "heading",
+        "id": "n_001017",
+        "level": 1,
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001018",
+            "text": "Ecuaciones en bloque"
+          }
+        ]
+      },
+      {
+        "type": "equation-block",
+        "id": "n_001019",
+        "latex": "\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001021",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001020",
+            "text": "La ecuación anterior es la fórmula cuadrática."
+          }
+        ]
+      },
+      {
+        "type": "equation-block",
+        "id": "n_001022",
+        "latex": "E = mc^2"
+      },
+      {
+        "type": "equation-block",
+        "id": "n_001023",
+        "latex": "\\int_{0}^{\\infty} e^{-x} dx = 1"
+      },
+      {
+        "type": "equation-block",
+        "id": "n_001024",
+        "latex": "\\alpha + \\beta = \\gamma"
+      }
+    ]
+  },
+  "assets": {}
+}

@@ -1,4 +1,18 @@
-import { SCHEMA_VERSION, type PortableDocument, type RootNode, type ParagraphNode, type HeadingNode, type TextNode, type VariableNode, type ImageBlockNode, type TableNode, type IdGenerator, type Clock } from "./types.js";
+import {
+  SCHEMA_VERSION,
+  type PortableDocument,
+  type RootNode,
+  type ParagraphNode,
+  type HeadingNode,
+  type TextNode,
+  type VariableNode,
+  type ImageBlockNode,
+  type TableNode,
+  type InlineEquationNode,
+  type EquationBlockNode,
+  type IdGenerator,
+  type Clock,
+} from "./types.js";
 
 export function createIdGenerator(prefix = "n"): IdGenerator {
   let c = 0;
@@ -104,4 +118,19 @@ export function createTable(idGen: IdGenerator, cols = 2, rows = 2): TableNode {
     })),
   }));
   return { type: "table", id: idGen.next(), columns, rows: tableRows };
+}
+
+/**
+ * Create an inline LaTeX equation node.
+ * Validation of the LaTeX subset is deferred to the validator; this factory only ensures required fields.
+ */
+export function createEquation(idGen: IdGenerator, latex: string, display = false): InlineEquationNode {
+  return { type: "equation", id: idGen.next(), latex, ...(display ? { display: true as const } : {}) };
+}
+
+/**
+ * Create a block-level display equation.
+ */
+export function createEquationBlock(idGen: IdGenerator, latex: string, label?: string): EquationBlockNode {
+  return { type: "equation-block", id: idGen.next(), latex, ...(label ? { label } : {}) };
 }

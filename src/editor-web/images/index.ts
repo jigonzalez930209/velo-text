@@ -1,6 +1,6 @@
 /**
- * Imágenes — Fase 4 / 5
- * Pipeline de subida: validación, sniff, dimensiones, hash, URL firmada
+ * Images — Phase 4 / 5
+ * Upload pipeline: validation, sniffing, dimensions, hashing, signed URL
  */
 import { sniffImage } from "../../assets/sniff/index.js";
 import { getDimensions } from "../../assets/dimensions/index.js";

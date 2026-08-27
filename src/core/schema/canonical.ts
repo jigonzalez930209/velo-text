@@ -1,6 +1,6 @@
 /**
- * Canonical JSON — Fase 10.4 / 9.4
- * Arrays preservan orden, objetos con keys ordenadas, utf8 estable, hash sha256.
+ * Canonical JSON — Phase 10.4 / 9.4
+ * Arrays preserve order, objects with sorted keys, stable utf8, sha256 hash.
  */
 import crypto from "node:crypto";
 import type { PortableDocument } from "../model/types.js";

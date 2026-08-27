@@ -38,8 +38,8 @@ export interface ExportResult {
 }
 
 /**
- * Pipeline común — Fase 10
- * validar+migrar -> resolver variables -> resolver assets -> normalizar -> layout -> adaptar -> empaquetar
+ * Common pipeline — Phase 10
+ * validate+migrate -> resolve variables -> resolve assets -> normalize -> layout -> adapt -> package
  */
 export async function exportDocument(req: ExportRequest): Promise<ExportResult> {
   const { document, data = {}, format, sink, options = {}, assets = {} } = req;

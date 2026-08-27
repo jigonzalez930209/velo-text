@@ -1,7 +1,7 @@
 /**
- * ZipWriter — Fase 10.6
- * STORE obligatorio, DEFLATE opcional via capacidad inyectada, streaming cuando sink lo permite.
- * mimetype primero y sin compresión para ODT.
+ * ZipWriter — Phase 10.6
+ * STORE mandatory, DEFLATE optional via injected capability, streaming when sink allows.
+ * The mimetype entry must be first and uncompressed (STORE) for ODT compliance.
  */
 import { crc32 } from "./crc32.js";
 import type { BinarySink } from "../../core/model/types.js";

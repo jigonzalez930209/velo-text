@@ -1,6 +1,7 @@
 /**
- * Validador estructural — Fase 2.1.2
- * Diagnósticos con JSON Pointer, límite de errores, modos strict/tolerante
+ * Structural validator — Phase 2.1.2
+ * Diagnostics with JSON Pointer, error limit, strict/tolerant modes.
+ * Also validates LaTeX equation nodes (simple subset).
  */
 import type { PortableDocument, BlockNode, InlineNode } from "../model/types.js";
 
@@ -49,8 +50,18 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
 
   if (doc.root?.id) checkId(doc.root.id, "/root/id");
 
-  const validBlockTypes = new Set<BlockNode["type"]>(["paragraph", "heading", "quote", "list", "table", "image", "page-break", "horizontal-rule"]);
-  const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break"]);
+  const validBlockTypes = new Set<BlockNode["type"]>([
+    "paragraph",
+    "heading",
+    "quote",
+    "list",
+    "table",
+    "image",
+    "page-break",
+    "horizontal-rule",
+    "equation-block",
+  ]);
+  const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation"]);
 
   function validateInline(node: InlineNode, path: string): void {
     if (!node || typeof (node as unknown as Record<string, unknown>).type !== "string") {
@@ -73,6 +84,24 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
       if (typeof node.href !== "string") err(`${path}/href`, "type", "href must be string");
       if (node.href && /^javascript:/i.test(node.href)) err(`${path}/href`, "unsafe-url", "javascript: url forbidden");
       if (Array.isArray(node.children)) node.children.forEach((c, i) => validateInline(c as InlineNode, `${path}/children/${i}`));
+    }
+    if (node.type === "equation") {
+      if (typeof node.latex !== "string" || !node.latex.trim()) err(`${path}/latex`, "required", "equation latex required");
+      else {
+        if (node.latex.length > 2000) err(`${path}/latex`, "too-long", "equation too long (max 2000 chars)");
+        // Simple LaTeX subset allowlist: letters, numbers, \command, {}, ^_, +-=/*, (), [], fractions, sqrt, greek, etc.
+        // For v1 we allow most printable except dangerous control sequences like \input, \write, \def, \include.
+        const forbidden = ["\\input", "\\write", "\\def", "\\include", "\\catcode", "\\openout", "\\immediate"];
+        if (forbidden.some((f) => node.latex.includes(f))) err(`${path}/latex`, "forbidden-command", `forbidden LaTeX command in ${node.latex.slice(0, 30)}`);
+        // Balanced braces check (simple)
+        let depth = 0;
+        for (const ch of node.latex) {
+          if (ch === "{") depth++;
+          if (ch === "}") depth--;
+          if (depth < 0) break;
+        }
+        if (depth !== 0) err(`${path}/latex`, "unbalanced-braces", "unbalanced braces in LaTeX");
+      }
     }
   }
 
@@ -122,6 +151,21 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     if (node.type === "image") {
       if (typeof node.assetId !== "string") err(`${path}/assetId`, "type", "image assetId required");
       if (node.assetId && !doc.assets?.[node.assetId] && strict) err(`${path}/assetId`, "missing-asset", `asset ${node.assetId} not in document.assets`);
+    }
+    if (node.type === "equation-block") {
+      if (typeof node.latex !== "string" || !node.latex.trim()) err(`${path}/latex`, "required", "equation latex required");
+      else {
+        if (node.latex.length > 2000) err(`${path}/latex`, "too-long", "equation too long (max 2000 chars)");
+        const forbidden = ["\\input", "\\write", "\\def", "\\include"];
+        if (forbidden.some((f) => node.latex.includes(f))) err(`${path}/latex`, "forbidden-command", "forbidden LaTeX command");
+        let depth = 0;
+        for (const ch of node.latex) {
+          if (ch === "{") depth++;
+          if (ch === "}") depth--;
+          if (depth < 0) break;
+        }
+        if (depth !== 0) err(`${path}/latex`, "unbalanced-braces", "unbalanced braces");
+      }
     }
   }
 

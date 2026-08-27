@@ -1,6 +1,6 @@
 /**
- * CRC-32 — Fase 10.6
- * Implementación propia sin dependencias
+ * CRC-32 — Phase 10.6
+ * Self-contained implementation with no dependencies.
  */
 const TABLE = new Uint32Array(256);
 (function init(): void {

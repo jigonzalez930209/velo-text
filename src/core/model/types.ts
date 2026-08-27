@@ -1,7 +1,7 @@
 /**
- * Tipos canónicos — Fase 2.1.1 / 5.x
- * Envelope PortableDocument + nodos + assets + selección
- * Medidas en micrómetros (enteros), colores #RRGGBBAA, fechas ISO8601 UTC.
+ * Canonical types — Phase 2.1.1 / 5.x
+ * PortableDocument envelope + nodes + assets + selection.
+ * Measurements in micrometers (integers), colors as #RRGGBBAA, dates as ISO8601 UTC.
  */
 
 export const SCHEMA_VERSION = 1 as const;
@@ -70,7 +70,20 @@ export interface HardBreakNode {
   id: NodeId;
 }
 
-export type InlineNode = TextNode | VariableNode | LinkNode | InlineImageNode | HardBreakNode;
+/**
+ * Inline LaTeX equation — simple subset.
+ * Stores raw LaTeX source; rendering is pluggable (web: HTML/CSS, export: fallback text or OMML).
+ * Example: "E = mc^2", "\\frac{a}{b}", "\\sqrt{x}".
+ * Max length enforced by validator; content is atomic (contenteditable=false).
+ */
+export interface InlineEquationNode {
+  type: "equation";
+  id: NodeId;
+  latex: string;
+  display?: boolean; // false (default) = inline, true = display block inside paragraph
+}
+
+export type InlineNode = TextNode | VariableNode | LinkNode | InlineImageNode | HardBreakNode | InlineEquationNode;
 
 // ── Block ───────────────────────────────────────────────────────────
 export interface ParagraphNode {
@@ -166,6 +179,17 @@ export interface HorizontalRuleNode {
   id: NodeId;
 }
 
+/**
+ * Block-level LaTeX equation — display mode centered.
+ * Simple subset only; complex macros are out of scope for v1 (see roadmap 2.2).
+ */
+export interface EquationBlockNode {
+  type: "equation-block";
+  id: NodeId;
+  latex: string;
+  label?: string;
+}
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -174,7 +198,8 @@ export type BlockNode =
   | TableNode
   | ImageBlockNode
   | PageBreakNode
-  | HorizontalRuleNode;
+  | HorizontalRuleNode
+  | EquationBlockNode;
 
 export interface RootNode {
   type: "root";
@@ -182,7 +207,7 @@ export interface RootNode {
   children: BlockNode[];
 }
 
-// ── Assets ──────────────────────────────────────────────────────────
+// ── Assets ─────────────────────────────────────────────────────────
 export interface AssetVariant {
   storageKey: string;
   mediaType: string;
@@ -204,7 +229,7 @@ export interface AssetRef {
   variants?: Record<string, AssetVariant>;
 }
 
-// ── Document envelope ────────────────────────────────────────────────
+// ── Document envelope ────────────────────────────────────────────
 export interface PortableDocument {
   schema: typeof SCHEMA_TYPE;
   schemaVersion: typeof SCHEMA_VERSION;
@@ -222,7 +247,7 @@ export interface PortableDocument {
   extensions?: Record<string, JsonValue>;
 }
 
-// ── Selection ────────────────────────────────────────────────────────
+// ── Selection ────────────────────────────────────────────────
 export interface Point {
   nodeId: NodeId;
   offset: number;
@@ -237,7 +262,7 @@ export interface RangeSelection {
 
 export type Selection = RangeSelection | { kind: "none" } | { kind: "node"; nodeId: NodeId };
 
-// ── Ports (Fase 3.1) ────────────────────────────────────────────────
+// ── Platform ports (Phase 3.1) — no direct window/document/fs access in core ──
 export interface BinarySink {
   write(chunk: Uint8Array): Promise<void> | void;
   close(): Promise<void> | void;

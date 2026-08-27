@@ -1,6 +1,6 @@
 /**
- * Accesibilidad — Fase 4.2
- * Roles ARIA, toolbar navegable por teclado, anuncios
+ * Accessibility — Phase 4.2
+ * ARIA roles, keyboard-navigable toolbar, live announcements
  */
 export function ariaLabelForVariable(path: string): string {
   return `Variable ${path}`;

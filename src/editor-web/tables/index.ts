@@ -1,6 +1,6 @@
 /**
- * Tablas — Fase 4.2.2
- * Insertar/eliminar filas y columnas, spans, navegación Tab
+ * Tables — Phase 4.2.2
+ * Insert/delete rows and columns, spans, Tab navigation
  */
 import type { PortableDocument } from "../../core/model/types.js";
 

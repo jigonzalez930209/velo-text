@@ -1,6 +1,6 @@
 /**
- * OdtWriter — Fase 8
- * ODF 1.3: mimetype STORE primero, META-INF/manifest.xml, content.xml, styles.xml, meta.xml, settings.xml
+ * OdtWriter — Phase 8
+ * ODF 1.3: mimetype STORE first, META-INF/manifest.xml, content.xml, styles.xml, meta.xml, settings.xml
  */
 import { XmlWriter } from "../xml/writer.js";
 import { ZipWriter } from "../zip/zipWriter.js";
@@ -156,6 +156,14 @@ export class OdtWriter {
       case "horizontal-rule":
         w.open("text:p", { "text:style-name": "Horizontal_20_Line" }).text("---").close();
         break;
+      case "equation-block": {
+        // ODT does not have native LaTeX; use a styled paragraph with the raw LaTeX as fallback
+        // Future: embed MathML if an ODT consumer requires it
+        w.open("text:p", { "text:style-name": "Equation" });
+        w.open("text:span", { "text:style-name": "Equation" }).text(`$${block.latex as string}$`).close();
+        w.close();
+        break;
+      }
       default:
         w.open("text:p").text(`[${block.type as string}]`).close();
     }
@@ -185,6 +193,9 @@ export class OdtWriter {
       w.open("draw:frame", { "draw:name": inl.id as string })
         .selfClose("draw:image", { "xlink:href": `Pictures/${inl.assetId as string}.${ext}` })
         .close();
+    } else if (inl.type === "equation") {
+      // Inline equation — render as styled span with LaTeX fallback
+      w.open("text:span", { "text:style-name": "Equation" }).text(`$${inl.latex as string}$`).close();
     } else w.text(`[${inl.type as string}]`);
   }
 

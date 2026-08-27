@@ -1,8 +1,9 @@
 /**
- * Renderizador — Fase 4.1.1
- * Host contenteditable controlado, data-node-id/type, reconciliación por IDs
+ * Renderer — Phase 4.1.1
+ * Controlled contenteditable host, data-node-id/type, reconciliation by IDs
  */
 import type { PortableDocument, BlockNode, InlineNode } from "../../core/model/types.js";
+import { latexToHtml } from "../../core/equation/index.js";
 
 export interface RenderOptions {
   theme?: string;
@@ -42,6 +43,12 @@ function renderBlock(block: BlockNode): string {
       return `<div data-node-id="${id}" data-node-type="page-break" class="pde-page-break"></div>`;
     case "horizontal-rule":
       return `<hr data-node-id="${id}" data-node-type="horizontal-rule" />`;
+    case "equation-block": {
+      // Block display equation — centered, atomic, non-editable
+      const latex = escapeAttr((block as unknown as { latex: string }).latex ?? "");
+      const inner = latexToHtml((block as unknown as { latex: string }).latex ?? "");
+      return `<div data-node-id="${id}" data-node-type="equation-block" contenteditable="false" class="pde-equation pde-equation--block" role="math" aria-label="${latex}">${inner}</div>`;
+    }
     default:
       return `<div data-node-id="${id}">[${(block as { type: string }).type}]</div>`;
   }
@@ -68,6 +75,13 @@ function renderInline(inline: InlineNode): string {
       return `<img data-node-id="${inline.id}" data-asset-id="${inline.assetId}" class="pde-inline-image" />`;
     case "hard-break":
       return `<br data-node-id="${inline.id}" />`;
+    case "equation": {
+      const latex = (inline as unknown as { latex: string }).latex ?? "";
+      const display = (inline as unknown as { display?: boolean }).display;
+      const inner = latexToHtml(latex);
+      const cls = display ? "pde-equation pde-equation--block" : "pde-equation";
+      return `<span data-node-id="${inline.id}" data-node-type="equation" contenteditable="false" class="${cls}" role="math" aria-label="${escapeAttr(latex)}">${inner}</span>`;
+    }
     default:
       return `<span>[${(inline as { type: string }).type}]</span>`;
   }
@@ -81,6 +95,6 @@ function escapeAttr(s: string): string {
 }
 
 export function reconcileDom(_prev: PortableDocument, next: PortableDocument, container: HTMLElement): void {
-  // Reconciliación mínima por IDs — para MVP re-render completo
+  // Minimal reconciliation by IDs — full re-render for MVP
   container.innerHTML = renderDocumentToHtml(next);
 }

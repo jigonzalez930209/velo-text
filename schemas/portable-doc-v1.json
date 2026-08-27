@@ -67,7 +67,8 @@
         { "$ref": "#/definitions/variableNode" },
         { "$ref": "#/definitions/linkNode" },
         { "$ref": "#/definitions/inlineImageNode" },
-        { "$ref": "#/definitions/hardBreakNode" }
+        { "$ref": "#/definitions/hardBreakNode" },
+        { "$ref": "#/definitions/inlineEquationNode" }
       ]
     },
     "textNode": {
@@ -121,6 +122,16 @@
         "id": { "type": "string" }
       }
     },
+    "inlineEquationNode": {
+      "type": "object",
+      "required": ["type", "id", "latex"],
+      "properties": {
+        "type": { "const": "equation" },
+        "id": { "type": "string" },
+        "latex": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "display": { "type": "boolean" }
+      }
+    },
     "blockNode": {
       "oneOf": [
         { "$ref": "#/definitions/paragraphNode" },
@@ -130,7 +141,8 @@
         { "$ref": "#/definitions/tableNode" },
         { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" },
-        { "$ref": "#/definitions/horizontalRuleNode" }
+        { "$ref": "#/definitions/horizontalRuleNode" },
+        { "$ref": "#/definitions/equationBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -213,6 +225,16 @@
       "properties": {
         "type": { "const": "horizontal-rule" },
         "id": { "type": "string" }
+      }
+    },
+    "equationBlockNode": {
+      "type": "object",
+      "required": ["type", "id", "latex"],
+      "properties": {
+        "type": { "const": "equation-block" },
+        "id": { "type": "string" },
+        "latex": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "label": { "type": "string" }
       }
     },
     "assetRef": {

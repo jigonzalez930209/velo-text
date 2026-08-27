@@ -1,6 +1,6 @@
 /**
- * Selección — Fase 2.2.2
- * RangeSelection con anchor/focus Point(nodeId, offset, affinity)
+ * Selection — Phase 2.2.2
+ * RangeSelection with anchor/focus Point(nodeId, offset, affinity)
  */
 import type { Point, RangeSelection, Selection } from "../model/types.js";
 import type { Operation } from "../operations/operations.js";
@@ -23,7 +23,7 @@ export function isRangeSelection(sel: Selection): sel is RangeSelection {
   return sel.kind === "range";
 }
 
-// Mapear selección a través de operaciones primitivas (simplificado para MVP)
+// Map selection through primitive operations (simplified for MVP)
 export function mapSelectionThroughOps(selection: RangeSelection, ops: readonly Operation[]): RangeSelection {
   let anchor: Point = { ...selection.anchor };
   let focus: Point = { ...selection.focus };

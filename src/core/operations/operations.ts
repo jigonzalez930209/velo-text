@@ -1,6 +1,6 @@
 /**
- * Operaciones primitivas — Fase 2.2.1
- * Insertar, borrar, dividir, unir, mover y aplicar marcas. Precondiciones, inversa.
+ * Primitive operations — Phase 2.2.1
+ * Insert, delete, split, join, move and apply marks. Preconditions, inverse.
  */
 import type { PortableDocument, BlockNode, InlineNode, TextMarks } from "../model/types.js";
 

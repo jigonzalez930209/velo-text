@@ -23,8 +23,8 @@ export interface LayoutModel {
 }
 
 /**
- * Modelo de layout intermedio — Fase 6
- * Por ahora layout trivial por bloques; paginación y métricas de fuentes vendrán después.
+ * Intermediate layout model — Phase 6
+ * Trivial block layout for now; pagination and font metrics will come later.
  */
 export function buildLayout(doc: PortableDocument, _assets: Record<string, unknown> = {}, _opts: Record<string, unknown> = {}): LayoutModel {
   const pages: LayoutPage[] = [{

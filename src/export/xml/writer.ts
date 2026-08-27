@@ -1,6 +1,6 @@
 /**
- * XmlWriter — Fase 8.1.1 / 9.1 centralizado
- * Escape centralizado, namespaces, nombres estables
+ * XmlWriter — Phase 8.1.1 / 9.1 centralizado
+ * Centralized escaping, namespaces, stable names
  */
 export class XmlWriter {
   private parts: string[] = [];

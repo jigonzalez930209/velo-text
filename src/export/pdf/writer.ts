@@ -1,6 +1,6 @@
 /**
- * PdfWriter mínimo — Fase 7
- * Catálogo, páginas, streams, xref, trailer determinista.
+ * Minimal PdfWriter — Phase 7
+ * Catalog, pages, streams, xref, deterministic trailer.
  */
 import type { PortableDocument, BinarySink, Clock, IdGenerator } from "../../core/model/types.js";
 
@@ -45,16 +45,33 @@ export class PdfWriter {
       for (const b of blocks) {
         if (b.type === "paragraph" || b.type === "heading" || b.type === "quote") {
           const text = (b.children ?? [])
-            .map((c) => (c.type === "text" ? c.text : c.type === "variable" ? c.source : ""))
+            .map((c) => {
+              if (c.type === "text") return c.text;
+              if (c.type === "variable") return c.source;
+              if (c.type === "equation") return `$${(c as unknown as { latex: string }).latex}$`;
+              return "";
+            })
             .join("");
           lines.push({ text, style: b.type, level: (b as { level?: number }).level });
         } else if (b.type === "table") {
           for (const row of b.rows) for (const cell of row.cells) collect(cell.blocks);
         } else if (b.type === "list") {
-          for (const it of b.items) lines.push({ text: `• ${it.content.map((c) => (c as { text?: string }).text ?? "").join("")}`, style: "list" });
+          for (const it of b.items)
+            lines.push({
+              text: `• ${it.content
+                .map((c) => {
+                  const cc = c as { text?: string; source?: string; latex?: string; type: string };
+                  if (cc.type === "equation") return `$${cc.latex}$`;
+                  return cc.text ?? cc.source ?? "";
+                })
+                .join("")}`,
+              style: "list",
+            });
         } else if (b.type === "horizontal-rule") lines.push({ text: "---", style: "hr" });
         else if (b.type === "page-break") lines.push({ text: "[PAGE_BREAK]", style: "break" });
         else if (b.type === "image") lines.push({ text: `[IMAGE ${(b as { assetId: string }).assetId}]`, style: "image" });
+        else if (b.type === "equation-block")
+          lines.push({ text: `$${(b as unknown as { latex: string }).latex}$`, style: "equation-block" });
       }
     };
     collect(doc.root.children);

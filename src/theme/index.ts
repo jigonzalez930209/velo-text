@@ -1,6 +1,6 @@
 /**
- * Theming — Fase 11
- * Tokens CSS, cuatro presets, scope .pde-
+ * Theming — Phase 11
+ * CSS tokens, four presets, .pde- scope
  */
 
 export type ThemeName = "light-neutral" | "light-warm" | "dark-slate" | "dark-contrast";

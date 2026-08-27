@@ -1,6 +1,6 @@
 /**
- * Sanitización SVG — Fase 5.1.3
- * Parser XML interno seguro, allowlist de elementos/atributos, sin scripts/eventos/red.
+ * SVG sanitization — Phase 5.1.3
+ * Safe internal XML parser, element/attribute allowlist, no scripts/events/network.
  */
 const ALLOWED_ELEMENTS = new Set([
   "svg",
@@ -58,13 +58,13 @@ export interface SanitizeResult {
 
 export function sanitizeSvg(svgText: string): SanitizeResult {
   const removed: string[] = [];
-  // Rechazo rápido: scripts, foreignObject, event handlers, URLs externas
+  // Fast rejection: scripts, foreignObject, event handlers, external URLs
   if (/<script/i.test(svgText)) removed.push("script");
   if (/<foreignObject/i.test(svgText)) removed.push("foreignObject");
   if (/javascript:/i.test(svgText)) removed.push("javascript-url");
   if (/\bon\w+\s*=/i.test(svgText)) removed.push("event-handler");
 
-  // Parser muy simple: si contiene elementos no allowlist, marcar
+  // Very simple parser: flag non-allowlisted elements
   const tagRe = /<\/?([a-zA-Z0-9:]+)[^>]*>/g;
   let m: RegExpExecArray | null;
   while ((m = tagRe.exec(svgText)) !== null) {
@@ -76,13 +76,13 @@ export function sanitizeSvg(svgText: string): SanitizeResult {
     }
   }
 
-  // Attr filtering: eliminar atributos peligrosos
+  // Attribute filtering: remove dangerous attributes
   let sanitized = svgText
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
     .replace(/\s+on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 
-  // Valid: si removimos script/event, consideramos sanitizado pero válido; si elemento crítico, invalid
-  const valid = !removed.includes("script") || sanitized !== svgText; // simplified
+  // Valid if script/event was removed and output differs; critical elements keep invalid flag (simplified)
+  const valid = !removed.includes("script") || sanitized !== svgText;
   return { sanitized, removed, valid: removed.length === 0 || valid };
 }

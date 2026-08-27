@@ -1,6 +1,6 @@
 /**
- * Contrato PostgreSQL — Fase 10.1
- * Repositorio documental: create, get, update, list revisions y restore. Concurrencia optimista.
+ * PostgreSQL contract — Phase 10.1
+ * Document repository: create, get, update, list revisions and restore. Optimistic concurrency.
  */
 import type { PortableDocument } from "../../core/model/types.js";
 
@@ -24,7 +24,7 @@ export interface DocumentRepository {
   restore(id: string, tenantId: string, revision: number): Promise<DocumentRecord>;
 }
 
-// SQL de referencia (no ejecutado aquí, solo contrato)
+// Reference SQL (not executed here, contract only)
 export const SQL_MIGRATION = `
 CREATE TABLE IF NOT EXISTS documents (
   id uuid PRIMARY KEY,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS document_revisions (
 `;
 
 /**
- * Implementación en memoria para tests — respeta control de concurrencia optimista
+ * In-memory implementation for tests — respects optimistic concurrency control
  */
 export function createInMemoryRepository(): DocumentRepository {
   const store = new Map<string, DocumentRecord>();

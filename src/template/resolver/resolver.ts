@@ -1,6 +1,6 @@
 /**
- * Resolver seguro — Fase 3.2.1/3.2.2
- * Lectura de propiedades propias, bloqueo de prototipos, límites, formatters
+ * Safe resolver — Phase 3.2.1/3.2.2
+ * Own-property access, prototype blocking, limits, formatters
  */
 import type { PortableDocument } from "../../core/model/types.js";
 import type { ParseResult } from "../parser/parser.js";

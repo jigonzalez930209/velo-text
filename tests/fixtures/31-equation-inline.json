@@ -1,0 +1,108 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_1015",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_001016",
+    "children": [
+      {
+        "type": "paragraph",
+        "id": "n_001004",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001001",
+            "text": "Teorema de Pitágoras: "
+          },
+          {
+            "type": "equation",
+            "id": "n_001002",
+            "latex": "a^2 + b^2 = c^2"
+          },
+          {
+            "type": "text",
+            "id": "n_001003",
+            "text": " es fundamental."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001009",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001005",
+            "text": "Fracción: "
+          },
+          {
+            "type": "equation",
+            "id": "n_001006",
+            "latex": "\\frac{a}{b}"
+          },
+          {
+            "type": "text",
+            "id": "n_001007",
+            "text": " y raíz "
+          },
+          {
+            "type": "equation",
+            "id": "n_001008",
+            "latex": "\\sqrt{x^2 + 1}"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001012",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001010",
+            "text": "Suma: "
+          },
+          {
+            "type": "equation",
+            "id": "n_001011",
+            "latex": "\\sum_{i=0}^{n} i = \\frac{n(n+1)}{2}"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001015",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001013",
+            "text": "Inline con display: "
+          },
+          {
+            "type": "equation",
+            "id": "n_001014",
+            "latex": "E = mc^2",
+            "display": true
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {}
+}

@@ -1,8 +1,20 @@
 /**
- * API pública — Fase 12.1
- * Superficie mínima exportada
+ * Public API — Phase 12.1
+ * Minimal exported surface
  */
-export { createDocument, createIdGenerator, createSystemClock, createParagraph, createHeading, createText, createVariable, createImageBlock, createTable } from "../core/model/factories.js";
+export {
+  createDocument,
+  createIdGenerator,
+  createSystemClock,
+  createParagraph,
+  createHeading,
+  createText,
+  createVariable,
+  createImageBlock,
+  createTable,
+  createEquation,
+  createEquationBlock,
+} from "../core/model/factories.js";
 export { validateDocument, assertValid } from "../core/schema/validator.js";
 export { canonicalStringify, canonicalBytes, contentHashHex } from "../core/schema/canonical.js";
 export { normalizeDocument, isIdempotent } from "../core/normalize/normalize.js";
@@ -21,9 +33,13 @@ export { exportDocument } from "../export/index.js";
 export { sniffImage, isAllowedMediaType } from "../assets/sniff/index.js";
 export { getDimensions } from "../assets/dimensions/index.js";
 export { sanitizeSvg } from "../assets/svg/index.js";
+export { getIconSvg, getAllIcons, iconCss } from "../assets/icons/index.js";
+export { validateLatex, latexToHtml, latexToPlainText, equationCss } from "../core/equation/index.js";
 export { themes, themeCss, allThemesCss } from "../theme/index.js";
-export { renderDocumentToHtml } from "../editor-web/view/index.js";
+export { renderDocumentToHtml, reconcileDom } from "../editor-web/view/index.js";
 export { registerCommand, getCommand, listCommands } from "../editor-web/toolbar/index.js";
+export { intentToOperation } from "../editor-web/input/index.js";
 
-export type { PortableDocument, BlockNode, InlineNode, TextNode, VariableNode, AssetRef, PageSettings, Selection, RangeSelection, BinarySink, AssetResolver, Clock, IdGenerator } from "../core/model/types.js";
+export type { PortableDocument, BlockNode, InlineNode, TextNode, VariableNode, InlineEquationNode, EquationBlockNode, AssetRef, PageSettings, Selection, RangeSelection, BinarySink, AssetResolver, Clock, IdGenerator } from "../core/model/types.js";
 export type { ExportFormat, ExportRequest, ExportResult } from "../export/index.js";
+export type { IconName, IconOptions } from "../assets/icons/index.js";

@@ -1,6 +1,6 @@
 /**
- * DocxWriter — Fase 9
- * Paquete Open XML: [Content_Types].xml, _rels/.rels, word/document.xml, word/styles.xml, word/settings.xml, word/_rels/document.xml.rels, word/media/*, docProps/*
+ * DocxWriter — Phase 9
+ * Open XML package: [Content_Types].xml, _rels/.rels, word/document.xml, word/styles.xml, word/settings.xml, word/_rels/document.xml.rels, word/media/*, docProps/*
  */
 import { XmlWriter } from "../xml/writer.js";
 import { ZipWriter } from "../zip/zipWriter.js";
@@ -198,6 +198,16 @@ export class DocxWriter {
         w.open("w:r").open("w:t").text("").close().close().close();
         break;
       }
+      case "equation-block": {
+        // DOCX OfficeMath fallback: render LaTeX as italic text inside centered paragraph
+        // Future: emit <m:oMath> for native equation support
+        w.open("w:p");
+        w.open("w:pPr").selfClose("w:jc", { "w:val": "center" }).close();
+        w.open("w:r");
+        w.open("w:rPr").selfClose("w:i").close();
+        w.open("w:t", { "xml:space": "preserve" }).text(`$${(block as unknown as { latex: string }).latex}$`).close().close().close();
+        break;
+      }
       default:
         w.open("w:p").open("w:r").open("w:t").text(`[${block.type as string}]`).close().close().close();
     }
@@ -238,6 +248,10 @@ export class DocxWriter {
       w.open("w:r").selfClose("w:br").close();
     } else if (inl.type === "inline-image") {
       w.open("w:r").open("w:t").text(`[image ${inl.assetId as string}]`).close().close();
+    } else if (inl.type === "equation") {
+      w.open("w:r");
+      w.open("w:rPr").selfClose("w:i").close();
+      w.open("w:t", { "xml:space": "preserve" }).text(`$${(inl as unknown as { latex: string }).latex}$`).close().close();
     }
   }
 

@@ -1,0 +1,217 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_1058",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_001059",
+    "children": [
+      {
+        "type": "heading",
+        "id": "n_001026",
+        "level": 1,
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001027",
+            "text": "Reporte con ecuaciones y variables"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001030",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001028",
+            "text": "Cliente: "
+          },
+          {
+            "type": "variable",
+            "id": "n_001029",
+            "path": "customer.name",
+            "source": "{{customer.name}}",
+            "valueType": "string"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_001034",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_001031",
+            "text": "La energía se calcula como "
+          },
+          {
+            "type": "equation",
+            "id": "n_001032",
+            "latex": "E = mc^2"
+          },
+          {
+            "type": "text",
+            "id": "n_001033",
+            "text": " donde m es la masa."
+          }
+        ]
+      },
+      {
+        "type": "equation-block",
+        "id": "n_001035",
+        "latex": "\\sum_{i=1}^{n} x_i = S"
+      },
+      {
+        "type": "table",
+        "id": "n_001036",
+        "columns": [
+          {
+            "id": "n_001037",
+            "widthUm": 60000
+          },
+          {
+            "id": "n_001038",
+            "widthUm": 60000
+          }
+        ],
+        "rows": [
+          {
+            "id": "n_001039",
+            "cells": [
+              {
+                "id": "n_001040",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_001042",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_001041",
+                        "text": "Concepto"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_001043",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_001045",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_001044",
+                        "text": "Fórmula"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_001046",
+            "cells": [
+              {
+                "id": "n_001047",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_001049",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_001048",
+                        "text": "Área círculo"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_001050",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_001052",
+                    "children": [
+                      {
+                        "type": "equation",
+                        "id": "n_001051",
+                        "latex": "\\pi r^2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_001053",
+            "cells": [
+              {
+                "id": "n_001054",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_001056",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_001055",
+                        "text": "Volumen"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_001057",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "equation-block",
+                    "id": "n_001058",
+                    "latex": "V = \\frac{4}{3} \\pi r^3"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {}
+}

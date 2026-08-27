@@ -1,5 +1,5 @@
 /**
- * Dimensiones sin decodificar imagen completa — Fase 5.1.2
+ * Dimensions without fully decoding the image — Phase 5.1.2
  * PNG, JPEG, WebP lectura de cabecera
  */
 export interface Dimensions {

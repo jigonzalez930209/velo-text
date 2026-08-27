@@ -1,6 +1,6 @@
 /**
- * Normalizador — Fase 2.1.3
- * Idempotente: fusionar textos adyacentes con mismas marcas, eliminar vacíos ilegales.
+ * Normalizer — Phase 2.1.3
+ * Idempotent: merge adjacent texts with same marks, remove illegal empties.
  */
 import type { PortableDocument, RootNode, BlockNode, TextMarks } from "../model/types.js";
 
