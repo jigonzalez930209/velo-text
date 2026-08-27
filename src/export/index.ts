@@ -66,7 +66,7 @@ export async function exportDocument(req: ExportRequest): Promise<ExportResult> 
   switch (format) {
     case "pdf": {
       const w = new PdfWriter({ clock, idGenerator: req.idGenerator });
-      const res = await w.write(rendered.document, sink);
+      const res = await w.write(rendered.document, sink, assets);
       return { byteLength: res.byteLength, diagnostics: rendered.diagnostics, format };
     }
     case "odt": {

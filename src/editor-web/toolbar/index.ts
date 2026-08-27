@@ -31,14 +31,14 @@ export function listCommands(): CommandDef[] {
 registerCommand({ id: "text.toggleBold", label: "Bold", icon: "bold", canExecute: () => true, execute: () => ({ mark: "bold" }) });
 registerCommand({ id: "text.toggleItalic", label: "Italic", icon: "italic", canExecute: () => true, execute: () => ({ mark: "italic" }) });
 registerCommand({ id: "text.toggleUnderline", label: "Underline", icon: "underline", canExecute: () => true, execute: () => ({ mark: "underline" }) });
-registerCommand({ id: "text.toggleStrike", label: "Strikethrough", icon: "strike", canExecute: () => true, execute: () => ({ mark: "strike" }) });
+registerCommand({ id: "text.toggleStrike", label: "Strikethrough", icon: "strikethrough", canExecute: () => true, execute: () => ({ mark: "strike" }) });
 registerCommand({ id: "text.toggleCode", label: "Code", icon: "code", canExecute: () => true, execute: () => ({ mark: "code" }) });
 registerCommand({ id: "text.clearFormat", label: "Clear formatting", icon: "clearFormat", canExecute: () => true, execute: () => ({}) });
 registerCommand({ id: "heading.toggle1", label: "Heading 1", icon: "heading1", canExecute: () => true, execute: () => ({ level: 1 }) });
 registerCommand({ id: "heading.toggle2", label: "Heading 2", icon: "heading2", canExecute: () => true, execute: () => ({ level: 2 }) });
 registerCommand({ id: "quote.toggle", label: "Quote", icon: "quote", canExecute: () => true, execute: () => ({}) });
-registerCommand({ id: "list.toggleUl", label: "Bullet list", icon: "ul", canExecute: () => true, execute: () => ({ kind: "unordered" }) });
-registerCommand({ id: "list.toggleOl", label: "Ordered list", icon: "ol", canExecute: () => true, execute: () => ({ kind: "ordered" }) });
+registerCommand({ id: "list.toggleUl", label: "Bullet list", icon: "listUnordered", canExecute: () => true, execute: () => ({ kind: "unordered" }) });
+registerCommand({ id: "list.toggleOl", label: "Ordered list", icon: "listOrdered", canExecute: () => true, execute: () => ({ kind: "ordered" }) });
 registerCommand({ id: "link.insert", label: "Insert link", icon: "link", canExecute: () => true, execute: (_ctx, p) => p });
 registerCommand({ id: "variable.insert", label: "Insert variable", icon: "variable", canExecute: () => true, execute: (_ctx, p) => p });
 registerCommand({ id: "equation.insert", label: "Insert equation", icon: "equation", canExecute: () => true, execute: (_ctx, p) => p });
@@ -49,6 +49,6 @@ registerCommand({ id: "table.insertRowAfter", label: "Insert row after", icon: "
 registerCommand({ id: "align.left", label: "Align left", icon: "alignLeft", canExecute: () => true, execute: () => ({ align: "left" }) });
 registerCommand({ id: "align.center", label: "Align center", icon: "alignCenter", canExecute: () => true, execute: () => ({ align: "center" }) });
 registerCommand({ id: "align.right", label: "Align right", icon: "alignRight", canExecute: () => true, execute: () => ({ align: "right" }) });
-registerCommand({ id: "document.export", label: "Export", icon: "more", canExecute: () => true, execute: (_ctx, p) => p });
-registerCommand({ id: "history.undo", label: "Undo", icon: "undo", canExecute: () => true, execute: () => ({}) });
-registerCommand({ id: "history.redo", label: "Redo", icon: "redo", canExecute: () => true, execute: () => ({}) });
+registerCommand({ id: "document.export", label: "Export", icon: "moreHorizontal", canExecute: () => true, execute: (_ctx, p) => p });
+registerCommand({ id: "history.undo", label: "Undo", icon: "undo2", canExecute: () => true, execute: () => ({}) });
+registerCommand({ id: "history.redo", label: "Redo", icon: "redo2", canExecute: () => true, execute: () => ({}) });

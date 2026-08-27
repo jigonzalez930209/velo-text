@@ -26,7 +26,7 @@ test("equation: latexToHtml handles sqrt", () => {
 test("icons: getIconSvg uses currentColor by default", () => {
   const svg = getIconSvg("bold");
   assert(svg.includes("currentColor"));
-  assert(svg.includes('width="16"'));
+  assert(svg.includes('width="18"'));
 });
 
 test("icons: color override works", () => {

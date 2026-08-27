@@ -8,3 +8,5 @@ coverage/
 tmp/
 node_modules/
 coverage/
+docs/.vitepress/cache/
+image.png

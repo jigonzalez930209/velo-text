@@ -1,157 +1,139 @@
 /**
- * Toolbar and UI icons — Phase 4 / 11
- * All SVGs are included inline with no external dependencies.
- * Colors are controlled via `currentColor` and CSS variables, allowing runtime theming.
- *
- * Design principles:
- * - Each icon is a 16x16 or 20x20 viewBox SVG with stroke="currentColor" / fill="currentColor" where appropriate.
- * - No hardcoded hex colors inside the SVG path except `none`; color comes from CSS `color` or `--pde-icon-color`.
- * - Size and color can be overridden via options or CSS.
- * - Icons are tree-shakable named exports; a registry map is also provided for dynamic lookup.
+ * UI icons — Lucide-compatible 24x24 stroke icons (ISC-licensed path data).
+ * All SVGs are inline, zero dependencies, colored via `currentColor` so they
+ * can be recolored with CSS variables or the `color` option at render time.
  */
 
 export type IconName =
   | "bold"
   | "italic"
   | "underline"
-  | "strike"
+  | "strikethrough"
   | "code"
   | "heading1"
   | "heading2"
   | "heading3"
+  | "listUnordered"
+  | "listOrdered"
   | "quote"
-  | "ul"
-  | "ol"
   | "link"
   | "image"
+  | "imagePlus"
   | "table"
   | "variable"
   | "equation"
-  | "pageBreak"
-  | "horizontalRule"
   | "alignLeft"
   | "alignCenter"
   | "alignRight"
   | "alignJustify"
-  | "undo"
-  | "redo"
+  | "undo2"
+  | "redo2"
   | "clearFormat"
   | "color"
   | "background"
-  | "more";
+  | "gripVertical"
+  | "plus"
+  | "trash"
+  | "chevronDown"
+  | "chevronLeft"
+  | "chevronRight"
+  | "palette"
+  | "download"
+  | "sliders"
+  | "copy"
+  | "move"
+  | "columns3"
+  | "rows3"
+  | "eraser"
+  | "fileText"
+  | "panelLeft"
+  | "split"
+  | "moreHorizontal";
 
 export interface IconOptions {
-  /** Size in pixels (width and height). Default 16. */
   size?: number;
-  /** CSS color value or variable. Default "currentColor" (inherits from parent). */
   color?: string;
-  /** Additional CSS class. */
   className?: string;
-  /** Accessible title. */
   title?: string;
-  /** Stroke width override. Default 1.5. */
   strokeWidth?: number;
 }
 
-/**
- * Raw SVG paths using currentColor. Each entry is the inner <path> content, not the full <svg> wrapper.
- * Keeping them as template strings allows color/size injection at render time without parsing.
- */
-const ICON_PATHS: Record<IconName, string> = {
-  // Text marks
-  bold: '<path d="M7 4h3.5a2.5 2.5 0 010 5H7V4zm0 5h4a2.75 2.75 0 010 5.5H7V9z" />',
-  italic: '<path d="M10.5 4L7.5 13H8.5L11.5 4H10.5z" />',
-  underline: '<path d="M5 13.5V12h8v1.5H5zM7 4v4a2 2 0 004 0V4h1.2v4a3.2 3.2 0 01-6.4 0V4H7z" />',
-  strike: '<path d="M4 8.5h12v1H4zM7 4.5V7h1.2V4.5a1.8 1.8 0 113.6 0V7H13V4.5a3 3 0 00-6 0zM7 9v2.5a1.8 1.8 0 003.6 0V9h1.2v2.5a3 3 0 01-6 0V9H7z" />',
-  code: '<path d="M6 5L2.5 8 6 11l-.7.7L1.5 8l3.8-3.8L6 5zm6 0l.7-.7L16.5 8l-3.8 3.8L12 11l3.5-3L12 5zM9.5 3.5l-1 9 1.1.2 1-9-1.1-.2z" />',
-  // Headings
-  heading1: '<path d="M3 4h1.5v5H7.5V4H9v9.5H7.5V10.5H4.5v3H3V4zM10.5 7h1.2l2.2 6.5h-1.4l-.5-1.6h-2.2l-.5 1.6H8L10.5 7zM11.1 10.2l-.7-2.1-.7 2.1h1.4z" />',
-  heading2: '<path d="M3 4h6v1.2H4.5v2.5H8V9H4.5v2.3H9v1.2H3V4zm7.5 0h4.5v1.2h-3v2h2.5v1.2H12v1.9h3v1.2h-4.5V4z" />',
-  heading3: '<path d="M3 4h1.4l1.7 3.2L7.8 4H9.2l-2.4 4.3 2.5 5.2H7.8l-1.7-3.6-1.7 3.6H3l2.5-5.2L3 4z" />',
-  // Blocks
-  quote: '<path d="M3 5h3.2l.8 2.5H5c0 1.2.4 2 1.3 2.4v1.1a3.2 3.2 0 01-2.1-.9 3.5 3.5 0 01-1.2-2.7V5zm6 0h3.2l.8 2.5H11c0 1.2.4 2 1.3 2.4v1.1a3.2 3.2 0 01-2.1-.9 3.5 3.5 0 01-1.2-2.7V5z" />',
-  ul: '<path d="M3 5.5h1.5v1H3zM3 8h1.5v1H3zM3 10.5h1.5v1H3zM6.5 5.5H15v1H6.5zM6.5 8H15v1H6.5zM6.5 10.5H15v1H6.5z" />',
-  ol: '<path d="M3 5.2V4h1.6v.4H4v.8h.6V5.6H3v.8h1.6v.4H3zM3 8.3V7h1.6v.4H4v.4h1v.4H4v.5h.6V9H3v-.7zM3 11.4V10H4.6v1.4H3zm.5-.9h.6v.5H3.5zM6.5 5.5H15v1H6.5zM6.5 8H15v1H6.5zM6.5 10.5H15v1H6.5z" />',
-  link: '<path d="M6.5 9.5l1.2-1.2 2 2 1.2-1.2-2-2 1.5-1.5 2 2a2.5 2.5 0 01-3.5 3.5l-2-2zM9.5 6.5l-2 2-1.2-1.2 2-2A2.5 2.5 0 0111.8 9l-2 2-1.2-1.2 2-2z" />',
-  image: '<path d="M3 4.5h12v9H3zM3.8 12.2l2.8-3.6 1.9 2.2 1.4-1.6 2.3 3H3.8zM6.2 7.5a1.2 1.2 0 110-2.4 1.2 1.2 0 010 2.4z" />',
-  table: '<path d="M3 4.5h12v9H3zM3 7.5h12M3 10.5h12M7.5 4.5v9M11 4.5v9" />',
-  variable: '<path d="M3 5h3.5l1 2 1-2H12v1.2H9.8l-1.6 3.1 1.6 3.1H12v1.1H8.2l-1-1.9-1 1.9H3v-1.1h2.2l1.6-3.1L5.2 6.2H3V5z" />',
-  equation: '<path d="M3 8.5h1.2l.8-2 1.5 4 1.5-4 .8 2H10V7.5H9.2l-.5-1.4-1.2 3.2-1.2-3.2L5.8 7.5H5V8.5h1zM11 4.5h3.5v1H12v2h2v1h-2v2h2.5v1H11V4.5z" />',
-  pageBreak: '<path d="M3 4.5h12v1H3zM7.5 6l4 3-4 3V6zM3 13.5h12v1H3z" />',
-  horizontalRule: '<path d="M3 8h12v1H3z" />',
-  alignLeft: '<path d="M3 5h12v1H3zM3 8h8v1H3zM3 11h12v1H3z" />',
-  alignCenter: '<path d="M3 5h12v1H3zM5 8h8v1H5zM3 11h12v1H3z" />',
-  alignRight: '<path d="M3 5h12v1H3zM7 8h8v1H7zM3 11h12v1H3z" />',
-  alignJustify: '<path d="M3 5h12v1H3zM3 8h12v1H3zM3 11h12v1H3z" />',
-  undo: '<path d="M7 4l-4 4 4 4V10a3 3 0 013 3v1h1.2v-1a4.2 4.2 0 00-4.2-4.2V4z" />',
-  redo: '<path d="M11 4v1.8A4.2 4.2 0 0115.2 10v1H16.5v-1a3 3 0 00-3-3V4l-4 4 4 4z" />',
-  clearFormat: '<path d="M3 12.5l2-6h1.2l2 6h-1.2l-.4-1.2H4.8L4.4 12.5H3zm2.4-2.2h2l-1-3-1 3zM9.5 4l1.5 1.5 2.5-2.5 1 1-2.5 2.5 2.5 2.5-1 1-2.5-2.5-1.5 1.5V4z" />',
-  color: '<path d="M8 3a5 5 0 015 5c0 2.8-2.5 4.9-5 6.5C5.5 12.9 3 10.8 3 8a5 5 0 015-5zm0 1.2A3.8 3.8 0 004.2 8c0 1.8 1.5 3.3 3.8 4.8 2.3-1.5 3.8-3 3.8-4.8A3.8 3.8 0 008 4.2z" />',
-  background: '<path d="M3 4h12v7H3zM3 12h12v1.5H3zM7 6h2v2H7z" />',
-  more: '<path d="M4 8a1.2 1.2 0 112.4 0 1.2 1.2 0 01-2.4 0zM8 8a1.2 1.2 0 112.4 0 1.2 1.2 0 01-2.4 0zM12 8a1.2 1.2 0 112.4 0 1.2 1.2 0 01-2.4 0z" />',
+const ICONS: Record<IconName, string> = {
+  bold: '<path d="M14 12a4 4 0 0 0 0-8H6v8"/><path d="M15 20a4 4 0 0 0 0-8H6v8"/>',
+  italic: '<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>',
+  underline: '<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>',
+  strikethrough: '<path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/>',
+  code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  heading1: '<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="m17 12 3-2v8"/>',
+  heading2: '<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>',
+  heading3: '<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2c-.7 0-1.4-.3-1.9-.8"/><path d="M17.5 15.5c1.7 1 3.5 0 3.5-1.5"/>',
+  listUnordered: '<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>',
+  listOrdered: '<line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  quote: '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+  imagePlus: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><line x1="9" x2="9" y1="2" y2="6"/><line x1="3" x2="7" y1="4" y2="4"/>',
+  table: '<path d="M12 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/>',
+  variable: '<path d="M4 6h3.5l1 1.8 1-1.8h4.7v1.2h-2.6l-1.7 3.1 1.7 3.1h2.6V14.5H9.4l-1-1.9-1 1.9H3.5V13h2.3l1.5-2.7L5.8 7.3H3.5V6z"/><path d="M15 9.5h4.5v1.2h-1.8v3.8h-1.2v-3.8h-1.5V9.5z"/>',
+  equation: '<path d="M18 7V5a1 1 0 0 0-1-1H6.5a.5.5 0 0 0-.4.8l4.5 6a2 2 0 0 1 0 2.4l-4.5 6a.5.5 0 0 0 .4.8H17a1 1 0 0 0 1-1v-2"/>',
+  alignLeft: '<line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/>',
+  alignCenter: '<line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/>',
+  alignRight: '<line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/>',
+  alignJustify: '<line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="3" y1="12" y2="12"/><line x1="21" x2="3" y1="18" y2="18"/>',
+  undo2: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/>',
+  redo2: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/>',
+  clearFormat: '<path d="M4 7V4h16v3"/><path d="M5 20h6"/><path d="M13 4 8 20"/><path d="m15 15 5 5"/><path d="m20 15-5 5"/>',
+  color: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  background: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 7v10"/><path d="M7 12h10"/>',
+  gripVertical: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  palette: '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  sliders: '<line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  move: '<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/>',
+  columns3: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/>',
+  rows3: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/>',
+  eraser: '<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  fileText: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/>',
+  panelLeft: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+  split: '<path d="M8 3v18"/><path d="M16 3v18"/>',
+  moreHorizontal: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
 };
 
-const ICON_VIEWBOX: Record<IconName, string> = {
-  bold: "0 0 16 16",
-  italic: "0 0 16 16",
-  underline: "0 0 16 16",
-  strike: "0 0 16 16",
-  code: "0 0 16 16",
-  heading1: "0 0 16 16",
-  heading2: "0 0 16 16",
-  heading3: "0 0 16 16",
-  quote: "0 0 16 16",
-  ul: "0 0 16 16",
-  ol: "0 0 16 16",
-  link: "0 0 16 16",
-  image: "0 0 16 16",
-  table: "0 0 16 16",
-  variable: "0 0 16 16",
-  equation: "0 0 16 16",
-  pageBreak: "0 0 16 16",
-  horizontalRule: "0 0 16 16",
-  alignLeft: "0 0 16 16",
-  alignCenter: "0 0 16 16",
-  alignRight: "0 0 16 16",
-  alignJustify: "0 0 16 16",
-  undo: "0 0 16 16",
-  redo: "0 0 16 16",
-  clearFormat: "0 0 16 16",
-  color: "0 0 16 16",
-  background: "0 0 16 16",
-  more: "0 0 16 16",
-};
+const VIEWBOX = "0 0 24 24";
 
 /**
- * Render an icon to an inline SVG string.
- * Color is applied via the `color` CSS property (currentColor) so parent themes can override it.
- * Pass `color: "var(--pde-color-primary)"` or any CSS color to customize.
+ * Render a Lucide-style icon to inline SVG.
+ * Color via `currentColor` by default; override with `color` or CSS `--pde-icon-color`.
  */
 export function getIconSvg(name: IconName, opts: IconOptions = {}): string {
-  const path = ICON_PATHS[name];
-  if (!path) throw new Error(`Unknown icon: ${name}`);
-  const size = opts.size ?? 16;
+  const inner = ICONS[name];
+  if (!inner) throw new Error(`Unknown icon: ${name}`);
+  const size = opts.size ?? 18;
   const color = opts.color ?? "currentColor";
-  const strokeWidth = opts.strokeWidth ?? 1.5;
+  const strokeWidth = opts.strokeWidth ?? 2;
   const klass = ["pde-icon", `pde-icon--${name}`, opts.className].filter(Boolean).join(" ");
   const title = opts.title ? `<title>${escapeHtml(opts.title)}</title>` : "";
-  const viewBox = ICON_VIEWBOX[name] ?? "0 0 16 16";
-  // Use fill="currentColor" for solid icons; stroke for outline icons — we normalize to fill for simplicity
-  // The outer SVG sets color via style, inner paths use fill="currentColor"
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${viewBox}" role="img" aria-hidden="${opts.title ? "false" : "true"}" class="${klass}" style="color:${escapeAttr(color)}" fill="currentColor" stroke="none" stroke-width="${strokeWidth}">${title}${path}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${VIEWBOX}" role="img" aria-hidden="${opts.title ? "false" : "true"}" class="${klass}" style="color:${escapeAttr(color)}" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${title}${inner}</svg>`;
 }
 
-/**
- * Return all icons as a map — useful for previews, docs or runtime registration.
- */
 export function getAllIcons(opts: IconOptions = {}): Record<IconName, string> {
   const out = {} as Record<IconName, string>;
-  for (const name of Object.keys(ICON_PATHS) as IconName[]) out[name] = getIconSvg(name, opts);
+  for (const name of Object.keys(ICONS) as IconName[]) out[name] = getIconSvg(name, opts);
   return out;
 }
 
+export function listIconNames(): IconName[] {
+  return Object.keys(ICONS) as IconName[];
+}
+
 /**
- * CSS helper for icon theming — ensures icons inherit color and can be recolored via variables.
+ * CSS for icons + selection color — icons inherit color, selection uses theme token.
  */
 export const iconCss = `
 .pde-icon {
@@ -159,9 +141,10 @@ export const iconCss = `
   vertical-align: middle;
   flex-shrink: 0;
   color: var(--pde-icon-color, currentColor);
+  pointer-events: none;
 }
-.pde-toolbar .pde-icon {
-  color: var(--pde-color-text, #17191c);
+.pde-root::selection {
+  background: var(--pde-color-selection, #cbd7ff);
 }
 .pde-toolbar button:hover .pde-icon,
 .pde-toolbar button[aria-pressed="true"] .pde-icon {
