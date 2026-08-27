@@ -10,6 +10,7 @@ import {
   type TableNode,
   type InlineEquationNode,
   type EquationBlockNode,
+  type ColumnsNode,
   type IdGenerator,
   type Clock,
 } from "./types.js";
@@ -133,4 +134,24 @@ export function createEquation(idGen: IdGenerator, latex: string, display = fals
  */
 export function createEquationBlock(idGen: IdGenerator, latex: string, label?: string): EquationBlockNode {
   return { type: "equation-block", id: idGen.next(), latex, ...(label ? { label } : {}) };
+}
+
+export function createColumns(idGen: IdGenerator, count = 2): ColumnsNode {
+  const n = Math.max(2, Math.min(4, count));
+  const widthPct = Math.round(100 / n);
+  return {
+    type: "columns",
+    id: idGen.next(),
+    columns: Array.from({ length: n }, () => ({
+      id: idGen.next(),
+      widthPct,
+      blocks: [
+        {
+          type: "paragraph",
+          id: idGen.next(),
+          children: [{ type: "text", id: idGen.next(), text: "" }],
+        },
+      ],
+    })),
+  };
 }
