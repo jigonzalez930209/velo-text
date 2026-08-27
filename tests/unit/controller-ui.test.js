@@ -10,15 +10,17 @@ function setup(extra = "") {
   globalThis.document = dom.window.document;
   globalThis.window = dom.window;
   globalThis.Node = dom.window.Node;
+  globalThis.NodeFilter = dom.window.NodeFilter;
   globalThis.Selection = dom.window.Selection;
   globalThis.Range = dom.window.Range;
   const el = dom.window.document.getElementById("ed");
-  return { dom, el };
+  return { dom, el, root: el.parentElement };
 }
 function teardown() {
   delete globalThis.document;
   delete globalThis.window;
   delete globalThis.Node;
+  delete globalThis.NodeFilter;
   delete globalThis.Selection;
   delete globalThis.Range;
 }
@@ -41,19 +43,19 @@ function ev(win, type, props = {}) {
 }
 
 test("controller-ui: block handle shows on hover and menu inserts block", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "hi" }] });
   const editor = createEditor(el, { document: doc });
   const p = el.querySelector('[data-node-id="p1"]');
   el.dispatchEvent(ev(dom.window, "mouseover", { target: p }));
-  const handle = el.querySelector(".pde-block-handle");
+  const handle = root.querySelector(".pde-block-handle");
   assert(handle, "handle should appear");
   assert(handle.dataset.owner === "p1");
   // Open insert menu
   const plus = handle.querySelector("[data-block-handle-menu]");
   plus.dispatchEvent(ev(dom.window, "pointerdown", { target: plus, clientX: 0, clientY: 0 }));
-  const menu = el.querySelector(".pde-block-menu");
+  const menu = root.querySelector(".pde-block-menu");
   assert(menu, "menu should appear");
   // Click "Heading 2"
   const btns = Array.from(menu.querySelectorAll("button"));
@@ -67,7 +69,7 @@ test("controller-ui: block handle shows on hover and menu inserts block", () => 
 });
 
 test("controller-ui: block drag reorder runs", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.root.children.push(
     { type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "one" }] },
@@ -76,7 +78,7 @@ test("controller-ui: block drag reorder runs", () => {
   const editor = createEditor(el, { document: doc });
   const p1 = el.querySelector('[data-node-id="p1"]');
   el.dispatchEvent(ev(dom.window, "mouseover", { target: p1 }));
-  const grip = el.querySelector("[data-block-handle-grip]");
+  const grip = root.querySelector("[data-block-handle-grip]");
   assert(grip, "grip present");
   // simulate drag: pointerdown on grip then move/up on document
   grip.dispatchEvent(ev(dom.window, "pointerdown", { target: grip, clientX: 0, clientY: 0 }));
@@ -88,7 +90,7 @@ test("controller-ui: block drag reorder runs", () => {
 });
 
 test("controller-ui: table menu insert/delete row and col resize", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   const g = createIdGenerator("tbl");
   doc.root.children.push({
@@ -104,7 +106,7 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   assert(table, "table rendered");
   // Click table -> menu
   table.dispatchEvent(ev(dom.window, "click", { target: table }));
-  const menu = el.querySelector(".pde-table-menu");
+  const menu = root.querySelector(".pde-table-menu");
   assert(menu, "table menu present");
   // Insert row below
   const btn = Array.from(menu.querySelectorAll("button")).find((b) => b.textContent.includes("Insert row below"));
@@ -115,7 +117,7 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   const table2 = el.querySelector('table[data-node-type="table"]');
   table2.dispatchEvent(ev(dom.window, "click", { target: table2 }));
   // col resize: pointerdown on col handle then move/up
-  const colHandle = el.querySelector(".pde-col-handle");
+  const colHandle = root.querySelector(".pde-col-handle");
   assert(colHandle, "col handle present");
   colHandle.dispatchEvent(ev(dom.window, "pointerdown", { target: colHandle, clientX: 100, clientY: 0 }));
   dom.window.document.dispatchEvent(ev(dom.window, "pointermove", { clientX: 200, clientY: 0 }));
@@ -126,7 +128,7 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
 });
 
 test("controller-ui: image resize updates widthUm", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.assets["a1"] = { id: "a1", kind: "image", mediaType: "image/png", storageKey: "k", sha256: "a".repeat(64), byteLength: 10, alt: "x" };
   const g = createIdGenerator("img");
@@ -136,7 +138,7 @@ test("controller-ui: image resize updates widthUm", () => {
   assert(figure, "image figure rendered");
   // click image -> resize overlay
   figure.dispatchEvent(ev(dom.window, "click", { target: figure }));
-  const overlay = el.querySelector(".pde-image-resize");
+  const overlay = root.querySelector(".pde-image-resize");
   assert(overlay, "resize overlay present");
   const handle = overlay.querySelector("[data-img-handle]");
   assert(handle, "resize handle present");
@@ -150,7 +152,7 @@ test("controller-ui: image resize updates widthUm", () => {
 });
 
 test("controller-ui: commands without execCommand support still sync", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "hi" }] });
   const editor = createEditor(el, { document: doc });
@@ -178,7 +180,7 @@ test("controller-ui: commands without execCommand support still sync", () => {
 });
 
 test("controller-ui: insertEquation inline and insertImage/insertTable commands", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "x" }] });
   const editor = createEditor(el, { document: doc });
@@ -194,7 +196,7 @@ test("controller-ui: insertEquation inline and insertImage/insertTable commands"
 });
 
 test("controller-ui: setDocument and getDocument round-trip", () => {
-  const { dom, el } = setup();
+  const { dom, el, root } = setup();
   const doc = baseDoc();
   doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "a" }] });
   const editor = createEditor(el, { document: doc });

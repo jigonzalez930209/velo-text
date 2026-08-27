@@ -1,4 +1,4 @@
-.pde-root[data-pde-theme="light-neutral"] {
+[data-pde-theme="light-neutral"] {
   --pde-color-bg: #ffffff;
   --pde-color-surface: #f7f8fa;
   --pde-color-text: #17191c;
@@ -16,7 +16,7 @@
   --pde-font-ui: system-ui, sans-serif;
 }
 
-.pde-root[data-pde-theme="light-warm"] {
+[data-pde-theme="light-warm"] {
   --pde-color-bg: #fffaf3;
   --pde-color-surface: #fef3e2;
   --pde-color-text: #2b2111;
@@ -34,7 +34,7 @@
   --pde-font-ui: system-ui, sans-serif;
 }
 
-.pde-root[data-pde-theme="dark-slate"] {
+[data-pde-theme="dark-slate"] {
   --pde-color-bg: #0f172a;
   --pde-color-surface: #1e293b;
   --pde-color-text: #e2e8f0;
@@ -52,7 +52,7 @@
   --pde-font-ui: system-ui, sans-serif;
 }
 
-.pde-root[data-pde-theme="dark-contrast"] {
+[data-pde-theme="dark-contrast"] {
   --pde-color-bg: #000000;
   --pde-color-surface: #1a1a1a;
   --pde-color-text: #ffffff;

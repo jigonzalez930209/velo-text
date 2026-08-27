@@ -83,12 +83,83 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   container.classList.add("pde-editor");
   container.setAttribute("data-pde-theme", theme);
 
+  // Wrap the container in a positioned wrapper and host all UI overlays in a
+  // sibling layer — never inside the contenteditable, so the caret is never
+  // disturbed by handle/menu DOM changes.
+  const wrapper = ownerDoc.createElement("div");
+  wrapper.className = "pde-editor-wrapper";
+  wrapper.style.cssText = "position:relative;";
+  if (container.parentNode) container.parentNode.insertBefore(wrapper, container);
+  else ownerDoc.body.appendChild(wrapper);
+  wrapper.appendChild(container);
+  const ui = ownerDoc.createElement("div");
+  ui.className = "pde-ui-layer";
+  ui.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:100;";
+  wrapper.appendChild(ui);
+
+  // ── render ──
+  function rememberSelection(): { nodeId: string; offset: number } | null {
+    const sel = selection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement);
+    const block = el?.closest?.("[data-node-id]") as HTMLElement | null;
+    if (!block || !container.contains(block)) return null;
+    let offset = 0;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const tw = ownerDoc.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      let node2: Node | null;
+      let acc = 0;
+      while ((node2 = tw.nextNode())) {
+        if (node2 === node) break;
+        acc += (node2.textContent ?? "").length;
+      }
+      offset = acc + range.startOffset;
+    } else {
+      offset = range.startOffset;
+    }
+    return { nodeId: block.getAttribute("data-node-id") ?? "", offset };
+  }
+
+  function restoreSelection(saved: { nodeId: string; offset: number } | null): void {
+    if (!saved) return;
+    const block = container.querySelector(`[data-node-id="${saved.nodeId}"]`);
+    if (!block) return;
+    let remaining = saved.offset;
+    let target: Text | null = null;
+    let targetOffset = 0;
+    const tw = ownerDoc.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    let node2: Node | null;
+    while ((node2 = tw.nextNode())) {
+      const len = (node2.textContent ?? "").length;
+      if (remaining <= len) {
+        target = node2 as Text;
+        targetOffset = remaining;
+        break;
+      }
+      remaining -= len;
+    }
+    const range = ownerDoc.createRange();
+    if (target) range.setStart(target, targetOffset);
+    else {
+      range.selectNodeContents(block);
+      range.collapse(true);
+    }
+    range.collapse(true);
+    const sel = selection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }
+
   // ── render ──
   function render(): void {
     if (destroyed) return;
+    const saved = rememberSelection();
     suppress = true;
     container.innerHTML = renderDocumentToHtml(doc, { theme, editable: opts.editable !== false }).replace(/^<div[^>]*>/, "").replace(/<\/div>$/, "");
     suppress = false;
+    if (saved) restoreSelection(saved);
   }
 
   function pushSnapshot(): void {
@@ -163,6 +234,16 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     render();
     opts.onChange?.(doc);
   }
+
+  // Listen on both the contenteditable and the UI overlay layer (siblings)
+  const addBoth = (type: string, fn: (e: Event) => void): void => {
+    container.addEventListener(type, fn);
+    ui.addEventListener(type, fn);
+    cleanup.push(() => {
+      container.removeEventListener(type, fn);
+      ui.removeEventListener(type, fn);
+    });
+  };
 
   // ── selection helpers ──
   function selection(): Selection | null {
@@ -392,7 +473,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     plus.innerHTML = getIconSvg("plus", { size: 14 });
     plus.title = "Insert block";
     handleEl.append(grip, plus);
-    container.append(handleEl);
+    ui.append(handleEl);
   }
 
   const onMouseOver = (e: MouseEvent): void => {
@@ -445,8 +526,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     ownerDoc.addEventListener("pointermove", onMove);
     ownerDoc.addEventListener("pointerup", onUp);
   };
-  container.addEventListener("pointerdown", onPointerDown);
-  cleanup.push(() => container.removeEventListener("pointerdown", onPointerDown));
+  addBoth("pointerdown", onPointerDown as never);
 
   // Insert menu
   const MENU_ITEMS: Array<{ label: string; icon: IconName; type: InsertBlockType }> = [
@@ -485,10 +565,9 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       };
       menuEl.appendChild(btn);
     }
-    container.append(menuEl);
+    ui.append(menuEl);
   };
-  container.addEventListener("pointerdown", onPointerDownMenu);
-  cleanup.push(() => container.removeEventListener("pointerdown", onPointerDownMenu));
+  addBoth("pointerdown", onPointerDownMenu as never);
 
   const onBlur = (): void => {
     setTimeout(hideHandle, 200);
@@ -525,10 +604,9 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       h.dataset.imgHandle = pos;
       imgResizeEl.appendChild(h);
     }
-    container.append(imgResizeEl);
+    ui.append(imgResizeEl);
   };
-  container.addEventListener("click", onImageClick);
-  cleanup.push(() => container.removeEventListener("click", onImageClick));
+  addBoth("click", onImageClick as never);
 
   const onPointerDownImg = (e: PointerEvent): void => {
     const h = (e.target as HTMLElement).closest?.("[data-img-handle]") as HTMLElement | null;
@@ -568,8 +646,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     ownerDoc.addEventListener("pointermove", onMove);
     ownerDoc.addEventListener("pointerup", onUp);
   };
-  container.addEventListener("pointerdown", onPointerDownImg);
-  cleanup.push(() => container.removeEventListener("pointerdown", onPointerDownImg));
+  addBoth("pointerdown", onPointerDownImg as never);
 
   // ── table resize + menu ──
   let tableMenuEl: HTMLElement | null = null;
@@ -596,21 +673,21 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     const rowIndex = curRow ? Array.from(curRow.parentElement!.children).indexOf(curRow) : 0;
     const cellIndex = curCell ? Array.from(curCell.parentElement!.children).indexOf(curCell) : 0;
 
-    const addBtn = (label: string, fn: () => void): void => {
+    const addBtn = (icon: IconName, label: string, fn: () => void): void => {
       const b = ownerDoc.createElement("button");
       b.type = "button";
-      b.textContent = label;
+      b.innerHTML = `${getIconSvg(icon, { size: 16 })}<span>${label}</span>`;
       b.onclick = () => { fn(); hideTableUi(); };
       tableMenuEl!.appendChild(b);
     };
-    addBtn("Insert row above", () => tableOp(() => cloneRow(tblNode, rowIndex, rowIndex)));
-    addBtn("Insert row below", () => tableOp(() => cloneRow(tblNode, rowIndex, rowIndex + 1)));
-    addBtn("Delete row", () => tableOp(() => deleteRowOp(tblNode, rowIndex)));
-    addBtn("Insert column left", () => tableOp(() => insertCol(tblNode, cellIndex)));
-    addBtn("Insert column right", () => tableOp(() => insertCol(tblNode, cellIndex + 1)));
-    addBtn("Delete column", () => tableOp(() => deleteCol(tblNode, cellIndex)));
-    addBtn("Delete table", () => tableOp(() => deleteTable(tblNode)));
-    container.append(tableMenuEl);
+    addBtn("rows3", "Insert row above", () => tableOp(() => cloneRow(tblNode, rowIndex, rowIndex)));
+    addBtn("rows3", "Insert row below", () => tableOp(() => cloneRow(tblNode, rowIndex, rowIndex + 1)));
+    addBtn("trash", "Delete row", () => tableOp(() => deleteRowOp(tblNode, rowIndex)));
+    addBtn("columns3", "Insert column left", () => tableOp(() => insertCol(tblNode, cellIndex)));
+    addBtn("columns3", "Insert column right", () => tableOp(() => insertCol(tblNode, cellIndex + 1)));
+    addBtn("trash", "Delete column", () => tableOp(() => deleteCol(tblNode, cellIndex)));
+    addBtn("trash", "Delete table", () => tableOp(() => deleteTable(tblNode)));
+    ui.append(tableMenuEl);
   }
 
   function tableOp(mutate: () => void): void {
@@ -662,8 +739,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     showTableMenu(table, rect.right - cRect.left - 180, rect.top - cRect.top);
     showColResize(table);
   };
-  container.addEventListener("click", onTableClick);
-  cleanup.push(() => container.removeEventListener("click", onTableClick));
+  addBoth("click", onTableClick as never);
 
   function showColResize(table: HTMLTableElement): void {
     hideColResize();
@@ -684,7 +760,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       h.style.height = `${tRect.height + 4}px`;
       colResizeEl.appendChild(h);
     }
-    container.append(colResizeEl);
+    ui.append(colResizeEl);
   }
   function hideColResize(): void {
     colResizeEl?.remove();
@@ -724,8 +800,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     ownerDoc.addEventListener("pointermove", onMove);
     ownerDoc.addEventListener("pointerup", onUp);
   };
-  container.addEventListener("pointerdown", onPointerDownCol);
-  cleanup.push(() => container.removeEventListener("pointerdown", onPointerDownCol));
+  addBoth("pointerdown", onPointerDownCol as never);
 
   // ── theme ──
   function setTheme(t: ThemeName): void {
@@ -768,6 +843,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       hideHandle();
       hideImgResize();
       hideTableUi();
+      wrapper.remove();
     },
   };
 }

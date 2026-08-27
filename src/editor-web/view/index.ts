@@ -34,7 +34,11 @@ function renderBlock(block: BlockNode): string {
     }
     case "table": {
       const colsHtml = block.columns
-        .map((c) => `<col style="width:${Math.round((c.widthUm / 25400) * 96)}px" data-col-width-um="${c.widthUm}" />`)
+        .map((c) => {
+          const defaultW = 40000;
+          const style = c.widthUm && c.widthUm !== defaultW ? ` style="width:${Math.round((c.widthUm / 25400) * 96)}px"` : "";
+          return `<col data-col-width-um="${c.widthUm}"${style} />`;
+        })
         .join("");
       const rows = block.rows
         .map((row) => {

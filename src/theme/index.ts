@@ -99,7 +99,9 @@ export function themeCss(name: ThemeName): string {
   const vars = Object.entries(tokens)
     .map(([k, v]) => `  ${k}: ${v};`)
     .join("\n");
-  return `.pde-root[data-pde-theme="${name}"] {\n${vars}\n}`;
+  // Global attribute selector so the tokens apply to the editor (.pde-editor),
+  // the document root (.pde-root) and the host page (body) alike.
+  return `[data-pde-theme="${name}"] {\n${vars}\n}`;
 }
 
 export function allThemesCss(): string {
