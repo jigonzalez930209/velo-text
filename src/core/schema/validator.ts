@@ -211,8 +211,24 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
           for (const b of (c.blocks as unknown[]) ?? []) depth(b, d + 1);
         }
       }
+    if (Array.isArray(n?.columns))
+      for (const col of n.columns as Array<Record<string, unknown>>) {
+        if (Array.isArray(col.blocks)) for (const b of col.blocks) depth(b, d + 1);
+      }
   }
   if (doc.root) depth(doc.root);
+
+  function layoutNest(list: unknown[], d: number): void {
+    for (const raw of list) {
+      const b = raw as { type?: string; rows?: Array<{ cells: Array<{ blocks: unknown[] }> }>; columns?: Array<{ blocks?: unknown[] }> };
+      if (b.type === "table" || b.type === "columns") {
+        if (d >= 3) err("", "layout-depth", "nested table/columns max depth is 3");
+        if (b.type === "table") for (const row of b.rows ?? []) for (const cell of row.cells) layoutNest(cell.blocks, d + 1);
+        else for (const col of b.columns ?? []) layoutNest(col.blocks ?? [], d + 1);
+      }
+    }
+  }
+  if (doc.root?.children) layoutNest(doc.root.children, 0);
 
   return { valid: errors.filter((e) => e.severity === "error").length === 0, errors };
 }
