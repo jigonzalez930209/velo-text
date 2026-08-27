@@ -222,10 +222,7 @@
     "horizontalRuleNode": {
       "type": "object",
       "required": ["type", "id"],
-      "properties": {
-        "type": { "const": "horizontal-rule" },
-        "id": { "type": "string" }
-      }
+      "properties": { "type": { "const": "horizontal-rule" }, "id": { "type": "string" } }
     },
     "equationBlockNode": {
       "type": "object",
@@ -233,8 +230,7 @@
       "properties": {
         "type": { "const": "equation-block" },
         "id": { "type": "string" },
-        "latex": { "type": "string", "minLength": 1, "maxLength": 2000 },
-        "label": { "type": "string" }
+        "latex": { "type": "string", "minLength": 1, "maxLength": 2000 }, "label": { "type": "string" }
       }
     },
     "assetRef": {
