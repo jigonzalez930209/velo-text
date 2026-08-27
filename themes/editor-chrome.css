@@ -1,0 +1,80 @@
+/* === Editor chrome (block handles, menus, resize, selection, tables) === */
+
+.pde-editor {
+  position: relative;
+  outline: none;
+  padding: 28px 40px 48px 56px;
+  background: var(--pde-color-bg);
+  color: var(--pde-color-text);
+  font-family: var(--pde-font-ui);
+  line-height: 1.6;
+}
+.pde-editor ::selection,
+.pde-root ::selection {
+  background: var(--pde-color-selection, #cbd7ff);
+}
+.pde-editor:focus-visible {
+  outline: 2px solid var(--pde-color-primary, #3659e3);
+  outline-offset: -2px;
+}
+
+.pde-editor > p,
+.pde-editor > h1, .pde-editor > h2, .pde-editor > h3, .pde-editor > h4, .pde-editor > h5, .pde-editor > h6,
+.pde-editor > blockquote, .pde-editor > ul, .pde-editor > ol, .pde-editor > table, .pde-editor > figure,
+.pde-editor > hr, .pde-editor > div {
+  position: relative;
+}
+.pde-editor > p { margin: 0.4em 0; min-height: 1.2em; }
+.pde-editor > h1 { font-size: 2em; } .pde-editor > h2 { font-size: 1.5em; } .pde-editor > h3 { font-size: 1.17em; }
+.pde-editor > blockquote {
+  border-left: 3px solid var(--pde-color-primary, #3659e3);
+  padding-left: 12px;
+  margin: 0.6em 0;
+  color: var(--pde-color-muted);
+  background: var(--pde-color-surface);
+  border-radius: 0 var(--pde-radius-md) var(--pde-radius-md) 0;
+}
+.pde-editor > table,
+.pde-editor table.pde-table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  width: 100%;
+  min-width: 240px;
+  background: var(--pde-color-bg);
+  border: 1px solid var(--pde-color-border, #d8dce3);
+}
+.pde-editor td, .pde-editor th {
+  border: 1px solid var(--pde-color-border, #d8dce3);
+  padding: 8px 10px;
+  vertical-align: top;
+  min-width: 64px;
+  min-height: 32px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.pde-editor th { background: var(--pde-color-surface); font-weight: 600; }
+.pde-editor figure.pde-image-block {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.8em 0;
+  text-align: left;
+  vertical-align: top;
+}
+.pde-editor figure.pde-image-block img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--pde-radius-md);
+  cursor: nwse-resize;
+}
+.pde-editor hr { border: none; border-top: 1px solid var(--pde-color-border); margin: 1em 0; }
+
+.pde-variable {
+  background: var(--pde-color-variable-bg, #e8efff);
+  color: var(--pde-color-variable-text, #1939a3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  user-select: none;
+}
