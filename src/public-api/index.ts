@@ -14,6 +14,7 @@ export {
   createTable,
   createEquation,
   createEquationBlock,
+  createColumns,
 } from "../core/model/factories.js";
 export { validateDocument, assertValid } from "../core/schema/validator.js";
 export { canonicalStringify, canonicalBytes, contentHashHex } from "../core/schema/canonical.js";
@@ -36,7 +37,7 @@ export { sanitizeSvg } from "../assets/svg/index.js";
 export { getIconSvg, getAllIcons, iconCss } from "../assets/icons/index.js";
 export { validateLatex, latexToHtml, latexToPlainText, equationCss } from "../core/equation/index.js";
 export { themes, themeCss, allThemesCss } from "../theme/index.js";
-export { renderDocumentToHtml, reconcileDom } from "../editor-web/view/index.js";
+export { renderDocumentToHtml, renderBlocksToHtml, reconcileDom } from "../editor-web/view/index.js";
 export { createEditor } from "../editor-web/controller/index.js";
 export { registerCommand, getCommand, listCommands } from "../editor-web/toolbar/index.js";
 export { intentToOperation } from "../editor-web/input/index.js";
@@ -52,7 +53,7 @@ export {
   registerFormatter,
 } from "../core/plugin/index.js";
 
-export type { PortableDocument, BlockNode, InlineNode, TextNode, VariableNode, InlineEquationNode, EquationBlockNode, AssetRef, PageSettings, Selection, RangeSelection, BinarySink, AssetResolver, Clock, IdGenerator } from "../core/model/types.js";
+export type { ThemeName, ThemeTokens } from "../theme/index.js";
 export type { ExportFormat, ExportRequest, ExportResult } from "../export/index.js";
 export type { IconName, IconOptions } from "../assets/icons/index.js";
 export type { PluginDef } from "../core/plugin/index.js";
