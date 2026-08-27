@@ -1,8 +1,8 @@
 import type { BlockNode } from "../../core/model/types.js";
 import { createText, createImageBlock, createTable, createParagraph, createHeading, createColumns } from "../../core/model/factories.js";
-import { normalizeDocument } from "../../core/normalize/normalize.js";
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
+import { commitInsert, deleteCurrent, insertAfterId } from "./nesting.js";
 
 export function makeBlock(s: EditorState, type: InsertBlockType): BlockNode {
   const { idGen } = s;
@@ -60,25 +60,10 @@ export function bindCommands(s: EditorState) {
     s.syncFromDom(false);
   }
 
-  function appendBlock(node: BlockNode): void {
-    s.pushSnapshot();
-    s.getDoc().root.children.push(node);
-    s.setDoc(normalizeDocument(s.getDoc()));
-    s.render();
-    s.opts.onChange?.(s.getDoc());
-  }
-
-  function insertBlockAfter(blockEl: HTMLElement, type: InsertBlockType): void {
-    const idx = s.indexOfBlockEl(blockEl);
-    s.pushSnapshot();
-    s.getDoc().root.children.splice(idx + 1, 0, makeBlock(s, type));
-    s.render();
-    s.opts.onChange?.(s.getDoc());
-  }
-
   return {
-    appendBlock,
-    insertBlockAfter,
+    insertBlockAfter(blockEl: HTMLElement, type: InsertBlockType): void {
+      insertAfterId(s, s.blockIdOf(blockEl), makeBlock(s, type));
+    },
     toggleMark(mark: string): void {
       s.container.focus();
       const cmd = MARK_CMDS[mark];
@@ -140,27 +125,19 @@ export function bindCommands(s: EditorState) {
       insertInlineAtCaret(span);
     },
     insertImage(assetId: string, widthUm = 150000, heightUm = 90000): void {
-      appendBlock(createImageBlock(s.idGen, assetId, { alt: "image", widthUm, heightUm }));
+      commitInsert(s, createImageBlock(s.idGen, assetId, { alt: "image", widthUm, heightUm }));
     },
     insertTable(rows = 2, cols = 2): void {
-      appendBlock(createTable(s.idGen, cols, rows));
+      commitInsert(s, createTable(s.idGen, cols, rows));
     },
-    insertColumns(count = 2): void {
-      appendBlock(createColumns(s.idGen, count));
+    insertColumns(countOrPcts: number | number[] = 2): void {
+      commitInsert(s, createColumns(s.idGen, countOrPcts));
     },
     insertBlock(type: InsertBlockType): void {
-      appendBlock(makeBlock(s, type));
+      commitInsert(s, makeBlock(s, type));
     },
     deleteCurrentBlock(): void {
-      const block = s.currentBlockEl();
-      if (!block) return;
-      const idx = s.indexOfBlockEl(block);
-      if (idx === -1) return;
-      s.pushSnapshot();
-      s.getDoc().root.children.splice(idx, 1);
-      if (!s.getDoc().root.children.length) s.getDoc().root.children.push(createParagraph(s.idGen, [createText(s.idGen, "")]));
-      s.render();
-      s.opts.onChange?.(s.getDoc());
+      deleteCurrent(s);
     },
   };
 }

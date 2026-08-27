@@ -45,7 +45,7 @@ export interface Editor {
     insertEquation(latex: string, display?: boolean): void;
     insertImage(assetId: string, widthUm?: number, heightUm?: number): void;
     insertTable(rows: number, cols: number): void;
-    insertColumns(count?: number): void;
+    insertColumns(countOrPcts?: number | number[]): void;
     insertBlock(type: InsertBlockType): void;
     deleteCurrentBlock(): void;
   };

@@ -3,6 +3,8 @@ import { normalizeDocument } from "../../core/normalize/normalize.js";
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import type { bindCommands } from "./commands.js";
+import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH } from "./nesting.js";
+import { wrapperRel } from "./table-resize.js";
 
 const MENU_ITEMS: Array<{ label: string; icon: IconName; type: InsertBlockType }> = [
   { label: "Paragraph", icon: "alignLeft", type: "paragraph" },
@@ -38,17 +40,12 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     for (const el of s.blockElements()) el.classList.remove("pde-drop-above", "pde-drop-below");
   }
 
-  function topLevelBlock(from: HTMLElement | null): HTMLElement | null {
-    if (!from || !s.container.contains(from) || from === s.container) return null;
-    let cur: HTMLElement = from;
-    while (cur.parentElement && cur.parentElement !== s.container) cur = cur.parentElement;
-    return cur.parentElement === s.container ? cur : null;
-  }
-
   function positionHandle(blockEl: HTMLElement): void {
     const owner = s.blockIdOf(blockEl);
+    const t = wrapperRel(s, blockEl);
     if (handleEl && handleEl.dataset.owner === owner) {
-      handleEl.style.top = `${blockEl.offsetTop}px`;
+      handleEl.style.top = `${t.top}px`;
+      handleEl.style.left = `${Math.max(4, t.left - 24)}px`;
       return;
     }
     handleEl?.remove();
@@ -56,7 +53,8 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     handleEl.className = "pde-block-handle";
     handleEl.dataset.blockHandle = "";
     handleEl.dataset.owner = owner;
-    handleEl.style.top = `${blockEl.offsetTop}px`;
+    handleEl.style.top = `${t.top}px`;
+    handleEl.style.left = `${Math.max(4, t.left - 24)}px`;
     const grip = s.ownerDoc.createElement("span");
     grip.className = "pde-handle-grip";
     grip.dataset.blockHandleGrip = "";
@@ -75,7 +73,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     if (s.destroyed || dragging) return;
     const t = e.target as HTMLElement;
     if (t.closest?.(".pde-block-handle, .pde-block-menu, .pde-table-menu")) return;
-    const blockEl = topLevelBlock(t.closest?.(BLOCK_SEL) as HTMLElement | null);
+    const blockEl = siblingBlockEl(s.container, t.closest?.(BLOCK_SEL) as HTMLElement | null);
     if (blockEl) positionHandle(blockEl);
   };
   s.wrapper.addEventListener("pointermove", onHoverMove);
@@ -87,12 +85,13 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
   s.addBoth("pointerdown", ((e: PointerEvent) => {
     const grip = (e.target as HTMLElement).closest?.("[data-block-handle-grip]") as HTMLElement | null;
     if (!grip || !handleEl) return;
-    const owner = handleEl.dataset.owner;
+    const owner = handleEl.dataset.owner ?? "";
     e.preventDefault();
     e.stopPropagation();
-    const blockEl = s.blockElements().find((b) => s.blockIdOf(b) === owner) ?? null;
+    const blockEl = s.container.querySelector(`[data-node-id="${owner}"]`) as HTMLElement | null;
     if (!blockEl) return;
-    const fromIndex = s.indexOfBlockEl(blockEl);
+    const parent = findParentList(s.getDoc(), owner);
+    const fromIndex = parent?.index ?? s.indexOfBlockEl(blockEl);
     let toIndex = fromIndex;
     dragging = true;
     s.wrapper.classList.add("pde-dragging");
@@ -123,13 +122,13 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
       s.wrapper.classList.remove("pde-dragging");
       blockEl.classList.remove("pde-drag-source");
       hideDropLine();
-      const doc = s.getDoc();
-      if (toIndex !== fromIndex && toIndex >= 0 && toIndex < doc.root.children.length) {
+      const list = parent?.list ?? s.getDoc().root.children;
+      if (toIndex !== fromIndex && toIndex >= 0 && toIndex < list.length) {
         s.pushSnapshot();
-        const [item] = doc.root.children.splice(fromIndex, 1);
-        doc.root.children.splice(toIndex, 0, item!);
+        const [item] = list.splice(fromIndex, 1);
+        list.splice(toIndex, 0, item!);
         s.render();
-        s.opts.onChange?.(doc);
+        s.opts.onChange?.(s.getDoc());
       }
     };
     s.ownerDoc.addEventListener("pointermove", onMove);
@@ -144,14 +143,17 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     hideMenu();
     menuEl = s.ownerDoc.createElement("div");
     menuEl.className = "pde-block-menu";
-    menuEl.style.top = `${Math.min(handleEl.offsetTop, s.container.clientHeight - 40)}px`;
-    menuEl.style.left = "28px";
+    menuEl.style.top = handleEl.style.top;
+    menuEl.style.left = `${Math.max(28, parseFloat(handleEl.style.left || "8") + 26)}px`;
+    const ownerId = handleEl.dataset.owner ?? "";
+    const depth = layoutDepthOf(s.getDoc(), ownerId);
     for (const item of MENU_ITEMS) {
+      if ((item.type === "table" || item.type === "columns") && depth >= MAX_LAYOUT_DEPTH) continue;
       const btn = s.ownerDoc.createElement("button");
       btn.type = "button";
       btn.innerHTML = `${getIconSvg(item.icon, { size: 16 })}<span>${item.label}</span>`;
       btn.onclick = () => {
-        const blockEl = s.blockElements().find((b) => s.blockIdOf(b) === (handleEl?.dataset.owner ?? ""));
+        const blockEl = s.container.querySelector(`[data-node-id="${ownerId}"]`) as HTMLElement | null;
         if (blockEl) cmds.insertBlockAfter(blockEl, item.type);
         hideMenu();
       };

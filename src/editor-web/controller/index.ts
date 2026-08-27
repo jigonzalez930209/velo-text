@@ -13,6 +13,7 @@ import { bindCommands } from "./commands.js";
 import { attachBlockHandles } from "./handles.js";
 import { attachImageResize } from "./image-resize.js";
 import { attachTableUi } from "./table-ui.js";
+import { attachColumnsUi } from "./columns-ui.js";
 
 export type { Editor, EditorOptions, InsertBlockType } from "./types.js";
 
@@ -143,6 +144,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   const handles = attachBlockHandles(s, cmds);
   const imgUi = attachImageResize(s);
   const tableUi = attachTableUi(s);
+  const columnsUi = attachColumnsUi(s);
   s.render();
 
   return {
@@ -174,6 +176,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       handles.hideHandle();
       imgUi.hideImgResize();
       tableUi.hideTableUi();
+      columnsUi.hideColumnsUi();
       handles.hideDropLine();
       wrapper.remove();
     },
