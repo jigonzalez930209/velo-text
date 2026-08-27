@@ -1,115 +1,125 @@
 /**
- * Playground — demonstrates all editor features, theme switching, variables, tables, images, LaTeX and export.
- * Uses the built `dist/` via workspace link and the plugin system.
+ * Playground — full-featured demo using the editor controller.
+ * Toolbar (Lucide icons), variables, tables, images, equations, themes, export.
  */
 import {
   createDocument,
   createIdGenerator,
-  createParagraph,
-  createText,
-  createVariable,
-  createTable,
-  createEquation,
-  createImageBlock,
-  exportDocument,
-  renderDocumentToHtml,
+  createEditor,
   getIconSvg,
-  registerCommand,
-  themes,
+  exportDocument,
+  type IconName,
+  type PortableDocument,
 } from "../../dist/public-api/index.js";
-import { registerPlugin, listPlugins } from "../../dist/core/plugin/index.js";
 import { createMemorySink } from "../../dist/adapters/browser/index.js";
 
 const idGen = createIdGenerator("play");
 const clock = { nowIso: () => new Date().toISOString() };
 let doc = createDocument({ idGenerator: idGen, clock });
 doc.metadata.title = "Playground Document";
-
-// Initial content
 doc.root.children.push(
-  { type: "heading", id: idGen.next(), level: 1, children: [createText(idGen, "Welcome")] },
-  {
-    type: "paragraph",
-    id: idGen.next(),
-    children: [
-      createText(idGen, "Hello "),
-      createVariable(idGen, "name", "{{name}}"),
-      createText(idGen, " — try variables, tables, images and "),
-      createEquation(idGen, "E = mc^2"),
-      createText(idGen, "."),
-    ],
-  },
+  { type: "heading", id: idGen.next(), level: 1, children: [{ type: "text", id: idGen.next(), text: "Welcome to the playground" }] },
+  { type: "paragraph", id: idGen.next(), children: [
+    { type: "text", id: idGen.next(), text: "Type here. Insert variables " },
+    { type: "variable", id: idGen.next(), path: "name", source: "{{name}}", valueType: "string" },
+    { type: "text", id: idGen.next(), text: ", equations " },
+    { type: "equation", id: idGen.next(), latex: "E = mc^2" },
+    { type: "text", id: idGen.next(), text: ", tables and images. Drag blocks with the handle on the left." },
+  ] },
 );
 
-const editor = document.getElementById("editor") as HTMLElement;
+const editorEl = document.getElementById("editor") as HTMLElement;
 const toolbar = document.getElementById("toolbar") as HTMLElement;
 const status = document.getElementById("status") as HTMLElement;
 const jsonTa = document.getElementById("json") as HTMLTextAreaElement;
 const dataTa = document.getElementById("data") as HTMLTextAreaElement;
-const varCatalog = document.getElementById("var-catalog") as HTMLElement;
+const varChips = document.getElementById("var-chips") as HTMLElement;
 
-function render() {
-  editor.innerHTML = renderDocumentToHtml(doc).replace(/^<div[^>]*>/, "").replace(/<\/div>$/, "");
-  jsonTa.value = JSON.stringify(doc, null, 2);
-  status.textContent = `${doc.root.children.length} blocks • rev ${doc.revision}`;
-}
+// Playground asset bytes (uploaded images) for export
+const assetBytes: Record<string, Uint8Array> = {};
 
-// Toolbar with recolorable SVG icons
-const commands: Array<{ id: string; label: string; icon: string; action: () => void }> = [
-  { id: "bold", label: "Bold", icon: "bold", action: () => document.execCommand("bold") },
-  { id: "italic", label: "Italic", icon: "italic", action: () => document.execCommand("italic") },
-  { id: "variable", label: "Variable", icon: "variable", action: () => insertVariable("customer.name") },
-  { id: "equation", label: "Equation", icon: "equation", action: () => insertEquation("\\frac{a}{b}") },
-  { id: "table", label: "Table", icon: "table", action: () => insertTable() },
-  { id: "image", label: "Image", icon: "image", action: () => insertImage() },
-  { id: "undo", label: "Undo", icon: "undo", action: () => (status.textContent = "Undo (demo)") },
+const editor = createEditor(editorEl, {
+  document: doc,
+  theme: "light-neutral",
+  onChange: (d) => {
+    jsonTa.value = JSON.stringify(d, null, 2);
+    status.textContent = `${d.root.children.length} blocks · rev ${d.revision}`;
+  },
+});
+
+// ── Toolbar ──
+type ToolbarItem = { icon: IconName; title: string; run: () => void; group: string; pressed?: () => boolean };
+
+const items: ToolbarItem[] = [
+  { icon: "undo2", title: "Undo (Ctrl+Z)", group: "history", run: () => editor.undo() },
+  { icon: "redo2", title: "Redo (Ctrl+Y)", group: "history", run: () => editor.redo() },
+  { icon: "bold", title: "Bold", group: "marks", run: () => editor.commands.toggleMark("bold") },
+  { icon: "italic", title: "Italic", group: "marks", run: () => editor.commands.toggleMark("italic") },
+  { icon: "underline", title: "Underline", group: "marks", run: () => editor.commands.toggleMark("underline") },
+  { icon: "strikethrough", title: "Strikethrough", group: "marks", run: () => editor.commands.toggleMark("strike") },
+  { icon: "code", title: "Code", group: "marks", run: () => editor.commands.toggleMark("code") },
+  { icon: "heading1", title: "Title (H1)", group: "blocks", run: () => editor.commands.setHeading(1) },
+  { icon: "heading2", title: "Subtitle (H2)", group: "blocks", run: () => editor.commands.setHeading(2) },
+  { icon: "heading3", title: "Heading 3", group: "blocks", run: () => editor.commands.setHeading(3) },
+  { icon: "quote", title: "Quote", group: "blocks", run: () => editor.commands.toggleQuote() },
+  { icon: "listUnordered", title: "Bullet list", group: "blocks", run: () => editor.commands.toggleList("unordered") },
+  { icon: "listOrdered", title: "Numbered list", group: "blocks", run: () => editor.commands.toggleList("ordered") },
+  { icon: "alignLeft", title: "Align left", group: "align", run: () => editor.commands.setAlign("left") },
+  { icon: "alignCenter", title: "Align center", group: "align", run: () => editor.commands.setAlign("center") },
+  { icon: "alignRight", title: "Align right", group: "align", run: () => editor.commands.setAlign("right") },
+  { icon: "alignJustify", title: "Justify", group: "align", run: () => editor.commands.setAlign("justify") },
+  { icon: "variable", title: "Insert {{name}}", group: "insert", run: () => insertVariable("name") },
+  { icon: "equation", title: "Insert equation", group: "insert", run: () => insertEquation("\\frac{a}{b}") },
+  { icon: "table", title: "Insert 2×2 table", group: "insert", run: () => editor.commands.insertTable(2, 2) },
+  { icon: "imagePlus", title: "Insert image", group: "insert", run: () => insertImage() },
+  { icon: "eraser", title: "Clear formatting", group: "marks", run: () => editor.commands.clearFormat() },
 ];
 
-function renderToolbar() {
-  toolbar.innerHTML = "";
-  for (const cmd of commands) {
-    const btn = document.createElement("button");
-    btn.setAttribute("aria-label", cmd.label);
-    btn.title = cmd.label;
-    btn.innerHTML = getIconSvg(cmd.icon as never, { size: 16, color: "currentColor", title: cmd.label });
-    btn.onclick = cmd.action;
-    toolbar.appendChild(btn);
+let currentGroup = "";
+for (const item of items) {
+  if (item.group !== currentGroup) {
+    if (currentGroup) toolbar.appendChild(div("pde-toolbar-group"));
+    else toolbar.appendChild(div("pde-toolbar-group"));
+    currentGroup = item.group;
   }
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.title = item.title;
+  btn.setAttribute("aria-label", item.title);
+  btn.innerHTML = getIconSvg(item.icon, { size: 18 });
+  btn.onclick = () => item.run();
+  toolbar.lastElementChild?.appendChild(btn);
 }
-renderToolbar();
+function div(cls: string): HTMLElement {
+  const d = document.createElement("div");
+  d.className = cls;
+  return d;
+}
 
-// Variable catalog
+// ── Variable chips ──
 for (const v of ["name", "customer.name", "total | currency:ARS", "date | date:dd/MM/yyyy"]) {
   const b = document.createElement("button");
   b.textContent = `{{${v}}}`;
-  b.style.cssText = "padding:4px 6px; border-radius:4px; border:1px solid var(--pde-color-border); background:var(--pde-color-variable-bg); color:var(--pde-color-variable-text); cursor:pointer;";
-  b.onclick = () => insertVariable(v.split(" |")[0]!);
-  varCatalog.appendChild(b);
+  b.onclick = () => {
+    const [path, format] = v.split(" | ");
+    editor.commands.insertVariable(path!, format);
+  };
+  varChips.appendChild(b);
 }
 
-function insertVariable(path: string) {
-  const p = doc.root.children.find((b) => b.type === "paragraph") as ReturnType<typeof createParagraph> | undefined;
-  if (!p) return;
-  p.children.push(createVariable(idGen, path, `{{${path}}}`));
-  doc.revision++;
-  render();
+function insertVariable(path: string): void {
+  editor.commands.insertVariable(path);
+}
+function insertEquation(latex: string): void {
+  editor.commands.insertEquation(latex);
 }
 
-function insertEquation(latex: string) {
-  const p = doc.root.children.find((b) => b.type === "paragraph") as ReturnType<typeof createParagraph> | undefined;
-  if (!p) return;
-  p.children.push(createEquation(idGen, latex));
-  doc.revision++;
-  render();
-}
+// ── Quick buttons ──
+(document.getElementById("btn-eq") as HTMLButtonElement).onclick = () => insertEquation("E = mc^2");
+(document.getElementById("btn-table") as HTMLButtonElement).onclick = () => editor.commands.insertTable(2, 2);
+(document.getElementById("btn-pagebreak") as HTMLButtonElement).onclick = () => editor.commands.insertBlock("pageBreak");
 
-function insertTable() {
-  doc.root.children.push(createTable(idGen, 2, 2));
-  doc.revision++;
-  render();
-}
-
-function insertImage() {
+function insertImage(): void {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/png,image/jpeg,image/webp,image/svg+xml";
@@ -117,30 +127,37 @@ function insertImage() {
     const file = input.files?.[0];
     if (!file) return;
     const bytes = new Uint8Array(await file.arrayBuffer());
-    // For playground, create a fake asset with data URL
-    const assetId = `asset_${Date.now()}`;
-    const sha256 = "a".repeat(64);
-    // @ts-ignore - store in doc.assets for export
-    doc.assets[assetId] = { id: assetId, kind: "image", mediaType: file.type as never, storageKey: `playground/${assetId}`, sha256, byteLength: bytes.length, alt: file.name };
-    // @ts-ignore - keep bytes for export in memory
-    (doc as unknown as { _playgroundAssets?: Record<string, Uint8Array> })._playgroundAssets ??= {};
-    (doc as unknown as { _playgroundAssets: Record<string, Uint8Array> })._playgroundAssets[assetId] = bytes;
-    doc.root.children.push(createImageBlock(idGen, assetId, { alt: file.name }));
-    doc.revision++;
-    render();
+    const assetId = `asset_${Date.now().toString(36)}`;
+    const sha256Hex = await sha256(bytes);
+    (doc as PortableDocument).assets[assetId] = {
+      id: assetId,
+      kind: "image",
+      mediaType: file.type as never,
+      storageKey: `playground/${assetId}`,
+      sha256: sha256Hex,
+      byteLength: bytes.length,
+      alt: file.name,
+    };
+    assetBytes[assetId] = bytes;
+    editor.commands.insertImage(assetId);
   };
   input.click();
 }
 
-// Theme switcher
+async function sha256(data: Uint8Array): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// ── Theme switcher ──
 (document.getElementById("theme") as HTMLSelectElement).onchange = (e) => {
   const theme = (e.target as HTMLSelectElement).value;
   document.body.setAttribute("data-pde-theme", theme);
-  editor.setAttribute("data-pde-theme", theme);
+  editor.setTheme(theme as never);
 };
 
-// Export helpers
-async function doExport(fmt: "pdf" | "odt" | "docx") {
+// ── Export ──
+async function doExport(fmt: "pdf" | "odt" | "docx"): Promise<void> {
   let data: Record<string, unknown> = {};
   try {
     data = JSON.parse(dataTa.value);
@@ -148,57 +165,29 @@ async function doExport(fmt: "pdf" | "odt" | "docx") {
     alert("Invalid JSON in Data");
     return;
   }
+  const liveDoc = editor.getDocument();
   const { sink, getBytes } = createMemorySink();
-  const playgroundAssets = (doc as unknown as { _playgroundAssets?: Record<string, Uint8Array> })._playgroundAssets ?? {};
   const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
-  for (const [id, dataBytes] of Object.entries(playgroundAssets)) {
-    const ref = doc.assets[id];
-    if (ref) assets[id] = { id, mediaType: ref.mediaType, data: dataBytes as Uint8Array };
+  for (const [id, bytes] of Object.entries(assetBytes)) {
+    const ref = liveDoc.assets[id];
+    if (ref) assets[id] = { id, mediaType: ref.mediaType, data: bytes };
   }
-  // If no playground assets, use a 1x1 PNG for demo images
-  for (const [id, ref] of Object.entries(doc.assets)) {
-    if (!assets[id]) assets[id] = { id, mediaType: ref.mediaType, data: new Uint8Array([0x89, 0x50, 0x4e, 0x47]) };
-  }
-  await exportDocument({ document: doc, data, format: fmt, sink, assets, options: { deterministic: false, strict: false } });
+  await exportDocument({ document: liveDoc, data, format: fmt, sink, assets, options: { strict: false } });
   const bytes = getBytes();
-  const blob = new Blob([bytes as unknown as BlobPart], { type: fmt === "pdf" ? "application/pdf" : fmt === "odt" ? "application/vnd.oasis.opendocument.text" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const mime = fmt === "pdf" ? "application/pdf" : fmt === "odt" ? "application/vnd.oasis.opendocument.text" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const blob = new Blob([bytes as unknown as BlobPart], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `playground.${fmt}`;
   a.click();
   URL.revokeObjectURL(url);
-  status.textContent = `Exported ${fmt.toUpperCase()} ${bytes.length} bytes`;
+  status.textContent = `Exported ${fmt.toUpperCase()} · ${bytes.length} bytes`;
 }
 
-document.getElementById("btn-export-pdf")!.onclick = () => doExport("pdf");
-document.getElementById("btn-export-odt")!.onclick = () => doExport("odt");
-document.getElementById("btn-export-docx")!.onclick = () => doExport("docx");
-document.getElementById("btn-insert-var")!.onclick = () => insertVariable("name");
-document.getElementById("btn-insert-eq")!.onclick = () => insertEquation("E = mc^2");
-document.getElementById("btn-insert-table")!.onclick = () => insertTable();
-document.getElementById("btn-insert-image")!.onclick = () => insertImage();
+(document.getElementById("btn-export-pdf") as HTMLButtonElement).onclick = () => doExport("pdf");
+(document.getElementById("btn-export-odt") as HTMLButtonElement).onclick = () => doExport("odt");
+(document.getElementById("btn-export-docx") as HTMLButtonElement).onclick = () => doExport("docx");
 
-// Plugin sandbox demo
-document.getElementById("btn-plugin-eq")!.onclick = () => {
-  const latex = (document.getElementById("plugin-latex") as HTMLInputElement).value || "\\sqrt{x}";
-  // Example external plugin: register a formatter and insert via command
-  try {
-    registerPlugin({
-      type: "demo-plugin",
-      version: 1,
-      schema: { type: "object" } as never,
-      createNode: () => createEquation(idGen, latex),
-      renderWeb: (node: unknown) => `<span>${(node as { latex: string }).latex}</span>`,
-    });
-    insertEquation(latex);
-    status.textContent = `Plugin demo-plugin used — plugins: ${listPlugins().join(", ")}`;
-  } catch (e) {
-    status.textContent = `Plugin error: ${(e as Error).message}`;
-  }
-};
-
-// Initial render + simple plugin registration
-registerCommand({ id: "demo.hello", label: "Hello", icon: "more", canExecute: () => true, execute: () => alert("Hello from plugin!") });
-render();
-status.textContent = `Ready — ${Object.keys(themes).length} themes, plugins: ${listPlugins().length}`;
+jsonTa.value = JSON.stringify(doc, null, 2);
+status.textContent = "ready — drag blocks, resize images/tables, export";

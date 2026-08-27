@@ -138,6 +138,8 @@ export interface TableRow {
   id: NodeId;
   cells: TableCell[];
   header?: boolean;
+  /** Optional row height in micrometers (set by row resize) */
+  heightUm?: number;
 }
 
 export interface TableStyle {

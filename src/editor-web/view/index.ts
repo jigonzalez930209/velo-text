@@ -33,13 +33,30 @@ function renderBlock(block: BlockNode): string {
       return `<${tag} data-node-id="${id}" data-node-type="list">${items}</${tag}>`;
     }
     case "table": {
-      const rows = block.rows
-        .map((row) => `<tr data-node-id="${row.id}">${row.cells.map((cell) => `<td data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}">${cell.blocks.map(renderBlock).join("")}</td>`).join("")}</tr>`)
+      const colsHtml = block.columns
+        .map((c) => `<col style="width:${Math.round((c.widthUm / 25400) * 96)}px" data-col-width-um="${c.widthUm}" />`)
         .join("");
-      return `<table data-node-id="${id}" data-node-type="table"><tbody>${rows}</tbody></table>`;
+      const rows = block.rows
+        .map((row) => {
+          const hPx = row.heightUm ? ` style="height:${Math.round((row.heightUm / 25400) * 96)}px" data-height-um="${row.heightUm}"` : "";
+          const cells = row.cells
+            .map((cell) => {
+              const tag = row.header ? "th" : "td";
+              return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${cell.colSpan}">${cell.blocks.map(renderBlock).join("")}</${tag}>`;
+            })
+            .join("");
+          return `<tr data-node-id="${row.id}"${hPx}>${cells}</tr>`;
+        })
+        .join("");
+      return `<table data-node-id="${id}" data-node-type="table" style="table-layout:fixed"><colgroup>${colsHtml}</colgroup><tbody>${rows}</tbody></table>`;
     }
-    case "image":
-      return `<figure data-node-id="${id}" data-node-type="image"><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" /></figure>`;
+    case "image": {
+      const wUm = block.widthUm ?? 150000;
+      const hUm = block.heightUm ?? 90000;
+      const wPx = Math.round((wUm / 25400) * 96);
+      const hPx = Math.round((hUm / 25400) * 96);
+      return `<figure data-node-id="${id}" data-node-type="image" data-asset-id="${block.assetId}" data-width-um="${wUm}" data-height-um="${hUm}" data-alt="${escapeAttr(block.alt ?? "")}" class="pde-image-block"><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" draggable="false" style="width:${wPx}px;height:${hPx}px" /></figure>`;
+    }
     case "page-break":
       return `<div data-node-id="${id}" data-node-type="page-break" class="pde-page-break" data-page-break="true"></div>`;
     case "horizontal-rule":
@@ -47,7 +64,7 @@ function renderBlock(block: BlockNode): string {
     case "equation-block": {
       const latex = escapeAttr((block as unknown as { latex: string }).latex ?? "");
       const inner = latexToHtml((block as unknown as { latex: string }).latex ?? "");
-      return `<div data-node-id="${id}" data-node-type="equation-block" contenteditable="false" class="pde-equation pde-equation--block" role="math" aria-label="${latex}">${inner}</div>`;
+      return `<div data-node-id="${id}" data-node-type="equation-block" contenteditable="false" class="pde-equation pde-equation--block" role="math" aria-label="${latex}" data-latex="${latex}">${inner}</div>`;
     }
     default:
       return `<div data-node-id="${id}">[${(block as { type: string }).type}]</div>`;
@@ -68,7 +85,7 @@ function renderInline(inline: InlineNode): string {
       return s;
     }
     case "variable":
-      return `<span data-node-id="${inline.id}" data-node-type="variable" contenteditable="false" class="pde-variable" role="button" tabindex="0" aria-label="Variable ${escapeAttr((inline as unknown as { path: string }).path)}">${escapeHtml(inline.source)}</span>`;
+      return `<span data-node-id="${inline.id}" data-node-type="variable" contenteditable="false" class="pde-variable" role="button" tabindex="0" data-path="${escapeAttr((inline as unknown as { path: string }).path)}" data-source="${escapeAttr(inline.source)}" aria-label="Variable ${escapeAttr((inline as unknown as { path: string }).path)}">${escapeHtml(inline.source)}</span>`;
     case "link":
       return `<a data-node-id="${inline.id}" href="${escapeAttr(inline.href)}" data-node-type="link">${inline.children.map(renderInline).join("")}</a>`;
     case "inline-image":
@@ -80,7 +97,7 @@ function renderInline(inline: InlineNode): string {
       const display = (inline as unknown as { display?: boolean }).display;
       const inner = latexToHtml(latex);
       const cls = display ? "pde-equation pde-equation--block" : "pde-equation";
-      return `<span data-node-id="${inline.id}" data-node-type="equation" contenteditable="false" class="${cls}" role="math" tabindex="0" aria-label="${escapeAttr(latex)}">${inner}</span>`;
+      return `<span data-node-id="${inline.id}" data-node-type="equation" contenteditable="false" class="${cls}" role="math" tabindex="0" aria-label="${escapeAttr(latex)}" data-latex="${escapeAttr(latex)}">${inner}</span>`;
     }
     default:
       return `<span>[${(inline as { type: string }).type}]</span>`;

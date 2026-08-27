@@ -48,7 +48,8 @@ export type IconName =
   | "fileText"
   | "panelLeft"
   | "split"
-  | "moreHorizontal";
+  | "moreHorizontal"
+  | "minus";
 
 export interface IconOptions {
   size?: number;
@@ -103,6 +104,7 @@ const ICONS: Record<IconName, string> = {
   panelLeft: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
   split: '<path d="M8 3v18"/><path d="M16 3v18"/>',
   moreHorizontal: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  minus: '<line x1="5" x2="19" y1="12" y2="12"/>',
 };
 
 const VIEWBOX = "0 0 24 24";

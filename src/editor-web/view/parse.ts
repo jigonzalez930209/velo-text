@@ -1,0 +1,263 @@
+/**
+ * DOM → AST parser — Phase 4.1.1 / 4.1.2
+ * Parses the contenteditable DOM back into the canonical PortableDocument.
+ * The AST is the source of truth; DOM is an editable view that mirrors it.
+ *
+ * ID policy (critical for history idempotence):
+ *  - elements with `data-node-id` keep their ID
+ *  - text nodes / hard breaks get deterministic IDs derived from their parent block
+ *    (`<blockId>_t<index>`, `<blockId>_br<index>`) so repeated parses are stable
+ *  - inline atomic nodes wrapped at container level get deterministic wrapper IDs
+ */
+import type { PortableDocument, BlockNode, InlineNode, TextMarks, TableNode, TableRow, TableCell, IdGenerator } from "../../core/model/types.js";
+import { pxToUm } from "../../export/layout/units.js";
+
+function nodeId(el: HTMLElement, idGen: IdGenerator): string {
+  return el.getAttribute("data-node-id") || idGen.next();
+}
+
+function mergeTexts(nodes: InlineNode[]): InlineNode[] {
+  const out: InlineNode[] = [];
+  for (const n of nodes) {
+    const last = out[out.length - 1];
+    if (n.type === "text" && last && last.type === "text" && JSON.stringify((n as { marks?: TextMarks }).marks ?? {}) === JSON.stringify((last as { marks?: TextMarks }).marks ?? {})) {
+      (last as { text: string }).text += (n as { text: string }).text;
+    } else {
+      out.push(n);
+    }
+  }
+  return out;
+}
+
+interface ParseCtx {
+  baseId: string;
+  counter: number;
+}
+
+function nextInlineId(ctx: ParseCtx, prefix: string): string {
+  return `${ctx.baseId}_${prefix}${ctx.counter++}`;
+}
+
+export function parseInlines(root: HTMLElement, idGen: IdGenerator, marks: TextMarks = {}, baseId?: string): InlineNode[] {
+  const ctx: ParseCtx = { baseId: baseId ?? root.getAttribute("data-node-id") ?? "n", counter: 0 };
+  const out: InlineNode[] = [];
+  const walk = (node: Node, m: TextMarks): void => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? "";
+      if (text) out.push({ type: "text", id: nextInlineId(ctx, "t"), text, ...(Object.keys(m).length ? { marks: { ...m } } : {}) });
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const el = node as HTMLElement;
+    const tag = el.tagName.toUpperCase();
+    const ntype = el.getAttribute("data-node-type");
+    if (ntype === "variable") {
+      out.push({
+        type: "variable",
+        id: nodeId(el, idGen),
+        path: el.getAttribute("data-path") ?? "",
+        source: el.getAttribute("data-source") ?? el.textContent ?? "",
+        valueType: "unknown",
+        ...(Object.keys(m).length ? { marks: { ...m } } : {}),
+      });
+    } else if (ntype === "equation") {
+      out.push({ type: "equation", id: nodeId(el, idGen), latex: el.getAttribute("data-latex") ?? "" });
+    } else if (ntype === "link" || tag === "A") {
+      out.push({ type: "link", id: nodeId(el, idGen), href: el.getAttribute("href") ?? "#", children: parseInlines(el, idGen, m, baseId) as never });
+    } else if (tag === "IMG") {
+      out.push({ type: "inline-image", id: nodeId(el, idGen), assetId: el.getAttribute("data-asset-id") ?? "" });
+    } else if (tag === "BR") {
+      out.push({ type: "hard-break", id: nextInlineId(ctx, "br") });
+    } else if (tag === "STRONG" || tag === "B") {
+      for (const c of Array.from(el.childNodes)) walk(c, { ...m, bold: true });
+    } else if (tag === "EM" || tag === "I") {
+      for (const c of Array.from(el.childNodes)) walk(c, { ...m, italic: true });
+    } else if (tag === "U") {
+      for (const c of Array.from(el.childNodes)) walk(c, { ...m, underline: true });
+    } else if (tag === "S" || tag === "DEL") {
+      for (const c of Array.from(el.childNodes)) walk(c, { ...m, strike: true });
+    } else if (tag === "CODE") {
+      for (const c of Array.from(el.childNodes)) walk(c, { ...m, code: true });
+    } else {
+      for (const c of Array.from(el.childNodes)) walk(c, m);
+    }
+  };
+  for (const child of Array.from(root.childNodes)) walk(child, marks);
+  return mergeTexts(out);
+}
+
+const BLOCK_TAGS = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "BLOCKQUOTE", "UL", "OL", "TABLE", "HR", "FIGURE", "DIV"]);
+
+export function parseBlockEl(el: HTMLElement, idGen: IdGenerator): BlockNode | null {
+  const tag = el.tagName.toUpperCase();
+  const ntype = el.getAttribute("data-node-type");
+  const id = nodeId(el, idGen);
+
+  if (ntype === "page-break") return { type: "page-break", id };
+  if (ntype === "equation-block") return { type: "equation-block", id, latex: el.getAttribute("data-latex") ?? "" };
+  // Inline atomic nodes appearing as direct container children get wrapped in a paragraph
+  if (ntype === "variable") {
+    return {
+      type: "paragraph",
+      id: `${id}_w`,
+      children: [{
+        type: "variable",
+        id,
+        path: el.getAttribute("data-path") ?? "",
+        source: el.getAttribute("data-source") ?? el.textContent ?? "",
+        valueType: "unknown",
+      }],
+    };
+  }
+  if (ntype === "equation") {
+    return { type: "paragraph", id: `${id}_w`, children: [{ type: "equation", id, latex: el.getAttribute("data-latex") ?? "" }] };
+  }
+  if (ntype === "image" || tag === "FIGURE") {
+    const imgEl = el.querySelector("img");
+    const assetId = el.getAttribute("data-asset-id") ?? imgEl?.getAttribute("data-asset-id") ?? "";
+    const wUm = Number(el.getAttribute("data-width-um")) || undefined;
+    const hUm = Number(el.getAttribute("data-height-um")) || undefined;
+    const alt = el.getAttribute("data-alt") ?? imgEl?.getAttribute("alt") ?? "";
+    return { type: "image", id, assetId, alt, ...(wUm ? { widthUm: wUm } : {}), ...(hUm ? { heightUm: hUm } : {}) };
+  }
+  if (/^H[1-6]$/.test(tag)) {
+    return { type: "heading", id, level: Number(tag[1]) as 1 | 2 | 3 | 4 | 5 | 6, children: parseInlines(el, idGen, {}, id) };
+  }
+  if (tag === "BLOCKQUOTE") {
+    return { type: "quote", id, children: parseInlines(el, idGen, {}, id) };
+  }
+  if (tag === "UL" || tag === "OL") {
+    const kind = tag === "UL" ? "unordered" : "ordered";
+    const items = [];
+    for (const li of Array.from(el.children)) {
+      if (li.tagName.toUpperCase() !== "LI") continue;
+      const liEl = li as HTMLElement;
+      const nested = Array.from(liEl.children).find((c) => c.tagName.toUpperCase() === "UL" || c.tagName.toUpperCase() === "OL") as HTMLElement | undefined;
+      const contentEl = liEl.cloneNode(true) as HTMLElement;
+      if (nested) (nested as HTMLElement).remove();
+      const liId = nodeId(liEl, idGen);
+      items.push({
+        id: liId,
+        content: parseInlines(contentEl, idGen, {}, liId),
+        ...(nested ? { nested: parseBlockEl(nested, idGen) as never } : {}),
+      });
+    }
+    return { type: "list", id, kind, items } as BlockNode;
+  }
+  if (tag === "TABLE") {
+    return parseTable(el, idGen);
+  }
+  if (tag === "HR") return { type: "horizontal-rule", id };
+
+  // Default: paragraph (also <div>, generic elements)
+  const style = (el as HTMLElement).style;
+  const align = style?.textAlign && style.textAlign !== "left" ? (style.textAlign as "left" | "center" | "right" | "justify") : undefined;
+  // Empty paragraphs render as a single <br> — parse that back as an empty text node
+  const onlyBr = el.children.length === 1 && el.children[0]!.tagName.toUpperCase() === "BR" && !(el.textContent ?? "").trim();
+  const children = onlyBr ? [] : parseInlines(el, idGen, {}, id);
+  if (onlyBr) children.push({ type: "text", id: `${id}_t0`, text: "" });
+  return { type: "paragraph", id, children, ...(align ? { align } : {}) };
+}
+
+function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
+  const id = nodeId(el, idGen);
+  // Column widths from colgroup
+  const colEls = Array.from(el.querySelectorAll("colgroup col"));
+  let columns: Array<{ id: string; widthUm: number }> = [];
+  if (colEls.length) {
+    columns = colEls.map((c) => {
+      const cEl = c as HTMLElement;
+      const um = Number(cEl.getAttribute("data-col-width-um"));
+      const w = parseFloat(cEl.style.width) || 0;
+      return { id: idGen.next(), widthUm: um > 0 ? um : (w > 0 ? pxToUm(w) : 40000) };
+    });
+  }
+
+  // Rows: collect TRs from tbody/thead children and direct TR children
+  const rowEls: HTMLElement[] = [];
+  for (const child of Array.from(el.children)) {
+    const t = child.tagName.toUpperCase();
+    if (t === "TBODY" || t === "THEAD" || t === "TFOOT") {
+      for (const tr of Array.from(child.children)) if (tr.tagName.toUpperCase() === "TR") rowEls.push(tr as HTMLElement);
+    } else if (t === "TR") {
+      rowEls.push(child as HTMLElement);
+    }
+  }
+
+  const rows: TableRow[] = [];
+  for (const trEl of rowEls) {
+    const cells: TableCell[] = [];
+    let tdElIsTh = false;
+    for (const td of Array.from(trEl.children)) {
+      if (td.tagName.toUpperCase() !== "TD" && td.tagName.toUpperCase() !== "TH") continue;
+      const tdEl = td as HTMLElement;
+      if (tdEl.tagName.toUpperCase() === "TH") tdElIsTh = true;
+      const colSpan = Number(tdEl.getAttribute("colspan")) || 1;
+      const rowSpan = Number(tdEl.getAttribute("rowspan")) || 1;
+      const tdId = nodeId(tdEl, idGen);
+      // Cell blocks: block elements inside; text nodes wrapped into a paragraph
+      const blocks: BlockNode[] = [];
+      let textAcc: Text[] = [];
+      const flushText = () => {
+        if (!textAcc.length) return;
+        const holder = document.createElement("div");
+        for (const t of textAcc) holder.appendChild(t);
+        blocks.push({ type: "paragraph", id: `${tdId}_p`, children: parseInlines(holder, idGen, {}, `${tdId}_p`) });
+        textAcc = [];
+      };
+      for (const child of Array.from(tdEl.childNodes)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          textAcc.push(child as Text);
+          continue;
+        }
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          const childEl = child as HTMLElement;
+          if (BLOCK_TAGS.has(childEl.tagName.toUpperCase()) && childEl.tagName.toUpperCase() !== "DIV") {
+            flushText();
+            const b = parseBlockEl(childEl, idGen);
+            if (b) blocks.push(b);
+          } else if (childEl.tagName.toUpperCase() === "DIV" && childEl.getAttribute("data-node-type")) {
+            flushText();
+            const b = parseBlockEl(childEl, idGen);
+            if (b) blocks.push(b);
+          } else {
+            textAcc.push(...Array.from(childEl.childNodes).filter((n) => n.nodeType === Node.TEXT_NODE) as Text[]);
+            textAcc.push(childEl as unknown as Text);
+          }
+        }
+      }
+      flushText();
+      if (!blocks.length) blocks.push({ type: "paragraph", id: `${tdId}_p`, children: [] });
+      cells.push({ id: tdId, colSpan, rowSpan, blocks });
+    }
+    const hUm = Number(trEl.getAttribute("data-height-um")) || undefined;
+    const header = trEl.getAttribute("data-header") === "true" || trEl.parentElement?.tagName.toUpperCase() === "THEAD" || tdElIsTh;
+    rows.push({ id: nodeId(trEl, idGen), cells, ...(header ? { header: true as const } : {}), ...(hUm ? { heightUm: hUm } : {}) });
+  }
+
+  if (!columns.length) {
+    const colCount = Math.max(1, ...rows.map((r) => r.cells.reduce((n, c) => n + c.colSpan, 0)));
+    columns = Array.from({ length: colCount }, () => ({ id: idGen.next(), widthUm: 40000 }));
+  }
+
+  return { type: "table", id, columns, rows };
+}
+
+/**
+ * Parse the whole editor container into a PortableDocument.
+ * Preserves ids from data-node-id; keeps document metadata/envelope from `prev`.
+ */
+const UI_OVERLAY_CLASSES = ["pde-block-handle", "pde-block-menu", "pde-image-resize", "pde-col-resize", "pde-table-menu"];
+
+export function domToAst(container: HTMLElement, prev: PortableDocument, idGen: IdGenerator): PortableDocument {
+  const doc: PortableDocument = JSON.parse(JSON.stringify(prev));
+  doc.root.children = [];
+  for (const el of Array.from(container.children)) {
+    const el2 = el as HTMLElement;
+    // Skip transient UI overlays (block handles, menus, resize handles)
+    if (UI_OVERLAY_CLASSES.some((c) => el2.classList.contains(c))) continue;
+    const block = parseBlockEl(el2, idGen);
+    if (block) doc.root.children.push(block);
+  }
+  return doc;
+}

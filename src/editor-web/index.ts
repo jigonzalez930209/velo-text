@@ -5,3 +5,5 @@ export * from "./toolbar/index.js";
 export * from "./tables/index.js";
 export * from "./images/index.js";
 export * from "./accessibility/index.js";
+export * from "./controller/index.js";
+export * from "./view/parse.js";

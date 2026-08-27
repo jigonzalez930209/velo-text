@@ -11,7 +11,82 @@ function marksEqual(a: TextMarks | undefined, b: TextMarks | undefined): boolean
 export function normalizeDocument(doc: PortableDocument): PortableDocument {
   const copy: PortableDocument = JSON.parse(JSON.stringify(doc));
   normalizeRoot(copy.root);
+  canonicalizeInlineIds(copy.root);
   return copy;
+}
+
+/**
+ * Assign deterministic inline IDs derived from their parent block so that
+ * factory-created documents and DOM-parsed documents converge to the same
+ * canonical form. This keeps history snapshots stable (undo/redo idempotence).
+ *  - text node in block B: `B_t<index>`
+ *  - hard break in block B: `B_br<index>`
+ *  - atomic nodes (variable/equation/inline-image) keep their stable IDs
+ *  - link children derive from the link ID
+ */
+function canonicalizeInlineIds(root: RootNode): void {
+  const walkBlocks = (blocks: BlockNode[]): void => {
+    for (const b of blocks) {
+      if (b.type === "paragraph" || b.type === "heading" || b.type === "quote") {
+        canonicalizeInlineArray(b.children, b.id);
+      } else if (b.type === "list") {
+        for (const item of b.items ?? []) {
+          canonicalizeInlineArray(item.content, item.id);
+          if (item.nested) walkBlocks([item.nested]);
+        }
+      } else if (b.type === "table") {
+        for (let ci2 = 0; ci2 < b.columns.length; ci2++) {
+          b.columns[ci2]!.id = `${b.id}_c${ci2}`;
+        }
+        for (let ri = 0; ri < b.rows.length; ri++) {
+          const row = b.rows[ri]!;
+          row.id = `${b.id}_r${ri}`;
+          let ci = 0;
+          for (const cell of row.cells) {
+            cell.id = `${b.id}_r${ri}c${ci}`;
+            ci += cell.colSpan ?? 1;
+            for (let bi = 0; bi < cell.blocks.length; bi++) {
+              const cb = cell.blocks[bi]!;
+              if (cb.type === "paragraph" || cb.type === "heading" || cb.type === "quote") {
+                cb.id = `${cell.id}_b${bi}`;
+                canonicalizeInlineArray(cb.children, cb.id);
+              } else if (cb.type === "list") {
+                for (const item of cb.items ?? []) {
+                  canonicalizeInlineArray(item.content, item.id);
+                  if (item.nested) walkBlocks([item.nested]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+  walkBlocks(root.children);
+}
+
+function canonicalizeInlineArray(inlines: Array<InlineNodeLike>, baseId: string): void {
+  let t = 0;
+  let br = 0;
+  for (const n of inlines) {
+    if (n.type === "text") {
+      n.id = `${baseId}_t${t++}`;
+    } else if (n.type === "hard-break") {
+      n.id = `${baseId}_br${br++}`;
+    } else if (n.type === "link" && n.children) {
+      let lt = 0;
+      for (const c of n.children) {
+        if (c.type === "text") c.id = `${n.id}_t${lt++}`;
+        else if (c.type === "hard-break") c.id = `${n.id}_br${br++}`;
+      }
+    }
+  }
+}
+
+interface InlineNodeLike {
+  type: string;
+  id: string;
+  children?: InlineNodeLike[];
 }
 
 function normalizeRoot(root: RootNode): void {
