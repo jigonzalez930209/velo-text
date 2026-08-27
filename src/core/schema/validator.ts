@@ -60,6 +60,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "page-break",
     "horizontal-rule",
     "equation-block",
+    "columns",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation"]);
 
@@ -151,6 +152,14 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     if (node.type === "image") {
       if (typeof node.assetId !== "string") err(`${path}/assetId`, "type", "image assetId required");
       if (node.assetId && !doc.assets?.[node.assetId] && strict) err(`${path}/assetId`, "missing-asset", `asset ${node.assetId} not in document.assets`);
+    }
+    if (node.type === "columns") {
+      if (!Array.isArray(node.columns) || node.columns.length < 2) err(`${path}/columns`, "type", "columns requires at least 2 slots");
+      else
+        node.columns.forEach((col, i) => {
+          checkId(col.id, `${path}/columns/${i}/id`);
+          if (Array.isArray(col.blocks)) col.blocks.forEach((b, bi) => validateBlock(b, `${path}/columns/${i}/blocks/${bi}`));
+        });
     }
     if (node.type === "equation-block") {
       if (typeof node.latex !== "string" || !node.latex.trim()) err(`${path}/latex`, "required", "equation latex required");

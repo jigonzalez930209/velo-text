@@ -59,6 +59,8 @@ function canonicalizeInlineIds(root: RootNode): void {
             }
           }
         }
+      } else if (b.type === "columns") {
+        for (const col of b.columns) walkBlocks(col.blocks);
       }
     }
   };
@@ -116,6 +118,13 @@ function normalizeBlock(block: BlockNode): void {
         }
         for (const b of cell.blocks) normalizeBlock(b);
       }
+    }
+  } else if (block.type === "columns") {
+    for (const col of block.columns ?? []) {
+      if (!col.blocks || col.blocks.length === 0) {
+        col.blocks = [{ type: "paragraph", id: `${col.id}_p`, children: [{ type: "text", id: `${col.id}_t`, text: "" }] } as BlockNode];
+      }
+      for (const b of col.blocks) normalizeBlock(b);
     }
   }
 }

@@ -54,7 +54,7 @@ const listeners = new Set<(e: PluginRegistryEvent) => void>();
 
 function validateType(type: string): void {
   if (!/^[a-z][a-z0-9-]*$/.test(type)) throw new Error(`Invalid plugin type "${type}" — must be kebab-case`);
-  if (["paragraph", "heading", "quote", "list", "table", "image", "page-break", "horizontal-rule", "equation", "equation-block", "text", "variable", "link", "inline-image", "hard-break", "root"].includes(type))
+  if (["paragraph", "heading", "quote", "list", "table", "image", "page-break", "horizontal-rule", "equation", "equation-block", "columns", "text", "variable", "link", "inline-image", "hard-break", "root"].includes(type))
     throw new Error(`Plugin type "${type}" conflicts with core type`);
 }
 
