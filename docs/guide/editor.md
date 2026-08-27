@@ -16,18 +16,43 @@ beforeinput / keydown / paste / drop
 - IME: `compositionstart`/`compositionend` defer reconciliation.
 - Mobile & autocorrect handled via same pipeline.
 
+## Host (`createEditor`)
+`src/editor-web/controller/index.ts` mounts a `contenteditable` host inside `.pde-editor-wrapper`. Overlays (block handles, table chrome, image resize) live in a sibling `.pde-ui-layer` so they do not steal typing.
+
+```ts
+const editor = createEditor(container, {
+  document,
+  theme: "light-neutral",
+  resolveAssetUrl: (id) => urls[id],
+  onChange: (doc) => { /* persist AST */ },
+});
+editor.commands.setAlign("center");
+editor.commands.insertTable(2, 2);
+editor.commands.insertColumns(2);
+```
+
+Toolbar buttons should `preventDefault` on `mousedown` so the caret in a cell is not lost.
+
 ## Commands
 ```ts
-editor.execute("text.toggleBold");
-editor.execute("table.insertRowAfter");
-editor.execute("variable.insert", { path: "customer.name" });
-editor.execute("equation.insert", { latex: "\\frac{a}{b}" });
-editor.execute("image.insert", { assetId: "ast_123" });
+editor.commands.toggleMark("bold");
+editor.commands.setAlign("left" | "center" | "right" | "justify");
+editor.commands.insertTable(2, 2);
+editor.commands.insertColumns(2);
+editor.commands.insertVariable("customer.name");
+editor.commands.insertEquation("\\frac{a}{b}");
+editor.commands.insertImage(assetId);
 ```
-Each has `canExecute`, `execute`, validated payload and invertible change.
+Marks use `execCommand` when available and then `syncFromDom`. Alignment writes `text-align` on the **innermost paragraph** (including paragraphs inside table cells), then parses it back into `ParagraphNode.align`.
 
 ## Tables
-Insert/delete rows/columns, spans, `Tab`/`Shift+Tab` navigation (wraps, creates row at end), cell selection (`createCellSelection`, `extendCellSelection`).
+- Click a table to show **column handles** (vertical, drag width → `columns[].widthUm`) and **row handles** (horizontal, drag height → `rows[].heightUm`).
+- A small **table button** to the right of the table opens insert/delete row/column and delete table. The menu sits **beside** the table so cells stay editable.
+- Cell text is a nested `paragraph` (and optional other blocks). Type normally; alignment from the toolbar applies to the cell paragraph, not the outer `<table>`.
+- `Tab` / `Shift+Tab` via `handleTableTab` (wraps, creates a row at the end). Spans: `setCellSpan`. Structural ops: `insertRowAfter`, `deleteRow`, `insertColumnAfter`, `deleteColumn`.
+
+## Columns
+Block type `columns` (`createColumns(idGen, n)`): side-by-side slots, each with nested blocks. Rendered as `.pde-columns` / `.pde-column`. Exported as a table-like grid in PDF/DOCX/ODT.
 
 ## Clipboard & DnD
 - `text/plain` → paragraphs/hard-breaks
@@ -42,4 +67,4 @@ Insert/delete rows/columns, spans, `Tab`/`Shift+Tab` navigation (wraps, creates 
 - High contrast in 4 themes, `checkContrast` WCAG AA
 - Alt text required (decorative allowed empty), trap-free navigation for atomic nodes
 
-See `src/editor-web/view|input|clipboard|tables|images|accessibility`.
+See `src/editor-web/controller` (commands, handles, table-ui, table-resize, image-resize), `view`, `input`, `clipboard`, `tables`, `images`, `accessibility`.
