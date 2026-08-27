@@ -3,162 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>portable-doc-editor — Playground</title>
-    <link rel="stylesheet" href="../themes/base.css" />
-    <link rel="stylesheet" href="../themes/components.css" />
-    <style>
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: var(--pde-font-ui, system-ui, sans-serif);
-        background: var(--pde-color-bg, #f7f8fa);
-        color: var(--pde-color-text, #17191c);
-        min-height: 100vh;
-      }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 16px;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--pde-color-border, #d8dce3);
-        background: var(--pde-color-bg, #fff);
-      }
-      header h1 { font-size: 17px; margin: 0; font-weight: 600; }
-      header select, header button, .toolbar button {
-        font: inherit;
-      }
-      header select {
-        padding: 6px 10px;
-        border-radius: var(--pde-radius-sm, 6px);
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        background: var(--pde-color-surface, #f7f8fa);
-        color: var(--pde-color-text, #17191c);
-        cursor: pointer;
-      }
-      header button {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 7px 14px;
-        border-radius: var(--pde-radius-sm, 6px);
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        background: var(--pde-color-surface, #f7f8fa);
-        color: var(--pde-color-text, #17191c);
-        cursor: pointer;
-      }
-      header button:hover { background: var(--pde-color-selection, #cbd7ff); }
-      #status { color: var(--pde-color-muted, #667085); font-size: 12px; }
-
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 340px;
-        gap: 20px;
-        max-width: 1200px;
-        margin: 20px auto;
-        padding: 0 20px;
-        align-items: start;
-      }
-      .editor-pane { min-width: 0; }
-      #toolbar { margin-bottom: 14px; }
-      #editor {
-        min-height: 480px;
-        max-width: 860px;
-        margin: 0 auto;
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        border-radius: var(--pde-radius-md, 10px);
-        background: var(--pde-color-bg, #fff);
-        box-shadow: var(--pde-shadow-panel, 0 8px 24px rgb(0 0 0 / 8%));
-        text-align: left;
-      }
-      .side {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-      .panel {
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        border-radius: var(--pde-radius-md, 10px);
-        padding: 14px;
-        background: var(--pde-color-surface, #f7f8fa);
-      }
-      .panel h3 {
-        margin: 0 0 10px;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--pde-color-muted, #667085);
-      }
-      textarea {
-        width: 100%;
-        font-family: ui-monospace, monospace;
-        font-size: 12px;
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        border-radius: var(--pde-radius-sm, 6px);
-        padding: 8px;
-        background: var(--pde-color-bg, #fff);
-        color: var(--pde-color-text, #17191c);
-        resize: vertical;
-      }
-      .var-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-      .var-chips button, .quick button {
-        padding: 5px 9px;
-        font-size: 12px;
-        border-radius: var(--pde-radius-sm, 6px);
-        border: 1px solid var(--pde-color-border, #d8dce3);
-        background: var(--pde-color-bg, #fff);
-        color: var(--pde-color-variable-text, #1939a3);
-        cursor: pointer;
-      }
-      .var-chips button:hover, .quick button:hover { background: var(--pde-color-selection, #cbd7ff); }
-      .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-      .quick button { color: var(--pde-color-text, #17191c); }
-      .json-view { min-height: 120px; }
-      @media (max-width: 960px) {
-        .layout { grid-template-columns: 1fr; }
-      }
-    </style>
+    <title>PortableDoc Editor — Playground</title>
   </head>
   <body data-pde-theme="light-neutral">
-    <header>
-      <h1>PortableDoc Editor — Playground</h1>
-      <select id="theme" aria-label="Theme">
-        <option value="light-neutral">Light neutral</option>
-        <option value="light-warm">Light warm</option>
-        <option value="dark-slate">Dark slate</option>
-        <option value="dark-contrast">Dark contrast</option>
-      </select>
-      <button id="btn-export-pdf">PDF</button>
-      <button id="btn-export-odt">ODT</button>
-      <button id="btn-export-docx">DOCX</button>
-      <span id="status">ready</span>
-    </header>
-    <div class="layout">
-      <div class="editor-pane">
-        <div id="toolbar" class="pde-toolbar" role="toolbar" aria-label="Formatting"></div>
-        <div id="editor" class="pde-editor" contenteditable="true" role="textbox" aria-label="Document editor"></div>
+    <header class="pg-header">
+      <div class="pg-brand">PortableDoc</div>
+      <div class="pg-header-actions">
+        <label class="pg-theme">
+          <span>Theme</span>
+          <select id="theme" aria-label="Theme">
+            <option value="light-neutral">Light neutral</option>
+            <option value="light-warm">Light warm</option>
+            <option value="dark-slate">Dark slate</option>
+            <option value="dark-contrast">Dark contrast</option>
+          </select>
+        </label>
+        <div class="pg-export">
+          <button type="button" id="btn-export-pdf">PDF</button>
+          <button type="button" id="btn-export-odt">ODT</button>
+          <button type="button" id="btn-export-docx">DOCX</button>
+        </div>
+        <span id="status" class="pg-status">ready</span>
       </div>
-      <div class="side">
-        <div class="panel">
-          <h3>Insert variables</h3>
+    </header>
+    <div class="pg-layout">
+      <div class="pg-editor-col">
+        <div id="toolbar" class="pde-toolbar" role="toolbar" aria-label="Formatting"></div>
+        <div class="pg-paper">
+          <div id="editor" class="pde-editor" contenteditable="true" role="textbox" aria-label="Document editor"></div>
+        </div>
+      </div>
+      <aside class="pg-side">
+        <section class="pg-panel">
+          <h3>Variables</h3>
           <div class="var-chips" id="var-chips"></div>
-          <h3>Quick insert</h3>
+        </section>
+        <section class="pg-panel">
+          <h3>Insert</h3>
           <div class="quick">
-            <button id="btn-eq">E = mc²</button>
-            <button id="btn-table">2×2 Table</button>
-            <button id="btn-image">Image…</button>
-            <button id="btn-pagebreak">Page break</button>
+            <button type="button" id="btn-eq">Equation</button>
+            <button type="button" id="btn-table">2×2 table</button>
+            <button type="button" id="btn-columns">2 columns</button>
+            <button type="button" id="btn-image">Image…</button>
+            <button type="button" id="btn-pagebreak">Page break</button>
           </div>
-        </div>
-        <div class="panel">
-          <h3>Data (JSON)</h3>
-          <textarea id="data" rows="8">{"name":"Ada","customer":{"name":"Acme"},"items":[{"name":"Item A","price":100},{"name":"Item B","price":250}]}</textarea>
-        </div>
-        <div class="panel">
+        </section>
+        <section class="pg-panel">
+          <h3>Template data</h3>
+          <textarea id="data" rows="8">{"name":"Ada","customer":{"name":"Acme"},"total":1250,"date":"2026-08-27","items":[{"name":"Item A","price":100},{"name":"Item B","price":250}]}</textarea>
+        </section>
+        <section class="pg-panel pg-panel--grow">
           <h3>Document JSON</h3>
           <textarea id="json" class="json-view" readonly></textarea>
-        </div>
-      </div>
+        </section>
+      </aside>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

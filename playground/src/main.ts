@@ -1,15 +1,19 @@
 /**
  * Playground — full-featured demo using the editor controller.
- * Toolbar (Lucide icons), variables, tables, images, equations, themes, export.
  */
+import "../../themes/base.css";
+import "../../themes/components.css";
+import "./playground.css";
 import {
   createDocument,
   createIdGenerator,
   createEditor,
+  createTable,
   getIconSvg,
   exportDocument,
   type IconName,
   type PortableDocument,
+  type ThemeName,
 } from "../../dist/public-api/index.js";
 import { createMemorySink } from "../../dist/adapters/browser/index.js";
 
@@ -24,9 +28,25 @@ doc.root.children.push(
     { type: "variable", id: idGen.next(), path: "name", source: "{{name}}", valueType: "string" },
     { type: "text", id: idGen.next(), text: ", equations " },
     { type: "equation", id: idGen.next(), latex: "E = mc^2" },
-    { type: "text", id: idGen.next(), text: ", tables and images. Drag blocks with the handle on the left." },
+    { type: "text", id: idGen.next(), text: ", tables and images. Hover a block and drag the handle on the left to reorder." },
   ] },
+  createTable(idGen, 2, 2),
 );
+{
+  const tbl = doc.root.children[doc.root.children.length - 1];
+  if (tbl && tbl.type === "table") {
+    const labels = [["Item", "Qty"], ["Widget", "2"]];
+    tbl.rows.forEach((row, ri) => {
+      row.header = ri === 0;
+      row.cells.forEach((cell, ci) => {
+        const p = cell.blocks[0];
+        if (p && p.type === "paragraph" && p.children[0] && p.children[0].type === "text") {
+          p.children[0].text = labels[ri]?.[ci] ?? "";
+        }
+      });
+    });
+  }
+}
 
 const editorEl = document.getElementById("editor") as HTMLElement;
 const toolbar = document.getElementById("toolbar") as HTMLElement;
@@ -35,20 +55,20 @@ const jsonTa = document.getElementById("json") as HTMLTextAreaElement;
 const dataTa = document.getElementById("data") as HTMLTextAreaElement;
 const varChips = document.getElementById("var-chips") as HTMLElement;
 
-// Playground asset bytes (uploaded images) for export
 const assetBytes: Record<string, Uint8Array> = {};
+const assetUrls: Record<string, string> = {};
 
 const editor = createEditor(editorEl, {
   document: doc,
   theme: "light-neutral",
+  resolveAssetUrl: (id) => assetUrls[id],
   onChange: (d) => {
     jsonTa.value = JSON.stringify(d, null, 2);
     status.textContent = `${d.root.children.length} blocks · rev ${d.revision}`;
   },
 });
 
-// ── Toolbar ──
-type ToolbarItem = { icon: IconName; title: string; run: () => void; group: string; pressed?: () => boolean };
+type ToolbarItem = { icon: IconName; title: string; run: () => void; group: string };
 
 const items: ToolbarItem[] = [
   { icon: "undo2", title: "Undo (Ctrl+Z)", group: "history", run: () => editor.undo() },
@@ -71,6 +91,7 @@ const items: ToolbarItem[] = [
   { icon: "variable", title: "Insert {{name}}", group: "insert", run: () => insertVariable("name") },
   { icon: "equation", title: "Insert equation", group: "insert", run: () => insertEquation("\\frac{a}{b}") },
   { icon: "table", title: "Insert 2×2 table", group: "insert", run: () => editor.commands.insertTable(2, 2) },
+  { icon: "columns3", title: "Insert 2 columns", group: "insert", run: () => editor.commands.insertColumns(2) },
   { icon: "imagePlus", title: "Insert image", group: "insert", run: () => insertImage() },
   { icon: "eraser", title: "Clear formatting", group: "marks", run: () => editor.commands.clearFormat() },
 ];
@@ -78,8 +99,7 @@ const items: ToolbarItem[] = [
 let currentGroup = "";
 for (const item of items) {
   if (item.group !== currentGroup) {
-    if (currentGroup) toolbar.appendChild(div("pde-toolbar-group"));
-    else toolbar.appendChild(div("pde-toolbar-group"));
+    toolbar.appendChild(div("pde-toolbar-group"));
     currentGroup = item.group;
   }
   const btn = document.createElement("button");
@@ -87,6 +107,7 @@ for (const item of items) {
   btn.title = item.title;
   btn.setAttribute("aria-label", item.title);
   btn.innerHTML = getIconSvg(item.icon, { size: 18 });
+  btn.addEventListener("mousedown", (e) => e.preventDefault());
   btn.onclick = () => item.run();
   toolbar.lastElementChild?.appendChild(btn);
 }
@@ -96,9 +117,9 @@ function div(cls: string): HTMLElement {
   return d;
 }
 
-// ── Variable chips ──
 for (const v of ["name", "customer.name", "total | currency:ARS", "date | date:dd/MM/yyyy"]) {
   const b = document.createElement("button");
+  b.type = "button";
   b.textContent = `{{${v}}}`;
   b.onclick = () => {
     const [path, format] = v.split(" | ");
@@ -114,10 +135,11 @@ function insertEquation(latex: string): void {
   editor.commands.insertEquation(latex);
 }
 
-// ── Quick buttons ──
 (document.getElementById("btn-eq") as HTMLButtonElement).onclick = () => insertEquation("E = mc^2");
 (document.getElementById("btn-table") as HTMLButtonElement).onclick = () => editor.commands.insertTable(2, 2);
+(document.getElementById("btn-columns") as HTMLButtonElement).onclick = () => editor.commands.insertColumns(2);
 (document.getElementById("btn-pagebreak") as HTMLButtonElement).onclick = () => editor.commands.insertBlock("pageBreak");
+(document.getElementById("btn-image") as HTMLButtonElement).onclick = () => insertImage();
 
 function insertImage(): void {
   const input = document.createElement("input");
@@ -139,6 +161,9 @@ function insertImage(): void {
       alt: file.name,
     };
     assetBytes[assetId] = bytes;
+    assetUrls[assetId] = URL.createObjectURL(file);
+    const live = editor.getDocument();
+    live.assets[assetId] = (doc as PortableDocument).assets[assetId]!;
     editor.commands.insertImage(assetId);
   };
   input.click();
@@ -149,14 +174,13 @@ async function sha256(data: Uint8Array): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// ── Theme switcher ──
 (document.getElementById("theme") as HTMLSelectElement).onchange = (e) => {
-  const theme = (e.target as HTMLSelectElement).value;
+  const theme = (e.target as HTMLSelectElement).value as ThemeName;
+  document.documentElement.setAttribute("data-pde-theme", theme);
   document.body.setAttribute("data-pde-theme", theme);
-  editor.setTheme(theme as never);
+  editor.setTheme(theme);
 };
 
-// ── Export ──
 async function doExport(fmt: "pdf" | "odt" | "docx"): Promise<void> {
   let data: Record<string, unknown> = {};
   try {
@@ -170,7 +194,9 @@ async function doExport(fmt: "pdf" | "odt" | "docx"): Promise<void> {
   const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
   for (const [id, bytes] of Object.entries(assetBytes)) {
     const ref = liveDoc.assets[id];
-    if (ref) assets[id] = { id, mediaType: ref.mediaType, data: bytes };
+    const mediaType = ref?.mediaType ?? (bytes[0] === 0xff ? "image/jpeg" : "image/png");
+    assets[id] = { id, mediaType, data: bytes };
+    if (!liveDoc.assets[id] && ref) liveDoc.assets[id] = ref;
   }
   await exportDocument({ document: liveDoc, data, format: fmt, sink, assets, options: { strict: false } });
   const bytes = getBytes();
@@ -189,5 +215,5 @@ async function doExport(fmt: "pdf" | "odt" | "docx"): Promise<void> {
 (document.getElementById("btn-export-odt") as HTMLButtonElement).onclick = () => doExport("odt");
 (document.getElementById("btn-export-docx") as HTMLButtonElement).onclick = () => doExport("docx");
 
-jsonTa.value = JSON.stringify(doc, null, 2);
-status.textContent = "ready — drag blocks, resize images/tables, export";
+jsonTa.value = JSON.stringify(editor.getDocument(), null, 2);
+status.textContent = `${editor.getDocument().root.children.length} blocks · rev 0`;
