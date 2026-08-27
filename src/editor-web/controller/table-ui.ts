@@ -2,6 +2,7 @@ import { getIconSvg, type IconName } from "../../assets/icons/index.js";
 import { normalizeDocument } from "../../core/normalize/normalize.js";
 import type { EditorState } from "./types.js";
 import { bindTableResize, findTableNode, showTableResize, wrapperRel } from "./table-resize.js";
+import { findParentList } from "./nesting.js";
 
 interface TableLike {
   id?: string;
@@ -77,8 +78,8 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
       }
     }));
     addBtn("trash", "Delete table", () => tableOp(() => {
-      const idx = s.getDoc().root.children.findIndex((b) => b.id === tblNode.id);
-      if (idx !== -1) s.getDoc().root.children.splice(idx, 1);
+      const found = findParentList(s.getDoc(), tblNode.id ?? "");
+      if (found) found.list.splice(found.index, 1);
     }));
     s.ui.append(tableMenuEl);
   }
