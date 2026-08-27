@@ -1,0 +1,218 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {
+    "title": "Documento completo"
+  },
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "heading",
+        "id": "n_000003",
+        "level": 1,
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000004",
+            "text": "Informe Anual"
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000005",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000006",
+            "text": "Introducción con variable "
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000007",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000008",
+            "text": "Cliente: "
+          },
+          {
+            "type": "variable",
+            "id": "n_000009",
+            "path": "customer.name",
+            "source": "{{customer.name}}",
+            "valueType": "unknown"
+          },
+          {
+            "type": "text",
+            "id": "n_000010",
+            "text": " — Fecha: "
+          },
+          {
+            "type": "variable",
+            "id": "n_000011",
+            "path": "date",
+            "source": "{{date | date:dd/MM/yyyy}}",
+            "valueType": "unknown",
+            "format": "date:dd/MM/yyyy"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "id": "n_000012",
+        "columns": [
+          {
+            "id": "n_000013",
+            "widthUm": 70000
+          },
+          {
+            "id": "n_000014",
+            "widthUm": 50000
+          }
+        ],
+        "rows": [
+          {
+            "id": "n_000015",
+            "cells": [
+              {
+                "id": "n_000016",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_000017",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_000018",
+                        "text": "Producto"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_000019",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_000020",
+                    "children": [
+                      {
+                        "type": "text",
+                        "id": "n_000021",
+                        "text": "Total"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_000022",
+            "cells": [
+              {
+                "id": "n_000023",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_000024",
+                    "children": [
+                      {
+                        "type": "variable",
+                        "id": "n_000025",
+                        "path": "product",
+                        "source": "{{product}}",
+                        "valueType": "unknown"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_000026",
+                "colSpan": 1,
+                "rowSpan": 1,
+                "blocks": [
+                  {
+                    "type": "paragraph",
+                    "id": "n_000027",
+                    "children": [
+                      {
+                        "type": "variable",
+                        "id": "n_000028",
+                        "path": "total",
+                        "source": "{{total | currency:ARS}}",
+                        "valueType": "unknown",
+                        "format": "currency:ARS"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "image",
+        "id": "n_000029",
+        "assetId": "asset_mix",
+        "alt": "firma"
+      },
+      {
+        "type": "horizontal-rule",
+        "id": "n_000030"
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000031",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000032",
+            "text": "Fin del documento."
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {
+    "asset_mix": {
+      "id": "asset_mix",
+      "kind": "image",
+      "mediaType": "image/png",
+      "storageKey": "assets/asset_mix",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byteLength": 1234,
+      "alt": "alt asset_mix"
+    }
+  }
+}

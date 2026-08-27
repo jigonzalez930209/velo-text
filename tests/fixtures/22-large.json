@@ -1,0 +1,578 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "paragraph",
+        "id": "n_000003",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000004",
+            "text": "Párrafo 1: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000005",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000006",
+            "text": "Párrafo 2: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000007",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000008",
+            "text": "Párrafo 3: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000009",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000010",
+            "text": "Párrafo 4: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000011",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000012",
+            "text": "Párrafo 5: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000013",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000014",
+            "text": "Párrafo 6: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000015",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000016",
+            "text": "Párrafo 7: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000017",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000018",
+            "text": "Párrafo 8: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000019",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000020",
+            "text": "Párrafo 9: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000021",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000022",
+            "text": "Párrafo 10: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000023",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000024",
+            "text": "Párrafo 11: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000025",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000026",
+            "text": "Párrafo 12: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000027",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000028",
+            "text": "Párrafo 13: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000029",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000030",
+            "text": "Párrafo 14: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000031",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000032",
+            "text": "Párrafo 15: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000033",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000034",
+            "text": "Párrafo 16: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000035",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000036",
+            "text": "Párrafo 17: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000037",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000038",
+            "text": "Párrafo 18: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000039",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000040",
+            "text": "Párrafo 19: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000041",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000042",
+            "text": "Párrafo 20: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000043",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000044",
+            "text": "Párrafo 21: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000045",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000046",
+            "text": "Párrafo 22: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000047",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000048",
+            "text": "Párrafo 23: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000049",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000050",
+            "text": "Párrafo 24: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000051",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000052",
+            "text": "Párrafo 25: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000053",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000054",
+            "text": "Párrafo 26: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000055",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000056",
+            "text": "Párrafo 27: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000057",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000058",
+            "text": "Párrafo 28: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000059",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000060",
+            "text": "Párrafo 29: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000061",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000062",
+            "text": "Párrafo 30: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000063",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000064",
+            "text": "Párrafo 31: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000065",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000066",
+            "text": "Párrafo 32: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000067",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000068",
+            "text": "Párrafo 33: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000069",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000070",
+            "text": "Párrafo 34: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000071",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000072",
+            "text": "Párrafo 35: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000073",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000074",
+            "text": "Párrafo 36: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000075",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000076",
+            "text": "Párrafo 37: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000077",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000078",
+            "text": "Párrafo 38: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000079",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000080",
+            "text": "Párrafo 39: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000081",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000082",
+            "text": "Párrafo 40: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000083",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000084",
+            "text": "Párrafo 41: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000085",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000086",
+            "text": "Párrafo 42: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000087",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000088",
+            "text": "Párrafo 43: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000089",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000090",
+            "text": "Párrafo 44: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000091",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000092",
+            "text": "Párrafo 45: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000093",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000094",
+            "text": "Párrafo 46: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000095",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000096",
+            "text": "Párrafo 47: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000097",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000098",
+            "text": "Párrafo 48: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000099",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000100",
+            "text": "Párrafo 49: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000101",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000102",
+            "text": "Párrafo 50: Lorem ipsum dolor sit amet consectetur adipiscing elit."
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {}
+}

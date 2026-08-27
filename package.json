@@ -1,0 +1,48 @@
+{
+  "name": "portable-doc-editor",
+  "version": "0.1.0",
+  "description": "Editor documental portable con variables, imágenes y exportación PDF/ODT/DOCX — cero dependencias runtime",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@11.24.0",
+  "main": "dist/public-api/index.js",
+  "types": "dist/public-api/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/public-api/index.d.ts",
+      "default": "./dist/public-api/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/model/index.d.ts",
+      "default": "./dist/core/model/index.js"
+    },
+    "./template": {
+      "types": "./dist/template/index.d.ts",
+      "default": "./dist/template/index.js"
+    },
+    "./export": {
+      "types": "./dist/export/index.d.ts",
+      "default": "./dist/export/index.js"
+    },
+    "./editor-web": {
+      "types": "./dist/editor-web/index.d.ts",
+      "default": "./dist/editor-web/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules --experimental-strip-types scripts/runner.js",
+    "test:unit": "node --experimental-strip-types scripts/runner.js --suite=unit",
+    "test:integration": "node --experimental-strip-types scripts/runner.js --suite=integration",
+    "build": "tsc -p tsconfig.json && node scripts/build.js",
+    "check:types": "tsc -p tsconfig.check.json --noEmit",
+    "check:zero-deps": "node scripts/check-zero-deps.js",
+    "lint": "node scripts/lint.js",
+    "dev": "node --experimental-strip-types scripts/dev-server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "typescript": "5.6.3"
+  }
+}

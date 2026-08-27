@@ -1,0 +1,82 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "list",
+        "id": "n_000003",
+        "kind": "unordered",
+        "items": [
+          {
+            "id": "n_000004",
+            "content": [
+              {
+                "type": "text",
+                "id": "n_000005",
+                "text": "Item 1"
+              }
+            ]
+          },
+          {
+            "id": "n_000006",
+            "content": [
+              {
+                "type": "text",
+                "id": "n_000007",
+                "text": "Item 2"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "list",
+        "id": "n_000008",
+        "kind": "ordered",
+        "items": [
+          {
+            "id": "n_000009",
+            "content": [
+              {
+                "type": "text",
+                "id": "n_000010",
+                "text": "Primero"
+              }
+            ]
+          },
+          {
+            "id": "n_000011",
+            "content": [
+              {
+                "type": "text",
+                "id": "n_000012",
+                "text": "Segundo"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {}
+}

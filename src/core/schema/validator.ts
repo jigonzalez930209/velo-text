@@ -1,0 +1,177 @@
+/**
+ * Validador estructural — Fase 2.1.2
+ * Diagnósticos con JSON Pointer, límite de errores, modos strict/tolerante
+ */
+import type { PortableDocument, BlockNode, InlineNode } from "../model/types.js";
+
+export interface ValidationError {
+  path: string;
+  code: string;
+  message: string;
+  severity: "error" | "warn" | "info";
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+}
+
+export interface ValidateOptions {
+  strict?: boolean;
+  maxErrors?: number;
+}
+
+const MAX_ERRORS = 100;
+
+export function validateDocument(doc: PortableDocument, opts: ValidateOptions = {}): ValidationResult {
+  const errors: ValidationError[] = [];
+  const strict = opts.strict ?? true;
+  const seenIds = new Set<string>();
+
+  function err(path: string, code: string, message: string, severity: ValidationError["severity"] = "error"): void {
+    if (errors.length >= (opts.maxErrors ?? MAX_ERRORS)) return;
+    errors.push({ path, code, message, severity });
+  }
+
+  // envelope
+  if ((doc as unknown as Record<string, unknown>).schema !== "portable-doc") err("", "schema-type", `schema must be "portable-doc"`);
+  if ((doc as PortableDocument).schemaVersion !== 1) err("/schemaVersion", "schema-version", `unsupported version ${(doc as PortableDocument).schemaVersion}`);
+  if (typeof doc.id !== "string" || !doc.id) err("/id", "required", "id required");
+  if (typeof doc.revision !== "number") err("/revision", "type", "revision must be number");
+  if (!doc.root || doc.root.type !== "root") err("/root", "type", "root must be type root");
+  if (doc.root && !Array.isArray(doc.root.children)) err("/root/children", "type", "root.children must be array");
+
+  function checkId(id: string, path: string): void {
+    if (typeof id !== "string" || !id) err(path, "id-required", "id required");
+    else if (seenIds.has(id)) err(path, "duplicate-id", `duplicate id ${id}`);
+    else seenIds.add(id);
+  }
+
+  if (doc.root?.id) checkId(doc.root.id, "/root/id");
+
+  const validBlockTypes = new Set<BlockNode["type"]>(["paragraph", "heading", "quote", "list", "table", "image", "page-break", "horizontal-rule"]);
+  const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break"]);
+
+  function validateInline(node: InlineNode, path: string): void {
+    if (!node || typeof (node as unknown as Record<string, unknown>).type !== "string") {
+      err(path, "type", "inline node requires type");
+      return;
+    }
+    checkId(node.id, `${path}/id`);
+    if (!validInlineTypes.has(node.type as InlineNode["type"])) err(`${path}/type`, "unknown-type", `unknown inline type ${(node as {type:string}).type}`);
+    if (node.type === "text") {
+      if (typeof node.text !== "string") err(`${path}/text`, "type", "text.text must be string");
+    }
+    if (node.type === "variable") {
+      if (typeof node.path !== "string" || !node.path) err(`${path}/path`, "required", "variable path required");
+      else if (!/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*|\[\d+\])*$/.test(node.path)) {
+        err(`${path}/path`, "invalid-path", `invalid variable path ${node.path}`);
+      }
+      if (node.source !== undefined && typeof node.source !== "string") err(`${path}/source`, "type", "source must be string");
+    }
+    if (node.type === "link") {
+      if (typeof node.href !== "string") err(`${path}/href`, "type", "href must be string");
+      if (node.href && /^javascript:/i.test(node.href)) err(`${path}/href`, "unsafe-url", "javascript: url forbidden");
+      if (Array.isArray(node.children)) node.children.forEach((c, i) => validateInline(c as InlineNode, `${path}/children/${i}`));
+    }
+  }
+
+  function validateBlock(node: BlockNode, path: string): void {
+    if (!node || typeof (node as unknown as Record<string, unknown>).type !== "string") {
+      err(path, "type", "block requires type");
+      return;
+    }
+    checkId(node.id, `${path}/id`);
+    if (!validBlockTypes.has(node.type)) err(`${path}/type`, "unknown-type", `unknown block type ${(node as {type:string}).type}`);
+    if (node.type === "paragraph" || node.type === "heading" || node.type === "quote") {
+      if (!Array.isArray(node.children)) err(`${path}/children`, "type", `${node.type} children must be array`);
+      else node.children.forEach((c, i) => validateInline(c, `${path}/children/${i}`));
+    }
+    if (node.type === "list") {
+      if (!Array.isArray(node.items)) err(`${path}/items`, "type", "list items must be array");
+      else
+        node.items.forEach((it, i) => {
+          checkId(it.id, `${path}/items/${i}/id`);
+          if (Array.isArray(it.content)) it.content.forEach((c, j) => validateInline(c, `${path}/items/${i}/content/${j}`));
+          if (it.nested) validateBlock(it.nested, `${path}/items/${i}/nested`);
+        });
+    }
+    if (node.type === "table") {
+      if (!Array.isArray(node.columns)) err(`${path}/columns`, "type", "columns must be array");
+      if (!Array.isArray(node.rows)) err(`${path}/rows`, "type", "rows must be array");
+      const colCount = node.columns?.length ?? 0;
+      node.rows?.forEach((row, ri) => {
+        checkId(row.id, `${path}/rows/${ri}/id`);
+        if (!Array.isArray(row.cells)) err(`${path}/rows/${ri}/cells`, "type", "cells must be array");
+        else {
+          let spanSum = 0;
+          row.cells.forEach((cell, ci) => {
+            checkId(cell.id, `${path}/rows/${ri}/cells/${ci}/id`);
+            spanSum += cell.colSpan ?? 1;
+            if (Array.isArray(cell.blocks)) cell.blocks.forEach((b, bi) => validateBlock(b, `${path}/rows/${ri}/cells/${ci}/blocks/${bi}`));
+          });
+          if (spanSum !== colCount && colCount > 0) err(`${path}/rows/${ri}`, "table-span", `row span ${spanSum} != columns ${colCount}`);
+        }
+      });
+      if (node.repeat) {
+        if (typeof node.repeat.path !== "string") err(`${path}/repeat/path`, "type", "repeat.path required");
+        if (typeof node.repeat.alias !== "string") err(`${path}/repeat/alias`, "type", "repeat.alias required");
+        if (typeof node.repeat.templateRowId !== "string") err(`${path}/repeat/templateRowId`, "type", "repeat.templateRowId required");
+      }
+    }
+    if (node.type === "image") {
+      if (typeof node.assetId !== "string") err(`${path}/assetId`, "type", "image assetId required");
+      if (node.assetId && !doc.assets?.[node.assetId] && strict) err(`${path}/assetId`, "missing-asset", `asset ${node.assetId} not in document.assets`);
+    }
+  }
+
+  if (doc.root?.children) {
+    doc.root.children.forEach((b, i) => validateBlock(b, `/root/children/${i}`));
+  }
+
+  // assets
+  if (doc.assets) {
+    for (const [k, a] of Object.entries(doc.assets)) {
+      const p = `/assets/${k}`;
+      if (a.id !== k) err(`${p}/id`, "asset-id-mismatch", `asset key ${k} != id ${a.id}`);
+      if (!["image/png", "image/jpeg", "image/webp", "image/svg+xml"].includes(a.mediaType as string))
+        err(`${p}/mediaType`, "media-type", `unsupported ${a.mediaType}`);
+      if (typeof a.sha256 !== "string" || !/^[a-f0-9]{64}$/i.test(a.sha256)) err(`${p}/sha256`, "hash", "sha256 must be 64 hex");
+      if (typeof a.byteLength !== "number" || a.byteLength < 0) err(`${p}/byteLength`, "type", "byteLength must be >=0");
+    }
+  }
+
+  // page
+  if (doc.page) {
+    if (typeof doc.page.widthUm !== "number" || doc.page.widthUm <= 0) err("/page/widthUm", "range", "widthUm >0");
+    if (typeof doc.page.heightUm !== "number" || doc.page.heightUm <= 0) err("/page/heightUm", "range", "heightUm >0");
+  }
+
+  // depth limit
+  function depth(node: unknown, d = 0): void {
+    if (d > 20) err("", "depth", "document too deep");
+    const n = node as Record<string, unknown>;
+    if (Array.isArray(n?.children)) (n.children as unknown[]).forEach((c) => depth(c, d + 1));
+    if (Array.isArray(n?.rows))
+      for (const r of n.rows as Array<Record<string, unknown>>) {
+        for (const c of (r.cells as Array<Record<string, unknown>>) ?? []) {
+          for (const b of (c.blocks as unknown[]) ?? []) depth(b, d + 1);
+        }
+      }
+  }
+  if (doc.root) depth(doc.root);
+
+  return { valid: errors.filter((e) => e.severity === "error").length === 0, errors };
+}
+
+export function assertValid(doc: PortableDocument, opts?: ValidateOptions): ValidationResult {
+  const res = validateDocument(doc, opts);
+  if (!res.valid) {
+    const msg = res.errors
+      .slice(0, 5)
+      .map((e) => `${e.path} ${e.code}: ${e.message}`)
+      .join("; ");
+    throw new Error(`Document invalid: ${msg}`);
+  }
+  return res;
+}

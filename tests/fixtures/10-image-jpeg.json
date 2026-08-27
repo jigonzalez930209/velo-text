@@ -1,0 +1,43 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "image",
+        "id": "n_000003",
+        "assetId": "asset_jpg1"
+      }
+    ]
+  },
+  "assets": {
+    "asset_jpg1": {
+      "id": "asset_jpg1",
+      "kind": "image",
+      "mediaType": "image/jpeg",
+      "storageKey": "assets/asset_jpg1",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byteLength": 1234,
+      "alt": "alt asset_jpg1"
+    }
+  }
+}

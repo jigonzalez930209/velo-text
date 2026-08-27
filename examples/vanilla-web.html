@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>portable-doc-editor — vanilla web</title>
+  <link rel="stylesheet" href="../themes/base.css" />
+  <style>
+    body { font-family: var(--pde-font-ui); background: var(--pde-color-bg); color: var(--pde-color-text); }
+    .pde-root { border: 1px solid var(--pde-color-border); padding: 16px; min-height: 300px; max-width: 800px; margin: 24px auto; }
+    .pde-variable { background: var(--pde-color-variable-bg); color: var(--pde-color-variable-text); padding: 1px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body data-pde-theme="light-neutral">
+  <h1>Ejemplo vanilla-web (sin framework)</h1>
+  <div id="editor" class="pde-root" data-pde-theme="light-neutral" contenteditable="true"></div>
+  <button id="export-pdf">Exportar PDF</button>
+  <button id="export-odt">Exportar ODT</button>
+  <button id="export-docx">Exportar DOCX</button>
+  <script type="module">
+    import { createDocument, createIdGenerator, exportDocument, renderDocumentToHtml } from "../dist/public-api/index.js";
+    const idGen = createIdGenerator("ex");
+    const doc = createDocument({ idGenerator: idGen, clock: { nowIso: () => new Date().toISOString() }});
+    doc.root.children.push(
+      { type:"heading", id: idGen.next(), level:1, children:[{type:"text", id: idGen.next(), text:"Contrato"}]},
+      { type:"paragraph", id: idGen.next(), children:[{type:"text", id: idGen.next(), text:"Hola "},{type:"variable", id: idGen.next(), path:"customer.name", source:"{{customer.name}}", valueType:"string"},{type:"text", id: idGen.next(), text:" — importe "},{type:"variable", id: idGen.next(), path:"total", source:"{{total | currency:ARS}}", valueType:"number", format:"currency:ARS"}]},
+    );
+    const editor = document.getElementById("editor");
+    editor.innerHTML = renderDocumentToHtml(doc).replace(/^<div[^>]*>/,"").replace(/<\/div>$/,"");
+
+    async function doExport(fmt){
+      const chunks=[];
+      const sink={ write(c){chunks.push(c)}, close(){}};
+      await exportDocument({ document: doc, data:{ customer:{name:"Ana"}, total: 12345.6 }, format: fmt, sink, options:{ strict:false }});
+      const blob=new Blob(chunks,{type: fmt==="pdf"?"application/pdf": fmt==="odt"?"application/vnd.oasis.opendocument.text":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=`demo.${fmt}`; a.click();
+    }
+    document.getElementById("export-pdf").onclick=()=>doExport("pdf");
+    document.getElementById("export-odt").onclick=()=>doExport("odt");
+    document.getElementById("export-docx").onclick=()=>doExport("docx");
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "paragraph",
+        "id": "n_000003",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000004",
+            "text": "Rojo",
+            "marks": {
+              "color": "#FF0000FF"
+            }
+          },
+          {
+            "type": "text",
+            "id": "n_000005",
+            "text": " fondo amarillo",
+            "marks": {
+              "background": "#FFFF00FF"
+            }
+          },
+          {
+            "type": "text",
+            "id": "n_000006",
+            "text": " grande",
+            "marks": {
+              "fontSizePt": 18
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {}
+}

@@ -1,0 +1,68 @@
+{
+  "schema": "portable-doc",
+  "schemaVersion": 1,
+  "id": "doc_000001",
+  "revision": 0,
+  "locale": "es-AR",
+  "direction": "ltr",
+  "createdAt": "2026-08-27T12:00:00.000Z",
+  "updatedAt": "2026-08-27T12:00:00.000Z",
+  "metadata": {},
+  "page": {
+    "widthUm": 210000,
+    "heightUm": 297000,
+    "marginUm": {
+      "top": 20000,
+      "right": 20000,
+      "bottom": 20000,
+      "left": 20000
+    }
+  },
+  "root": {
+    "type": "root",
+    "id": "root_000002",
+    "children": [
+      {
+        "type": "image",
+        "id": "n_000003",
+        "assetId": "asset1"
+      },
+      {
+        "type": "image",
+        "id": "n_000004",
+        "assetId": "asset2"
+      },
+      {
+        "type": "paragraph",
+        "id": "n_000005",
+        "children": [
+          {
+            "type": "text",
+            "id": "n_000006",
+            "text": "Entre imágenes"
+          }
+        ]
+      }
+    ]
+  },
+  "assets": {
+    "asset1": {
+      "id": "asset1",
+      "kind": "image",
+      "mediaType": "image/png",
+      "storageKey": "assets/asset1",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byteLength": 1234,
+      "alt": "alt asset1"
+    },
+    "asset2": {
+      "id": "asset2",
+      "kind": "image",
+      "mediaType": "image/jpeg",
+      "storageKey": "assets/asset2",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "byteLength": 1234,
+      "alt": "alt asset2"
+    }
+  }
+}
