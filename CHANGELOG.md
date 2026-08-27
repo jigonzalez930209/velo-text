@@ -2,6 +2,23 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Column layouts (`columns` / `createColumns`) in model, editor, PDF/ODT/DOCX
+- Table **row height** drag (`heightUm`) and a table actions button beside the table (does not cover cells)
+- Playground: imported theme CSS, demo table, 2-column insert, `resolveAssetUrl` for images
+
+### Changed
+- Source files capped at **250 lines** (controller, view, PDF/DOCX writers, pagination, CSS, unit tests split)
+- Table cell alignment (`setAlign`) targets the cell paragraph; render persists `text-align`
+- PDF tables advance Y per row; images use sanitized XObject names; playground export always sends `assetBytes`
+
+### Fixed
+- Typing in table cells (menu overlay + parse moving text nodes)
+- Column resize targeting the wrong table; image resize box sized to the `<img>`, not the figure
+- Theme tokens applied on wrapper, editor, `html`, and `body`
+
 ## [0.1.0] - 2026-08-27
 
 ### Added

@@ -61,7 +61,7 @@ See `examples/vanilla-web.html`, `examples/backend.mjs`, `examples/postgres.mjs`
 | Variables `{{path}}`, `\| format`, `?? fallback`, repeat rows | ✅ `src/template` |
 | LaTeX simple (`\frac`, `\sqrt`, `^/_`, greek) inline/block | ✅ `src/core/equation` |
 | SVG icons (28) with `currentColor` → recolorable via CSS | ✅ `src/assets/icons` |
-| Web editor: contenteditable, reconciler, MutationObserver, IME, Tab tables, clipboard allowlist, a11y | ✅ `src/editor-web` |
+| Web editor: `createEditor`, cell typing/align, col/row resize, columns, IME, clipboard allowlist, a11y | ✅ `src/editor-web` |
 | Assets: sniff (PNG/JPEG/WebP/SVG), dimensions, SHA-256, store dedupe & GC | ✅ `src/assets` |
 | S3 presigned URLs SigV4, PG jsonb + revisions + optimistic concurrency | ✅ `src/adapters` |
 | Layout: units (µm/pt/twip/EMU), text line break, pagination widows/orphans | ✅ `src/export/layout` |
