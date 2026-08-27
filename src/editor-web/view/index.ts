@@ -196,6 +196,17 @@ export function domSelectionToLogical(container: HTMLElement): { nodeId: string;
   if (!sel || sel.rangeCount === 0) return null;
   const range = sel.getRangeAt(0)!;
   const node = range.startContainer as HTMLElement;
+
+  // When selecting an atomic node (span[contenteditable=false]), startContainer is its parent
+  // element and startOffset points at the child index — resolve to that child.
+  if (node.nodeType === Node.ELEMENT_NODE && range.startOffset < node.childNodes.length) {
+    const child = node.childNodes[range.startOffset] as HTMLElement;
+    const childHost = child?.closest?.("[data-node-id]") as HTMLElement | null;
+    if (childHost && childHost.getAttribute("contenteditable") === "false") {
+      return { nodeId: childHost.dataset.nodeId!, offset: 1 };
+    }
+  }
+
   const el = (node.nodeType === Node.TEXT_NODE ? node.parentElement : node) as HTMLElement | null;
   const host = el?.closest?.("[data-node-id]") as HTMLElement | null;
   if (!host) return null;

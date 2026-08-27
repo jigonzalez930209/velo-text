@@ -1,0 +1,13 @@
+{
+  "include": ["dist/**/*.js"],
+  "all": true,
+  "src": ["dist"],
+  "reporter": ["text", "html", "json-summary"],
+  "reports-dir": "coverage",
+  "check-coverage": true,
+  "lines": 95,
+  "functions": 70,
+  "branches": 70,
+  "statements": 95,
+  "exclude": ["**/*.d.ts", "**/index.js"]
+}

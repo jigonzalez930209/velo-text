@@ -104,7 +104,8 @@ export function trapFreeNavigation(container: HTMLElement): void {
     const sel = container.ownerDocument.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const anchor = sel.anchorNode as HTMLElement | null;
-    const atomic = anchor?.closest?.('[data-node-type="variable"], [data-node-type="equation"]') as HTMLElement | null;
+    const anchorHost = (anchor?.nodeType === Node.TEXT_NODE ? anchor.parentElement : anchor) as HTMLElement | null;
+    const atomic = anchorHost?.closest?.('[data-node-type="variable"], [data-node-type="equation"]') as HTMLElement | null;
     if (!atomic) return;
     // Arrow keys should move past atomic nodes, not into them
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {

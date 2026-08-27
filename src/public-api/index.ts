@@ -39,7 +39,19 @@ export { themes, themeCss, allThemesCss } from "../theme/index.js";
 export { renderDocumentToHtml, reconcileDom } from "../editor-web/view/index.js";
 export { registerCommand, getCommand, listCommands } from "../editor-web/toolbar/index.js";
 export { intentToOperation } from "../editor-web/input/index.js";
+export {
+  registerPlugin,
+  unregisterPlugin,
+  getPlugin,
+  listPlugins,
+  getNodeTypePlugin,
+  isPluginNodeType,
+  validatePluginCoverage,
+  registerNodeType,
+  registerFormatter,
+} from "../core/plugin/index.js";
 
 export type { PortableDocument, BlockNode, InlineNode, TextNode, VariableNode, InlineEquationNode, EquationBlockNode, AssetRef, PageSettings, Selection, RangeSelection, BinarySink, AssetResolver, Clock, IdGenerator } from "../core/model/types.js";
 export type { ExportFormat, ExportRequest, ExportResult } from "../export/index.js";
 export type { IconName, IconOptions } from "../assets/icons/index.js";
+export type { PluginDef } from "../core/plugin/index.js";

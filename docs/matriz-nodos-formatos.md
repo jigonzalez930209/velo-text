@@ -11,11 +11,11 @@
 | image block WebP | ✅ | ⚠️ variant | ✅ preserva | ✅ +fallback PNG | ver 8.3 |
 | image block SVG | ✅ sanitized | ⚠️ subset | ✅ preserva | ✅ +fallback PNG | 5.1.3 |
 | inline-image | ✅ | ⚠️ inline | ⚠️ frame | ⚠️ inline | — |
-| variable {{path}} | ✅ atomic | ✅ materialized | ✅ materialized | ✅ materialized | node tipado |
+| variable &#123;&#123;path&#125;&#125; | ✅ atomic | ✅ materialized | ✅ materialized | ✅ materialized | node tipado |
 | variable | format currency/date | ✅ Intl | ✅ text | ✅ text | locale/timezone explícitos |
 | variable fallback ?? | ✅ | ✅ | ✅ | ✅ | — |
 | variable en celda | ✅ | ✅ | ✅ | ✅ | — |
-| repeat rows {{item.x}} | ✅ plantilla | ✅ clonado | ✅ clonado | ✅ clonado | límite 1000 |
+| repeat rows &#123;&#123;item.x&#125;&#125; | ✅ plantilla | ✅ clonado | ✅ clonado | ✅ clonado | límite 1000 |
 | page-break | ✅ | ✅ | ✅ text:page-break | ✅ w:br page | — |
 | horizontal-rule | ✅ | ✅ | ✅ | ✅ w:pBdr | — |
 | marks bold/italic/underline/strike/code | ✅ | ⚠️ Helvetica base | ✅ text:span | ✅ w:rPr | color/fondo |

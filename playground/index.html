@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>portable-doc-editor — Playground</title>
+    <link rel="stylesheet" href="../themes/base.css" />
+    <link rel="stylesheet" href="../themes/components.css" />
+    <style>
+      :root { --pde-font-ui: system-ui, sans-serif; }
+      body { margin: 0; font-family: var(--pde-font-ui); background: var(--pde-color-bg); color: var(--pde-color-text); }
+      header { padding: 12px 16px; border-bottom: 1px solid var(--pde-color-border); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      header h1 { font-size: 16px; margin: 0; }
+      .pde-toolbar { display: flex; gap: 4px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--pde-color-border); border-radius: var(--pde-radius-md); background: var(--pde-color-surface); }
+      .pde-toolbar button { border: 1px solid transparent; background: none; padding: 6px 8px; border-radius: var(--pde-radius-sm); cursor: pointer; color: var(--pde-color-text); }
+      .pde-toolbar button:hover { background: var(--pde-color-variable-bg); border-color: var(--pde-color-border); }
+      .pde-toolbar button[aria-pressed="true"] { background: var(--pde-color-selection); }
+      main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+      #editor { min-height: 420px; border: 1px solid var(--pde-color-border); border-radius: var(--pde-radius-md); padding: 16px; background: white; }
+      #editor:focus { outline: 2px solid var(--pde-color-primary); }
+      .panel { border: 1px solid var(--pde-color-border); border-radius: var(--pde-radius-md); padding: 12px; background: var(--pde-color-surface); }
+      .panel h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; color: var(--pde-color-muted); }
+      textarea { width: 100%; font-family: monospace; font-size: 12px; }
+      .pde-variable { background: var(--pde-color-variable-bg); color: var(--pde-color-variable-text); padding: 1px 6px; border-radius: 4px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body data-pde-theme="light-neutral">
+    <header>
+      <h1>Playground — portable-doc-editor</h1>
+      <select id="theme">
+        <option value="light-neutral">light-neutral</option>
+        <option value="light-warm">light-warm</option>
+        <option value="dark-slate">dark-slate</option>
+        <option value="dark-contrast">dark-contrast</option>
+      </select>
+      <button id="btn-export-pdf">Export PDF</button>
+      <button id="btn-export-odt">Export ODT</button>
+      <button id="btn-export-docx">Export DOCX</button>
+      <span id="status" style="margin-left:auto; color: var(--pde-color-muted); font-size: 12px;"></span>
+    </header>
+    <div id="toolbar" class="pde-toolbar" role="toolbar" aria-label="Formatting"></div>
+    <main>
+      <div id="editor" class="pde-root" contenteditable="true" role="textbox" aria-label="Document editor"></div>
+      <div class="panel">
+        <h3>Variables (click to insert)</h3>
+        <div id="var-catalog" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+        <h3 style="margin-top:12px;">Data (JSON)</h3>
+        <textarea id="data" rows="8">{"name":"Ada","customer":{"name":"Acme"},"items":[{"name":"Item A","price":100},{"name":"Item B","price":250}]}</textarea>
+        <div class="grid2">
+          <button id="btn-insert-var">Insert {{name}}</button>
+          <button id="btn-insert-eq">Insert E=mc²</button>
+          <button id="btn-insert-table">Insert 2×2 Table</button>
+          <button id="btn-insert-image">Insert Image</button>
+        </div>
+        <h3 style="margin-top:12px;">Document JSON</h3>
+        <textarea id="json" rows="10" readonly></textarea>
+        <h3>Plugin sandbox</h3>
+        <input id="plugin-latex" placeholder="LaTeX e.g. \frac{a}{b}" style="width:100%" />
+        <button id="btn-plugin-eq">Insert via plugin</button>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

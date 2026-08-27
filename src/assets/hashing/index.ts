@@ -14,9 +14,9 @@ export async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+import cryptoNode from "node:crypto";
+
 export function sha256HexSync(bytes: Uint8Array): string {
   // Sync only in Node — for deterministic tests
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createHash } = require("node:crypto") as typeof import("node:crypto");
-  return createHash("sha256").update(bytes).digest("hex");
+  return cryptoNode.createHash("sha256").update(bytes).digest("hex");
 }

@@ -32,10 +32,16 @@ jobs:
         run: pnpm run test:unit
       - name: Integration tests
         run: pnpm run test:integration
+      - name: Coverage (>95%)
+        run: pnpm run coverage
       - name: Fixtures validation (33 files)
         run: node --experimental-strip-types scripts/validate-fixtures.ts
       - name: Export smoke (PDF/ODT/DOCX deterministic)
         run: node --experimental-strip-types scripts/smoke-export.ts
+      - name: Build VitePress docs
+        run: pnpm run docs:build
+      - name: Build playground
+        run: pnpm run playground:build
       - name: Build artifacts
         uses: actions/upload-artifact@v4
         if: always()
