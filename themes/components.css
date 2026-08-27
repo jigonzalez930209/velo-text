@@ -1,5 +1,6 @@
 @import "./editor-chrome.css";
 @import "./editor-overlays.css";
+@import "./editor-columns.css";
 
 [data-pde-theme="light-neutral"] {
   --pde-color-bg: #ffffff;

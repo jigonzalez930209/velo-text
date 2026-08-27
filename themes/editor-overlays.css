@@ -184,7 +184,9 @@
 .pde-ui-layer .pde-table-menu,
 .pde-ui-layer .pde-table-btn,
 .pde-ui-layer .pde-col-handle,
-.pde-ui-layer .pde-row-handle { pointer-events: auto; }
+.pde-ui-layer .pde-row-handle,
+.pde-ui-layer .pde-columns-btn,
+.pde-ui-layer .pde-columns-menu { pointer-events: auto; }
 
 /* Menus polish */
 .pde-block-menu button {
@@ -211,18 +213,3 @@
   min-height: 28px;
   position: relative;
 }
-.pde-columns {
-  display: flex;
-  align-items: stretch;
-  margin: 0.8em 0;
-  width: 100%;
-}
-.pde-column {
-  min-width: 0;
-  flex: 1 1 0;
-  padding: 4px 8px;
-  border: 1px dashed var(--pde-color-border, #d8dce3);
-  border-radius: var(--pde-radius-sm);
-  min-height: 2.4em;
-}
-.pde-column > p { margin: 0.2em 0; }
