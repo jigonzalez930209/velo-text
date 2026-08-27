@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-08-27T15:08:28.276Z",
+  "results": [
+    {
+      "name": "write (insertInline)",
+      "perOp": 0.0109949464,
+      "iterations": 5000
+    },
+    {
+      "name": "canonicalStringify (50 pages)",
+      "perOp": 0.06138017199999999,
+      "iterations": 500
+    }
+  ]
+}

@@ -18,19 +18,46 @@ function writeUint32LE(arr: number[], v: number): void {
 
 interface ZipEntry {
   name: string;
-  data: Uint8Array;
-  method: number; // 0 STORE
+  data: Uint8Array; // original uncompressed
+  compressedData?: Uint8Array;
+  method: number; // 0 STORE, 8 DEFLATE
   mtime: Date;
+  crc: number;
+}
+
+export interface ZipWriterOptions {
+  // Optional DEFLATE capability — if not provided, all entries use STORE (larger but always valid)
+  deflate?: { deflate: (data: Uint8Array) => Uint8Array | Promise<Uint8Array>; method: number };
+  // Deterministic mtime for tests
+  defaultMtime?: Date;
 }
 
 export class ZipWriter {
   private files: ZipEntry[] = [];
-  constructor(private readonly opts: Record<string, unknown> = {}) {}
+  constructor(private readonly opts: ZipWriterOptions = {}) {}
 
   add(name: string, data: Uint8Array | string, opts: { method?: number; mtime?: Date; comment?: string } = {}): void {
     let bytes: Uint8Array = typeof data === "string" ? encodeUtf8(data) : data;
     if (!(bytes instanceof Uint8Array)) bytes = new Uint8Array(bytes);
-    this.files.push({ name, data: bytes, method: opts.method ?? 0, mtime: opts.mtime ?? new Date() });
+    // Enforce STORE for mimetype (ODT spec)
+    const method = name === "mimetype" ? 0 : (opts.method ?? 0);
+    const crc = crc32(bytes);
+    this.files.push({ name, data: bytes, method, mtime: opts.mtime ?? this.opts.defaultMtime ?? new Date(), crc });
+  }
+
+  /** If DEFLATE is available and requested, compress synchronously for build() */
+  private getCompressed(entry: ZipEntry): { data: Uint8Array; method: number } {
+    if (entry.method === 8 && this.opts.deflate) {
+      try {
+        const res = this.opts.deflate.deflate(entry.data);
+        // If async, fallback to STORE for sync build()
+        if (res instanceof Promise) return { data: entry.data, method: 0 };
+        return { data: res as Uint8Array, method: 8 };
+      } catch {
+        return { data: entry.data, method: 0 };
+      }
+    }
+    return { data: entry.data, method: 0 };
   }
 
   build(): Uint8Array {
@@ -46,36 +73,36 @@ export class ZipWriter {
 
     for (const f of this.files) {
       const nameBytes = encodeUtf8(f.name);
-      const crc = crc32(f.data);
+      const { data: compressed, method: actualMethod } = this.getCompressed(f);
       const { time, date } = mtimeToDos(f.mtime);
       const localHeader: number[] = [];
       writeUint32LE(localHeader, 0x04034b50);
       writeUint16LE(localHeader, 20);
       writeUint16LE(localHeader, 0x0800); // utf8
-      writeUint16LE(localHeader, f.method);
+      writeUint16LE(localHeader, actualMethod);
       writeUint16LE(localHeader, time);
       writeUint16LE(localHeader, date);
-      writeUint32LE(localHeader, crc);
-      writeUint32LE(localHeader, f.data.length);
-      writeUint32LE(localHeader, f.data.length);
+      writeUint32LE(localHeader, f.crc);
+      writeUint32LE(localHeader, compressed.length); // compressed size
+      writeUint32LE(localHeader, f.data.length); // uncompressed size
       writeUint16LE(localHeader, nameBytes.length);
       writeUint16LE(localHeader, 0);
       const localStart = offset;
       out.push(...localHeader, ...nameBytes);
       offset += localHeader.length + nameBytes.length;
-      out.push(...f.data);
-      offset += f.data.length;
+      out.push(...compressed);
+      offset += compressed.length;
 
       const cd: number[] = [];
       writeUint32LE(cd, 0x02014b50);
       writeUint16LE(cd, 20);
       writeUint16LE(cd, 20);
       writeUint16LE(cd, 0x0800);
-      writeUint16LE(cd, f.method);
+      writeUint16LE(cd, actualMethod);
       writeUint16LE(cd, time);
       writeUint16LE(cd, date);
-      writeUint32LE(cd, crc);
-      writeUint32LE(cd, f.data.length);
+      writeUint32LE(cd, f.crc);
+      writeUint32LE(cd, compressed.length);
       writeUint32LE(cd, f.data.length);
       writeUint16LE(cd, nameBytes.length);
       writeUint16LE(cd, 0);

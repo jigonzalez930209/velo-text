@@ -38,7 +38,13 @@
     "build": "tsc -p tsconfig.json && node scripts/build.js",
     "check:types": "tsc -p tsconfig.check.json --noEmit",
     "check:zero-deps": "node scripts/check-zero-deps.js",
+    "check:circular": "node scripts/check-circular.js",
+    "check:fixtures": "node --experimental-strip-types scripts/validate-fixtures.ts",
+    "check:smoke": "node --experimental-strip-types scripts/smoke-export.ts",
     "lint": "node scripts/lint.js",
+    "api:report": "node scripts/generate-api-report.js",
+    "fuzz": "node --experimental-strip-types scripts/fuzz.js --iterations=5000",
+    "benchmark": "node --experimental-strip-types scripts/benchmark.js",
     "dev": "node --experimental-strip-types scripts/dev-server.js"
   },
   "devDependencies": {
