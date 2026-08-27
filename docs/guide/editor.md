@@ -52,7 +52,9 @@ Marks use `execCommand` when available and then `syncFromDom`. Alignment writes 
 - `Tab` / `Shift+Tab` via `handleTableTab` (wraps, creates a row at the end). Spans: `setCellSpan`. Structural ops: `insertRowAfter`, `deleteRow`, `insertColumnAfter`, `deleteColumn`.
 
 ## Columns
-Block type `columns` (`createColumns(idGen, n)`): side-by-side slots, each with nested blocks. Rendered as `.pde-columns` / `.pde-column`. Exported as a table-like grid in PDF/DOCX/ODT.
+Block type `columns` (`createColumns(idGen, count | pcts)`). Click the layout to open the **column menu** (button to the right): presets such as 50/50, 25/50/25, 50/25/25, 25/25/50, 33×3, 25×4, 30/70, 70/30, etc. Applying a preset is additive — existing slot content is kept; extra slots are merged into the last column.
+
+Insert **table**, **image**, or **nested columns** into the focused cell or slot (toolbar or `+` handle). Combinations (table in a column, image in a cell, columns in a cell, …) are allowed up to **depth 3** of nested `table`/`columns`.
 
 ## Clipboard & DnD
 - `text/plain` → paragraphs/hard-breaks
