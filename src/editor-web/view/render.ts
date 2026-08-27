@@ -71,7 +71,7 @@ function renderBlock(block: BlockNode): string {
         .map((col, i) => {
           const pct = col.widthPct ?? Math.round(100 / Math.max(1, block.columns.length));
           const inner = col.blocks.map(renderBlock).join("") || "<p><br></p>";
-          return `<div class="pde-column" data-node-id="${col.id}" data-col-index="${i}" data-width-pct="${pct}" style="width:${pct}%">${inner}</div>`;
+          return `<div class="pde-column" data-node-id="${col.id}" data-col-index="${i}" data-width-pct="${pct}" style="flex:0 0 ${pct}%;width:${pct}%;max-width:${pct}%">${inner}</div>`;
         })
         .join("");
       const gapPx = Math.round(((block.gapUm ?? 4000) / 25400) * 96);
