@@ -43,6 +43,20 @@ test("nested-layout: image and table inside columns", () => {
   teardown();
 });
 
+test("nested-layout: image inside table cell", () => {
+  const g = createIdGenerator("t");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-01-01T00:00:00.000Z" } });
+  const tbl = createTable(g, 2, 1);
+  tbl.rows[0].cells[0].blocks = [createImageBlock(g, "a1", { alt: "cell", widthUm: 20000 })];
+  doc.root.children.push(tbl);
+  doc.assets.a1 = { id: "a1", kind: "image", mediaType: "image/png", storageKey: "k", sha256: "a".repeat(64), byteLength: 1, alt: "cell" };
+  const { el } = setup();
+  const editor = createEditor(el, { document: doc });
+  assert(el.querySelector("td figure[data-node-type='image']"));
+  assert(editor.getDocument().root.children[0].rows[0].cells[0].blocks[0].type === "image");
+  teardown();
+});
+
 test("nested-layout: presets keep content and change slot count", () => {
   const g = createIdGenerator("p");
   const node = createColumns(g, 2);
