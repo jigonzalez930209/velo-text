@@ -56,7 +56,10 @@ export function parseBlockEl(el: HTMLElement, idGen: IdGenerator): BlockNode | n
     const wUm = Number(el.getAttribute("data-width-um")) || undefined;
     const hUm = Number(el.getAttribute("data-height-um")) || undefined;
     const alt = el.getAttribute("data-alt") ?? imgEl?.getAttribute("alt") ?? "";
-    return { type: "image", id, assetId, alt, ...(wUm ? { widthUm: wUm } : {}), ...(hUm ? { heightUm: hUm } : {}) };
+    const title = el.getAttribute("data-title") ?? el.querySelector("figcaption")?.textContent ?? "";
+    const alignRaw = el.style?.textAlign;
+    const align = alignRaw && (alignRaw === "center" || alignRaw === "right") ? alignRaw : undefined;
+    return { type: "image", id, assetId, alt, ...(title ? { title } : {}), ...(wUm ? { widthUm: wUm } : {}), ...(hUm ? { heightUm: hUm } : {}), ...(align ? { align } : {}) };
   }
   if (/^H[1-6]$/.test(tag)) {
     return { type: "heading", id, level: Number(tag[1]) as 1 | 2 | 3 | 4 | 5 | 6, children: parseInlines(el, idGen, {}, id) };
@@ -94,7 +97,9 @@ export function parseBlockEl(el: HTMLElement, idGen: IdGenerator): BlockNode | n
   const onlyBr = el.children.length === 1 && el.children[0]!.tagName.toUpperCase() === "BR" && !(el.textContent ?? "").trim();
   const children = onlyBr ? [] : parseInlines(el, idGen, {}, id);
   if (onlyBr) children.push({ type: "text", id: `${id}_t0`, text: "" });
-  return { type: "paragraph", id, children, ...(align ? { align } : {}) };
+  const indentRaw = el.getAttribute("data-indent-level") || (style?.paddingLeft ? String(Math.round(parseFloat(style.paddingLeft) / 24)) : "");
+  const indentLevel = Number(indentRaw) || undefined;
+  return { type: "paragraph", id, children, ...(align ? { align } : {}), ...(indentLevel ? { indentLevel } : {}) };
 }
 
 function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {

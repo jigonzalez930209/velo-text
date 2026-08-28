@@ -59,6 +59,8 @@ export function parseInlines(root: HTMLElement, idGen: IdGenerator, marks: TextM
         source: el.getAttribute("data-source") ?? el.textContent ?? "",
         valueType: "unknown",
         ...(Object.keys(m).length ? { marks: { ...m } } : {}),
+        ...(el.getAttribute("data-format") ? { format: el.getAttribute("data-format")! } : {}),
+        ...(el.getAttribute("data-fallback") ? { fallback: el.getAttribute("data-fallback")! } : {}),
       });
     } else if (ntype === "equation") {
       out.push({ type: "equation", id: nodeId(el, idGen), latex: el.getAttribute("data-latex") ?? "" });
@@ -78,6 +80,20 @@ export function parseInlines(root: HTMLElement, idGen: IdGenerator, marks: TextM
       for (const c of Array.from(el.childNodes)) walk(c, { ...m, strike: true });
     } else if (tag === "CODE") {
       for (const c of Array.from(el.childNodes)) walk(c, { ...m, code: true });
+    } else if ((tag === "SPAN" || tag === "FONT") && !ntype) {
+      const extra: TextMarks = { ...m };
+      const color = el.style.color || el.getAttribute("color") || "";
+      const bg = el.style.backgroundColor;
+      const fs = el.style.fontSize;
+      const ff = el.style.fontFamily || el.getAttribute("face") || "";
+      if (color) extra.color = color;
+      if (bg) extra.background = bg;
+      if (fs) {
+        const n = parseFloat(fs);
+        extra.fontSizePt = fs.endsWith("px") ? Math.round(n * 72 / 96) : n;
+      }
+      if (ff) extra.fontFamily = ff.replace(/['"]/g, "").split(",")[0]?.trim();
+      for (const c of Array.from(el.childNodes)) walk(c, extra);
     } else {
       for (const c of Array.from(el.childNodes)) walk(c, m);
     }

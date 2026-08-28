@@ -9,30 +9,31 @@ import { latexToHtml } from "../../core/equation/index.js";
 export interface RenderOptions {
   theme?: string;
   editable?: boolean;
+  resolveAssetUrl?: (assetId: string) => string | undefined;
 }
 
-export function renderBlocksToHtml(doc: PortableDocument): string {
-  return doc.root.children.map((b) => renderBlock(b)).join("");
+export function renderBlocksToHtml(doc: PortableDocument, resolveAssetUrl?: RenderOptions["resolveAssetUrl"]): string {
+  return doc.root.children.map((b) => renderBlock(b, resolveAssetUrl)).join("");
 }
 
 export function renderDocumentToHtml(doc: PortableDocument, opts: RenderOptions = {}): string {
-  const blocks = renderBlocksToHtml(doc);
+  const blocks = renderBlocksToHtml(doc, opts.resolveAssetUrl);
   return `<div class="pde-root" data-pde-theme="${opts.theme ?? "light-neutral"}" contenteditable="${opts.editable ?? true ? "true" : "false"}">${blocks}</div>`;
 }
 
-function renderBlock(block: BlockNode): string {
+function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"]): string {
   const id = block.id;
   switch (block.type) {
     case "paragraph":
-      return `<p data-node-id="${id}" data-node-type="paragraph"${alignStyle(block)}>${(block.children ?? []).map(renderInline).join("") || "<br>"}</p>`;
+      return `<p data-node-id="${id}" data-node-type="paragraph"${blockStyle(block)}>${(block.children ?? []).map((n) => renderInline(n, resolve)).join("") || "<br>"}</p>`;
     case "heading":
-      return `<h${block.level} data-node-id="${id}" data-node-type="heading"${alignStyle(block)}>${(block.children ?? []).map(renderInline).join("")}</h${block.level}>`;
+      return `<h${block.level} data-node-id="${id}" data-node-type="heading"${alignStyle(block)}>${(block.children ?? []).map((n) => renderInline(n, resolve)).join("")}</h${block.level}>`;
     case "quote":
-      return `<blockquote data-node-id="${id}" data-node-type="quote"${alignStyle(block)}>${(block.children ?? []).map(renderInline).join("")}</blockquote>`;
+      return `<blockquote data-node-id="${id}" data-node-type="quote"${alignStyle(block)}>${(block.children ?? []).map((n) => renderInline(n, resolve)).join("")}</blockquote>`;
     case "list": {
       const tag = block.kind === "ordered" ? "ol" : "ul";
       const items = block.items
-        .map((it) => `<li data-node-id="${it.id}">${it.content.map(renderInline).join("")}${it.nested ? renderBlock(it.nested) : ""}</li>`)
+        .map((it) => `<li data-node-id="${it.id}">${it.content.map((n) => renderInline(n, resolve)).join("")}${it.nested ? renderBlock(it.nested, resolve) : ""}</li>`)
         .join("");
       return `<${tag} data-node-id="${id}" data-node-type="list">${items}</${tag}>`;
     }
@@ -50,7 +51,7 @@ function renderBlock(block: BlockNode): string {
           const cells = row.cells
             .map((cell, colIndex) => {
               const tag = row.header ? "th" : "td";
-              const inner = cell.blocks.map(renderBlock).join("") || "<p><br></p>";
+              const inner = cell.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
               return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}">${inner}</${tag}>`;
             })
             .join("");
@@ -63,14 +64,17 @@ function renderBlock(block: BlockNode): string {
       const wUm = block.widthUm ?? 150000;
       const hUm = block.heightUm ?? 90000;
       const wPx = Math.round((wUm / 25400) * 96);
-      const hPx = Math.round((hUm / 25400) * 96);
-      return `<figure data-node-id="${id}" data-node-type="image" data-asset-id="${block.assetId}" data-width-um="${wUm}" data-height-um="${hUm}" data-alt="${escapeAttr(block.alt ?? "")}" class="pde-image-block"><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" draggable="false" style="width:${wPx}px;height:${hPx}px;display:block" /></figure>`;
+      const align = (block as { align?: string }).align;
+      const figStyle = align && align !== "left" ? ` style="text-align:${align}"` : "";
+      const cap = block.title ? `<figcaption>${escapeAttr(block.title)}</figcaption>` : "";
+      const src = assetSrc(block.assetId, resolve);
+      return `<figure draggable="true" data-node-id="${id}" data-node-type="image" data-asset-id="${block.assetId}" data-width-um="${wUm}" data-height-um="${hUm}" data-alt="${escapeAttr(block.alt ?? "")}"${block.title ? ` data-title="${escapeAttr(block.title)}"` : ""} class="pde-image-block"${figStyle}><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" draggable="true" style="width:${wPx}px;height:auto"${src} />${cap}</figure>`;
     }
     case "columns": {
       const cols = block.columns
         .map((col, i) => {
           const pct = col.widthPct ?? Math.round(100 / Math.max(1, block.columns.length));
-          const inner = col.blocks.map(renderBlock).join("") || "<p><br></p>";
+          const inner = col.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
           return `<div class="pde-column" data-node-id="${col.id}" data-col-index="${i}" data-width-pct="${pct}" style="flex:0 0 ${pct}%;width:${pct}%;max-width:${pct}%">${inner}</div>`;
         })
         .join("");
@@ -91,7 +95,7 @@ function renderBlock(block: BlockNode): string {
   }
 }
 
-function renderInline(inline: InlineNode): string {
+function renderInline(inline: InlineNode, resolve?: RenderOptions["resolveAssetUrl"]): string {
   switch (inline.type) {
     case "text": {
       let s = escapeHtml(inline.text);
@@ -102,14 +106,20 @@ function renderInline(inline: InlineNode): string {
       if (m.underline) s = `<u>${s}</u>`;
       if (m.strike) s = `<s>${s}</s>`;
       if (m.code) s = `<code>${s}</code>`;
+      const st: string[] = [];
+      if (m.color) st.push(`color:${m.color}`);
+      if (m.background) st.push(`background:${m.background}`);
+      if (m.fontSizePt) st.push(`font-size:${m.fontSizePt}pt`);
+      if (m.fontFamily) st.push(`font-family:${m.fontFamily}`);
+      if (st.length) s = `<span style="${st.join(";")}">${s}</span>`;
       return s;
     }
     case "variable":
-      return `<span data-node-id="${inline.id}" data-node-type="variable" contenteditable="false" class="pde-variable" role="button" tabindex="0" data-path="${escapeAttr((inline as unknown as { path: string }).path)}" data-source="${escapeAttr(inline.source)}" aria-label="Variable ${escapeAttr((inline as unknown as { path: string }).path)}">${escapeHtml(inline.source)}</span>`;
+      return `<span data-node-id="${inline.id}" data-node-type="variable" contenteditable="false" class="pde-variable" role="button" tabindex="0" data-path="${escapeAttr((inline as unknown as { path: string }).path)}" data-source="${escapeAttr(inline.source)}"${(inline as { format?: string }).format ? ` data-format="${escapeAttr((inline as { format: string }).format)}"` : ""}${(inline as { fallback?: string }).fallback ? ` data-fallback="${escapeAttr((inline as { fallback: string }).fallback)}"` : ""} aria-label="Variable ${escapeAttr((inline as unknown as { path: string }).path)}">${escapeHtml(inline.source)}</span>`;
     case "link":
-      return `<a data-node-id="${inline.id}" href="${escapeAttr(inline.href)}" data-node-type="link">${inline.children.map(renderInline).join("")}</a>`;
+      return `<a data-node-id="${inline.id}" href="${escapeAttr(inline.href)}" data-node-type="link">${inline.children.map((n) => renderInline(n, resolve)).join("")}</a>`;
     case "inline-image":
-      return `<img data-node-id="${inline.id}" data-asset-id="${inline.assetId}" class="pde-inline-image" alt="" />`;
+      return `<img data-node-id="${inline.id}" data-asset-id="${inline.assetId}" class="pde-inline-image" alt=""${assetSrc(inline.assetId, resolve)} />`;
     case "hard-break":
       return `<br data-node-id="${inline.id}" />`;
     case "equation": {
@@ -124,9 +134,24 @@ function renderInline(inline: InlineNode): string {
   }
 }
 
+function blockStyle(block: { align?: string; indentLevel?: number } | object): string {
+  const b = block as { align?: string; indentLevel?: number };
+  const parts: string[] = [];
+  if (b.align) parts.push(`text-align:${b.align}`);
+  if (b.indentLevel) parts.push(`padding-left:${b.indentLevel * 1.5}em`);
+  const indentAttr = b.indentLevel ? ` data-indent-level="${b.indentLevel}"` : "";
+  const style = parts.length ? ` style="${parts.join(";")}"` : "";
+  return `${indentAttr}${style}`;
+}
+
 function alignStyle(block: { align?: string } | object): string {
   const align = (block as { align?: string }).align;
   return align ? ` style="text-align:${align}"` : "";
+}
+
+function assetSrc(assetId: string, resolve?: RenderOptions["resolveAssetUrl"]): string {
+  const url = resolve?.(assetId);
+  return url ? ` src="${escapeAttr(url)}"` : "";
 }
 
 function escapeHtml(s: string): string {
