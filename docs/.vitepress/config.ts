@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "portable-doc-editor",
-  description: "Portable document editor — zero_deps, TypeScript strict, PDF/ODT/DOCX",
+  description: "Portable document editor — zero_deps, TypeScript strict, PDF",
   lang: "en-US",
   base: "/",
   head: [
@@ -25,10 +25,11 @@ export default defineConfig({
             { text: "Architecture", link: "/guide/architecture" },
             { text: "Data Model", link: "/guide/model" },
             { text: "Editor", link: "/guide/editor" },
+            { text: "Adapters", link: "/guide/adapters" },
             { text: "Template Engine", link: "/guide/template" },
             { text: "Assets & S3", link: "/guide/assets" },
             { text: "Layout", link: "/guide/layout" },
-            { text: "Export (PDF/ODT/DOCX)", link: "/guide/export" },
+            { text: "Export (PDF)", link: "/guide/export" },
             { text: "Themes", link: "/guide/themes" },
             { text: "Plugins", link: "/guide/plugins" },
             { text: "PostgreSQL", link: "/guide/postgres" },
