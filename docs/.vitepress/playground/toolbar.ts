@@ -71,7 +71,7 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
     };
     wrap.append(btn);
     g.appendChild(wrap);
-    toolbar.ownerDocument.body.appendChild(menu);
+    helpers.root.appendChild(menu);
     drops.push({ btn, menu });
     return menu;
   };
