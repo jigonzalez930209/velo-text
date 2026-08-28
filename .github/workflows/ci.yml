@@ -32,7 +32,13 @@ jobs:
         run: pnpm run test:unit
       - name: Integration tests
         run: pnpm run test:integration
-      - name: Coverage (>95%)
+      - name: Property tests
+        run: pnpm run test:property
+      - name: Soak export (short)
+        run: SOAK_ITERS=8 node scripts/soak.js
+      - name: Security corpus
+        run: pnpm run test:security
+      - name: Coverage (>90% lines, --all dist)
         run: pnpm run coverage
       - name: Fixtures validation (33 files)
         run: node --experimental-strip-types scripts/validate-fixtures.ts
@@ -42,26 +48,11 @@ jobs:
         run: pnpm run docs:build
       - name: Build playground
         run: pnpm run playground:build
+      - name: Visual HTML snapshots
+        run: pnpm run test:visual && git diff --exit-code -- tests/visual/snapshots
       - name: Build artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dist
           path: dist/
-
-  visual:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.24.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      # Placeholder for Percy/Chromatic or custom visual snapshots
-      - run: echo "visual tests — toolbar, document, tables, variables, images (see tests/visual)"
