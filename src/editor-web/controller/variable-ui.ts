@@ -1,6 +1,7 @@
 import { parseVariableSource } from "../../template/parser/parser.js";
 import { formatValue, safeResolve } from "../../template/resolver/format.js";
 import type { EditorState } from "./types.js";
+import { clampToWrapper } from "./table-resize.js";
 
 export function attachVariableUi(s: EditorState): { hideVariableUi: () => void } {
   let pop: HTMLElement | null = null;
@@ -50,6 +51,7 @@ export function attachVariableUi(s: EditorState): { hideVariableUi: () => void }
       hideVariableUi();
     });
     s.ui.append(pop);
+    clampToWrapper(s, pop);
   }
 
   s.addBoth("click", ((e: MouseEvent) => {

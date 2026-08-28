@@ -1,3 +1,5 @@
+import { placeOverlay } from "./place-overlay.js";
+
 export interface SizePickerOpts {
   cols: number;
   rows: number;
@@ -64,8 +66,8 @@ export function openSizePicker(anchor: HTMLElement, opts: SizePickerOpts): () =>
     pop.appendChild(foot);
   }
   paint(1, 1);
-  placePop(anchor, pop);
   doc.body.appendChild(pop);
+  placeOverlay(anchor, pop);
   const onDoc = (ev: Event): void => {
     const t = ev.target as Node | null;
     if (pop.contains(t) || anchor.contains(t)) return;
@@ -161,8 +163,8 @@ export function openMosaicPicker(anchor: HTMLElement, opts: MosaicPickerOpts): (
     pop.remove();
   };
   pop.appendChild(insert);
-  placePop(anchor, pop);
   doc.body.appendChild(pop);
+  placeOverlay(anchor, pop);
   const onDoc = (ev: Event): void => {
     const t = ev.target as Node | null;
     if (pop.contains(t) || anchor.contains(t)) return;
@@ -174,12 +176,6 @@ export function openMosaicPicker(anchor: HTMLElement, opts: MosaicPickerOpts): (
     pop.remove();
     doc.removeEventListener("mousedown", onDoc, true);
   };
-}
-
-function placePop(anchor: HTMLElement, pop: HTMLElement): void {
-  const r = anchor.getBoundingClientRect();
-  pop.style.left = `${Math.round(r.left)}px`;
-  pop.style.top = `${Math.round(r.bottom + 4)}px`;
 }
 
 export function closeSizePickers(doc: Document): void {

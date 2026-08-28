@@ -13,16 +13,23 @@ export function wrapperRel(s: EditorState, el: Element): { left: number; top: nu
   return { left: r.left - w.left, top: r.top - w.top, width: r.width, height: r.height };
 }
 
-/** Keep an absolutely positioned overlay inside the editor wrapper (no page overflow). */
+/** Keep an absolutely positioned overlay inside the editor wrapper and the viewport. */
 export function clampToWrapper(s: EditorState, el: HTMLElement, pad = 4): void {
   const wr = s.wrapper.getBoundingClientRect();
   const r = el.getBoundingClientRect();
-  let left = Number.parseFloat(el.style.left) || 0;
-  let top = Number.parseFloat(el.style.top) || 0;
-  if (r.right > wr.right - pad) left -= r.right - wr.right + pad;
-  if (r.left < wr.left + pad) left += wr.left + pad - r.left;
-  if (r.bottom > wr.bottom - pad) top -= r.bottom - wr.bottom + pad;
-  if (r.top < wr.top + pad) top += wr.top + pad - r.top;
+  const win = s.ownerDoc.defaultView;
+  const maxRight = Math.min(wr.right, win?.innerWidth ?? wr.right) - pad;
+  const maxBottom = Math.min(wr.bottom, win?.innerHeight ?? wr.bottom) - pad;
+  const minLeft = Math.max(wr.left, 0) + pad;
+  const minTop = Math.max(wr.top, 0) + pad;
+  const originLeft = Number.parseFloat(el.style.left) || 0;
+  const originTop = Number.parseFloat(el.style.top) || 0;
+  let left = originLeft;
+  let top = originTop;
+  if (r.right > maxRight) left -= r.right - maxRight;
+  if (r.left + (left - originLeft) < minLeft) left += minLeft - (r.left + left - originLeft);
+  if (r.bottom > maxBottom) top -= r.bottom - maxBottom;
+  if (r.top + (top - originTop) < minTop) top += minTop - (r.top + top - originTop);
   el.style.left = `${Math.max(pad, left)}px`;
   el.style.top = `${Math.max(pad, top)}px`;
 }

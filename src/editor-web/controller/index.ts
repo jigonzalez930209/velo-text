@@ -21,6 +21,7 @@ import { attachHostUx } from "../ux/attach.js";
 
 export type { Editor, EditorOptions, InsertBlockType } from "./types.js";
 export { openSizePicker, openMosaicPicker, clampTableSize } from "./size-picker.js";
+export { placeOverlay } from "./place-overlay.js";
 
 export function createEditor(container: HTMLElement, opts: EditorOptions): Editor {
   let doc = normalizeDocument(opts.document);
