@@ -4,6 +4,7 @@
  * DOM is a reflection of the AST; AST is the source of truth.
  */
 import type { PortableDocument, BlockNode, InlineNode } from "../../core/model/types.js";
+import { tableClassName } from "../../core/model/table-look.js";
 import { latexToHtml } from "../../core/equation/index.js";
 
 export interface RenderOptions {
@@ -48,17 +49,22 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
       const rows = block.rows
         .map((row) => {
           const hPx = row.heightUm ? ` style="height:${Math.round((row.heightUm / 25400) * 96)}px" data-height-um="${row.heightUm}"` : "";
+          const hdr = row.header ? ` data-header="true"` : "";
           const cells = row.cells
             .map((cell, colIndex) => {
               const tag = row.header ? "th" : "td";
               const inner = cell.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
-              return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}">${inner}</${tag}>`;
+              const bg = typeof cell.style?.background === "string" ? `background:${cell.style.background}` : "";
+              const va = "vertical-align:middle";
+              const st = [bg, va].filter(Boolean).join(";");
+              const styleAttr = st ? ` style="${st}"` : ` style="${va}"`;
+              return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}"${styleAttr}>${inner}</${tag}>`;
             })
             .join("");
-          return `<tr data-node-id="${row.id}"${hPx}>${cells}</tr>`;
+          return `<tr data-node-id="${row.id}"${hPx}${hdr}>${cells}</tr>`;
         })
         .join("");
-      return `<table class="pde-table" data-node-id="${id}" data-node-type="table" style="table-layout:fixed;width:100%"><colgroup>${colsHtml}</colgroup><tbody>${rows}</tbody></table>`;
+      return `<table class="${tableClassName(block)}" data-node-id="${id}" data-node-type="table" style="table-layout:fixed;width:100%"><colgroup>${colsHtml}</colgroup><tbody>${rows}</tbody></table>`;
     }
     case "image": {
       const wUm = block.widthUm ?? 150000;

@@ -1,7 +1,7 @@
 /**
  * DOM → AST parser — parses contenteditable DOM into PortableDocument.
  */
-import type { PortableDocument, BlockNode, TableNode, TableRow, TableCell, IdGenerator } from "../../core/model/types.js";
+import type { PortableDocument, BlockNode, TableNode, TableRow, TableCell, TableLook, TablePreset, TableStyle, IdGenerator } from "../../core/model/types.js";
 import { pxToUm } from "../../export/layout/units.js";
 import { parseInlines, nodeId } from "./parse-inlines.js";
 
@@ -171,7 +171,9 @@ function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
       }
       flushText();
       if (!blocks.length) blocks.push({ type: "paragraph", id: `${tdId}_p`, children: [] });
-      cells.push({ id: tdId, colSpan, rowSpan, blocks });
+      const bg = (tdEl.style.backgroundColor || tdEl.style.background || "").trim();
+      const cellStyle = bg ? { background: bg } : undefined;
+      cells.push({ id: tdId, colSpan, rowSpan, blocks, ...(cellStyle ? { style: cellStyle } : {}) });
     }
     const hUm = Number(trEl.getAttribute("data-height-um")) || undefined;
     const header = trEl.getAttribute("data-header") === "true" || trEl.parentElement?.tagName.toUpperCase() === "THEAD" || tdElIsTh;
@@ -183,7 +185,26 @@ function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
     columns = Array.from({ length: colCount }, () => ({ id: idGen.next(), widthUm: 40000 }));
   }
 
-  return { type: "table", id, columns, rows };
+  const style = tableStyleFromClass(el.className);
+  return { type: "table", id, columns, rows, ...(style ? { style } : {}) };
+}
+
+function tableStyleFromClass(className: string): TableStyle | undefined {
+  const density = (["compact", "normal", "large"] as const).find((d) => className.includes(`pde-table--${d}`));
+  const preset = (["grid-banded", "list-header", "accent", "plain", "grid", "list"] as const).find((p) =>
+    className.includes(`pde-table--${p}`),
+  ) as TablePreset | undefined;
+  const look: TableLook = {};
+  if (className.includes("pde-table--banded-rows")) look.bandedRows = true;
+  if (className.includes("pde-table--banded-cols")) look.bandedColumns = true;
+  if (className.includes("pde-table--first-col")) look.firstColumn = true;
+  if (className.includes("pde-table--last-col")) look.lastColumn = true;
+  if (className.includes("pde-table--total-row")) look.totalRow = true;
+  if (preset === "grid" || preset === "grid-banded" || preset === "list" || preset === "list-header" || preset === "accent") {
+    look.headerRow = true;
+  }
+  if (!density && !preset && !Object.keys(look).length) return undefined;
+  return { ...(density ? { density } : {}), ...(preset ? { preset } : {}), ...(Object.keys(look).length ? { look } : {}) };
 }
 
 /**
