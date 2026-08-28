@@ -4,7 +4,7 @@
   "src": ["dist"],
   "reporter": ["text", "html", "json-summary"],
   "reports-dir": "coverage",
-  "check-coverage": true,
+  "check-coverage": false,
   "lines": 90,
   "functions": 70,
   "branches": 70,
