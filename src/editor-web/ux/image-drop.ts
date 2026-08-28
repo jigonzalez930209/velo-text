@@ -1,8 +1,8 @@
 import { sniffImage } from "../../assets/sniff/index.js";
 import { createImageBlock } from "../../core/model/factories.js";
 import type { EditorState } from "../controller/types.js";
-import { syncImageResizeOverlay } from "../controller/image-resize.js";
-import { commitInsert, locFromHostEl, moveBlockToHost } from "../controller/nesting.js";
+import { hideImageMeta, placeImageMeta, syncImageResizeOverlay } from "../controller/image-resize.js";
+import { commitInsert, dropHostFromPoint, locFromHostEl, moveBlockToHost } from "../controller/nesting.js";
 
 const BLOCK_MIME = "application/x-pde-block";
 
@@ -13,12 +13,21 @@ export function attachImageDrop(
   let hint: HTMLElement | null = null;
   let msg: HTMLElement | null = null;
 
-  function hideMeta(): void { s.wrapper.querySelector(".pde-img-meta")?.remove(); }
+  function hideMeta(): void { hideImageMeta(s); }
   function clearHost(): void {
     for (const el of s.container.querySelectorAll(".pde-drop-host")) el.classList.remove("pde-drop-host");
   }
   function hostFrom(e: DragEvent): HTMLElement | null {
-    return (e.target as HTMLElement)?.closest?.("td, th, .pde-column") as HTMLElement | null;
+    const t = e.target as HTMLElement | null;
+    const fromPoint = Number.isFinite(e.clientX) ? dropHostFromPoint(s, e.clientX, e.clientY) : null;
+    if (fromPoint) return fromPoint;
+    const cell = t?.closest?.("td, th, .pde-column") as HTMLElement | null;
+    if (cell && s.container.contains(cell)) return cell;
+    const table = t?.closest?.("table") as HTMLElement | null;
+    if (table && s.container.contains(table)) return table.querySelector("td, th") as HTMLElement | null;
+    const cols = t?.closest?.(".pde-columns") as HTMLElement | null;
+    if (cols && s.container.contains(cols)) return cols.querySelector(".pde-column") as HTMLElement | null;
+    return null;
   }
 
   function showHint(on: boolean): void {
@@ -70,6 +79,7 @@ export function attachImageDrop(
     if (types.includes("Files")) showHint(true);
     clearHost();
     host?.classList.add("pde-drop-host");
+    host?.closest("table, .pde-columns")?.classList.add("pde-drop-host");
   };
   const onDragLeave = (): void => { showHint(false); };
   const onDrop = (e: DragEvent): void => {
@@ -89,8 +99,9 @@ export function attachImageDrop(
   s.container.addEventListener("drop", onDrop);
 
   const onDocDown = (e: Event): void => {
-    const t = e.target as HTMLElement;
-    if (t.closest?.(".pde-img-meta, figure[data-node-type='image']")) return;
+    const n = e.target as Node | null;
+    const t = (n && n.nodeType === 1 ? n : n?.parentElement) as HTMLElement | null;
+    if (t?.closest?.(".pde-img-meta, .pde-image-resize, figure[data-node-type='image']")) return;
     hideMeta();
   };
   const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") hideMeta(); };
@@ -105,10 +116,11 @@ export function attachImageDrop(
     hideMeta();
     const box = s.ownerDoc.createElement("div");
     box.className = "pde-img-meta";
+    box.dataset.imgOwner = fig.getAttribute("data-node-id") ?? "";
     const alt = fig.getAttribute("data-alt") ?? "";
     const title = fig.getAttribute("data-title") ?? "";
-    box.innerHTML = `<label>Alt<input data-alt value="${esc(alt)}" /></label>
-      <label>Caption<input data-cap value="${esc(title)}" /></label>`;
+    box.innerHTML = `<label>Alt text<input data-alt value="${esc(alt)}" placeholder="Describe the image" /></label>
+      <label>Caption<input data-cap value="${esc(title)}" placeholder="Optional" /></label>`;
     const apply = (): void => {
       const a = (box.querySelector("[data-alt]") as HTMLInputElement).value;
       const c = (box.querySelector("[data-cap]") as HTMLInputElement).value;
@@ -118,7 +130,8 @@ export function attachImageDrop(
       s.syncFromDom(false);
     };
     box.querySelectorAll("input").forEach((inp) => inp.addEventListener("change", apply));
-    s.wrapper.appendChild(box);
+    s.ui.appendChild(box);
+    placeImageMeta(s, box, fig);
     syncImageResizeOverlay(s);
   }) as never);
 
