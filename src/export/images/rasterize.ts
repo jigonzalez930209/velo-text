@@ -1,4 +1,9 @@
 import type { DecodedImage } from "../pdf/image.js";
+import { sniffImage } from "../../assets/sniff/index.js";
+
+function sniffType(data: Uint8Array): string {
+  return sniffImage(data).mediaType ?? "application/octet-stream";
+}
 
 /**
  * Last-resort decode in browsers (and Node with ImageBitmap): WebP, indexed PNG,
@@ -12,7 +17,7 @@ export async function decodeViaBitmap(data: Uint8Array): Promise<DecodedImage | 
   };
   if (typeof g.createImageBitmap !== "function") return null;
   try {
-    const blob = new Blob([data as BlobPart]);
+    const blob = new Blob([data as BlobPart], { type: sniffType(data) });
     const bmp = await g.createImageBitmap(blob);
     const w = bmp.width;
     const h = bmp.height;
@@ -44,13 +49,17 @@ export async function decodeViaBitmap(data: Uint8Array): Promise<DecodedImage | 
     bmp.close?.();
     const rgba = ctx.getImageData(0, 0, w, h).data;
     const rgb = new Uint8Array(w * h * 3);
-    for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
-      const a = (rgba[i + 3] ?? 255) / 255;
-      rgb[j] = Math.round((rgba[i] ?? 0) * a + 255 * (1 - a));
-      rgb[j + 1] = Math.round((rgba[i + 1] ?? 0) * a + 255 * (1 - a));
-      rgb[j + 2] = Math.round((rgba[i + 2] ?? 0) * a + 255 * (1 - a));
+    const alpha = new Uint8Array(w * h);
+    let anyTrans = false;
+    for (let i = 0, j = 0, a = 0; i < rgba.length; i += 4, j += 3, a++) {
+      const aa = rgba[i + 3] ?? 255;
+      if (aa < 255) anyTrans = true;
+      rgb[j] = rgba[i] ?? 0;
+      rgb[j + 1] = rgba[i + 1] ?? 0;
+      rgb[j + 2] = rgba[i + 2] ?? 0;
+      alpha[a] = aa;
     }
-    return { widthPx: w, heightPx: h, rgb };
+    return { widthPx: w, heightPx: h, rgb, ...(anyTrans ? { alpha } : {}) };
   } catch {
     return null;
   }

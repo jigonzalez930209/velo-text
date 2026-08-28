@@ -93,6 +93,6 @@ export function buildCoreProps(doc: PortableDocument): string {
 export function buildAppProps(): string {
     const w = new XmlWriter().declaration();
     w.open("Properties", { xmlns: "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" });
-    w.open("Application").text("portable-doc-editor").close().close();
+    w.open("Application").text("velo-text").close().close();
     return w.toString();
   }
