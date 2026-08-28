@@ -1,8 +1,14 @@
 import { defineConfig } from "vitepress";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const docsDir = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(docsDir, "../..");
+const src = path.join(repo, "src");
 
 export default defineConfig({
-  title: "portable-doc-editor",
-  description: "Portable document editor — zero_deps, TypeScript strict, PDF",
+  title: "velo-text",
+  description: "velo-text — zero_deps document editor, TypeScript strict, PDF",
   lang: "en-US",
   base: "/",
   head: [
@@ -14,6 +20,7 @@ export default defineConfig({
       { text: "Guide", link: "/guide/introduction" },
       { text: "API", link: "/api/overview" },
       { text: "Playground", link: "/playground/" },
+      { text: "Examples", link: "/examples/" },
       { text: "Changelog", link: "/changelog" },
     ],
     sidebar: {
@@ -35,6 +42,21 @@ export default defineConfig({
             { text: "PostgreSQL", link: "/guide/postgres" },
             { text: "Security", link: "/guide/security" },
             { text: "Performance", link: "/guide/performance" },
+          ],
+        },
+      ],
+      "/examples/": [
+        {
+          text: "Framework adapters",
+          items: [
+            { text: "Overview", link: "/examples/" },
+            { text: "Vanilla", link: "/examples/vanilla" },
+            { text: "React", link: "/examples/react" },
+            { text: "Vue", link: "/examples/vue" },
+            { text: "Svelte", link: "/examples/svelte" },
+            { text: "Angular", link: "/examples/angular" },
+            { text: "Astro", link: "/examples/astro" },
+            { text: "Backend PDF (Vite / Express / Vercel)", link: "/examples/backend" },
           ],
         },
       ],
@@ -60,7 +82,7 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [{ icon: "github", link: "https://github.com/velo-text/portable-doc-editor" }],
+    socialLinks: [{ icon: "github", link: "https://github.com/velo-text/velo-text" }],
     footer: {
       message: "Zero runtime dependencies — TypeScript strict — MIT",
       copyright: "Copyright © 2026 velo-text",
@@ -68,7 +90,18 @@ export default defineConfig({
     search: { provider: "local" },
   },
   vite: {
-    server: { port: 5174 },
+    server: {
+      port: 5174,
+      fs: { allow: [repo] },
+    },
+    resolve: {
+      alias: [
+        { find: "velo-text/backend", replacement: path.join(src, "adapters/backend/index.ts") },
+        { find: "velo-text/adapters/browser", replacement: path.join(src, "adapters/browser/index.ts") },
+        { find: "velo-text/editor-web", replacement: path.join(src, "editor-web/index.ts") },
+        { find: "velo-text", replacement: path.join(src, "public-api/index.ts") },
+      ],
+    },
   },
   markdown: {
     theme: { light: "github-light", dark: "github-dark" },
