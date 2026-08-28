@@ -99,7 +99,24 @@ export function latexToHtml(latex: string): string {
         infty: "∞",
       };
       return map[name] ?? _m;
-    });
+    })
+    .replace(/\\hat\s*\{([^{}]+)\}/g, "$1̂")
+    .replace(/\\bar\s*\{([^{}]+)\}/g, "$1̄")
+    .replace(/\\vec\s*\{([^{}]+)\}/g, "$1⃗")
+    .replace(/\\tilde\s*\{([^{}]+)\}/g, "$1̃")
+    .replace(/\\begin\{matrix\}/g, "")
+    .replace(/\\end\{matrix\}/g, "")
+    .replace(/\\\\/g, "<br>")
+    .replace(/\\(left|right)\b/g, "");
+  const cmds: Array<[string, string]> = [
+    ["\\iiint", "∭"], ["\\iint", "∬"], ["\\oint", "∮"], ["\\int", "∫"],
+    ["\\sum", "∑"], ["\\prod", "∏"], ["\\lim", "lim"],
+    ["\\rightarrow", "→"], ["\\leftarrow", "←"], ["\\to", "→"],
+    ["\\times", "×"], ["\\cdot", "·"], ["\\div", "÷"], ["\\pm", "±"],
+    ["\\leq", "≤"], ["\\geq", "≥"], ["\\neq", "≠"],
+    ["\\sin", "sin"], ["\\cos", "cos"], ["\\ln", "ln"],
+  ];
+  for (const [cmd, ch] of cmds) html = html.split(cmd).join(ch);
   // Superscript ^ and subscript _ with braces: x^{2} -> x<sup>2</sup>
   html = html.replace(/\^\{([^{}]+)\}/g, "<sup>$1</sup>").replace(/_\{([^{}]+)\}/g, "<sub>$1</sub>");
   // Simple ^x and _x without braces (single char)

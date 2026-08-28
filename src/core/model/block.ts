@@ -83,6 +83,7 @@ export interface ImageBlockNode {
   title?: string;
   widthUm?: number;
   heightUm?: number;
+  align?: "left" | "center" | "right";
 }
 
 export interface PageBreakNode {
