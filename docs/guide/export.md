@@ -3,7 +3,7 @@
 **PDF is the product path.** Preview in the playground and a Vercel/Express handler must call the same function: `exportPdf({ document, data, assets, options })`. `exportDocument({ format: "pdf", sink })` is a thin wrapper around `exportPdf`.
 
 ```ts
-import { exportPdf } from "portable-doc-editor";
+import { exportPdf } from "velo-text";
 
 // Express / Vercel (Node runtime, no DOM)
 const { bytes, diagnostics, pages } = await exportPdf({

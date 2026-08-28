@@ -26,7 +26,7 @@ interface PluginDef {
 
 ## Registration
 ```ts
-import { registerNodeType, registerFormatter, registerCommand, registerPlugin } from "portable-doc-editor";
+import { registerNodeType, registerFormatter, registerCommand, registerPlugin } from "velo-text";
 registerNodeType("my-widget", MyWidgetNode);
 registerFormatter("myFormat", (v) => String(v));
 registerPlugin(myPluginDef); // external

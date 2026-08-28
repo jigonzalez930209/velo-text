@@ -71,7 +71,7 @@ Insert **table**, **image**, or **nested columns** into the focused cell or slot
 See `src/editor-web/controller` and `src/editor-web/ux` (command palette, selection bubble, find, image drop, page preview).
 
 ## Usability
-- `Ctrl/Cmd+K` or `/` in an empty paragraph: command palette (H2, table 3×2, `{{name}}`, undo…).
+- `Ctrl/Cmd+Shift+P` or `/` in an empty paragraph: command palette (H2, table 3×2, `{{name}}`, undo…).
 - Selection bubble: bold/italic/underline/link/clear (not table/column chrome).
 - `Ctrl/Cmd+F` / `H`: find and replace in text nodes (skips variables and LaTeX).
 - Drop a PNG/JPEG/WebP/SVG onto the editor (`onImageFile` on the host).
