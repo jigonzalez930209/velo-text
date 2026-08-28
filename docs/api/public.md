@@ -5,7 +5,7 @@
 ```ts
 export { createDocument, createIdGenerator, createTable, createColumns, ... } from "../core/model/factories.js";
 export { createEditor, renderDocumentToHtml, renderBlocksToHtml } from "../editor-web";
-export { exportDocument, PdfWriter, ... } from "../export";
+export { exportDocument, PdfWriter } from "../export";
 export { themes, setTheme } from "../theme";
 ```
 
