@@ -225,6 +225,7 @@ test("full: public-api re-exports", async () => {
   const mod = await import("../../dist/public-api/index.js");
   assert(typeof mod.createDocument === "function");
   assert(typeof mod.exportDocument === "function");
+  assert(typeof mod.exportPdf === "function");
   assert(typeof mod.getIconSvg === "function");
   assert(typeof mod.registerPlugin === "function");
 });

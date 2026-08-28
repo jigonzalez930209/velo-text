@@ -38,6 +38,14 @@ test("equation: latexToHtml strips left/right delimiters", () => {
   assert(html.includes("<sup>2</sup>"));
 });
 
+test("equation: latexToHtml maps extra greek and operators", () => {
+  const html = latexToHtml("\\Omega \\otimes \\notin \\lfloor x \\rfloor");
+  assert(html.includes("Ω"));
+  assert(html.includes("⊗"));
+  assert(html.includes("∉"));
+  assert(html.includes("⌊"));
+});
+
 test("icons: getIconSvg uses currentColor by default", () => {
   const svg = getIconSvg("bold");
   assert(svg.includes("currentColor"));
