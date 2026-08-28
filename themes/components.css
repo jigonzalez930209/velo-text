@@ -78,13 +78,25 @@
 
 .pde-equation {
   font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", serif;
+  display: inline-block;
+  vertical-align: middle;
   background: var(--pde-color-surface, #f7f8fa);
   border: 1px solid var(--pde-color-border, #d8dce3);
   border-radius: var(--pde-radius-sm, 4px);
   padding: 1px 6px;
-  margin: 0 2px;
+  margin: 4px;
   white-space: nowrap;
   color: var(--pde-color-text, #17191c);
+}
+.pde-equation sup {
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+}
+.pde-equation sub {
+  font-size: 0.72em;
+  vertical-align: sub;
+  line-height: 0;
 }
 .pde-equation--block {
   display: block;
@@ -92,12 +104,14 @@
   margin: 12px auto;
   padding: 8px 12px;
   max-width: 90%;
+  white-space: normal;
 }
-.pde-frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 2px; }
-.pde-frac-num { display: block; border-bottom: 1px solid currentColor; padding: 0 4px; }
-.pde-frac-den { display: block; padding: 0 4px; }
-.pde-sqrt { position: relative; }
-.pde-sqrt-inner { border-top: 1px solid currentColor; margin-left: 2px; }
+.pde-frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 2px; line-height: 1.15; }
+.pde-frac-num { display: block; border-bottom: 1.5px solid currentColor; padding: 0 5px 1px; }
+.pde-frac-den { display: block; padding: 1px 5px 0; }
+.pde-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.pde-sqrt-sym { width: 0.62em; min-height: 1.05em; flex-shrink: 0; display: block; overflow: visible; }
+.pde-sqrt-inner { border-top: 1.35px solid currentColor; padding: 0.08em 0.28em 0.06em 0.04em; margin-left: -1px; line-height: 1.2; }
 
 
 /* === Icons (src/assets/icons/index.ts:iconCss) === */

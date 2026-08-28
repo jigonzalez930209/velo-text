@@ -1,7 +1,7 @@
 /* Block handle + menu */
 .pde-block-handle {
   position: absolute;
-  left: 8px;
+  left: 0;
   top: 0;
   display: flex;
   gap: 2px;
@@ -9,8 +9,9 @@
   border-radius: var(--pde-radius-sm);
   background: var(--pde-color-surface);
   border: 1px solid var(--pde-color-border);
-  z-index: 20;
+  z-index: 1;
   opacity: 1;
+  transform: translateX(calc(-100% - 2px));
 }
 .pde-handle-grip, .pde-handle-plus {
   display: inline-flex;
@@ -250,18 +251,24 @@
 .pde-palette [data-list] button:hover { background: var(--pde-color-selection); }
 .pde-sel-bubble {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   padding: 4px;
+  max-width: min(100%, 360px);
 }
 .pde-sel-bubble button {
   min-width: 28px;
   height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: none;
   cursor: pointer;
   color: inherit;
   border-radius: var(--pde-radius-sm);
 }
+.pde-sel-bubble button .pde-icon { display: block; }
 .pde-sel-bubble button:hover { background: var(--pde-color-selection); }
 .pde-find {
   right: 12px;
@@ -349,14 +356,20 @@
 }
 .pde-block-menu button .pde-icon { color: var(--pde-color-muted); }
 .pde-block-menu button:hover .pde-icon { color: var(--pde-color-primary); }
-.pde-table-menu { min-width: 200px; }
-.pde-table-menu button .pde-icon { color: var(--pde-color-muted); }
-.pde-table-menu button:nth-of-type(3),
-.pde-table-menu button:nth-of-type(6),
-.pde-table-menu button:nth-of-type(7) { color: var(--pde-color-danger); }
-.pde-table-menu button:nth-of-type(3) .pde-icon,
-.pde-table-menu button:nth-of-type(6) .pde-icon,
-.pde-table-menu button:nth-of-type(7) .pde-icon { color: var(--pde-color-danger); }
+.pde-table-menu { min-width: 200px; max-height: min(70vh, 480px); overflow-y: auto; overflow-x: hidden; }
+.pde-submenu-wrap { display: flex; flex-direction: column; }
+.pde-submenu-wrap > button.pde-submenu-trigger { width: 100%; justify-content: flex-start; }
+.pde-submenu-wrap > button.pde-submenu-trigger .pde-icon:last-child { margin-left: auto; }
+.pde-submenu {
+  display: none;
+  flex-direction: column;
+  padding: 2px 0 4px 10px;
+  border-left: 2px solid var(--pde-color-border);
+  margin: 0 6px 4px;
+}
+.pde-submenu:not([hidden]) { display: flex; }
+.pde-menu-danger,
+.pde-menu-danger .pde-icon { color: var(--pde-color-danger); }
 
 /* Tables */
 .pde-editor table.pde-table,

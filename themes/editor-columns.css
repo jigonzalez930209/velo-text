@@ -2,14 +2,15 @@
 .pde-columns {
   display: flex;
   align-items: stretch;
-  margin: 0.8em 0;
+  margin: 1.1em 0;
   width: 100%;
   box-sizing: border-box;
+  gap: 12px;
 }
 .pde-column {
   min-width: 0;
   box-sizing: border-box;
-  padding: 4px 8px;
+  padding: 10px 12px;
   border: 1px dashed var(--pde-color-border, #d8dce3);
   border-radius: var(--pde-radius-sm);
   min-height: 2.4em;
