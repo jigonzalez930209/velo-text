@@ -13,6 +13,20 @@ export function wrapperRel(s: EditorState, el: Element): { left: number; top: nu
   return { left: r.left - w.left, top: r.top - w.top, width: r.width, height: r.height };
 }
 
+/** Keep an absolutely positioned overlay inside the editor wrapper (no page overflow). */
+export function clampToWrapper(s: EditorState, el: HTMLElement, pad = 4): void {
+  const wr = s.wrapper.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  let left = Number.parseFloat(el.style.left) || 0;
+  let top = Number.parseFloat(el.style.top) || 0;
+  if (r.right > wr.right - pad) left -= r.right - wr.right + pad;
+  if (r.left < wr.left + pad) left += wr.left + pad - r.left;
+  if (r.bottom > wr.bottom - pad) top -= r.bottom - wr.bottom + pad;
+  if (r.top < wr.top + pad) top += wr.top + pad - r.top;
+  el.style.left = `${Math.max(pad, left)}px`;
+  el.style.top = `${Math.max(pad, top)}px`;
+}
+
 export function findTableNode(s: EditorState, table: HTMLElement): TableNode | null {
   const id = table.getAttribute("data-node-id") ?? "";
   const found = findParentList(s.getDoc(), id);

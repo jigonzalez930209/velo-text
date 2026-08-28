@@ -4,7 +4,7 @@ import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import type { bindCommands } from "./commands.js";
 import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH, moveBlockToHost, dropHostFromPoint } from "./nesting.js";
-import { wrapperRel } from "./table-resize.js";
+import { wrapperRel, clampToWrapper } from "./table-resize.js";
 
 const MENU_ITEMS: Array<{ label: string; icon: IconName; type: InsertBlockType }> = [
   { label: "Paragraph", icon: "alignLeft", type: "paragraph" },
@@ -45,7 +45,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     const t = wrapperRel(s, blockEl);
     if (handleEl && handleEl.dataset.owner === owner) {
       handleEl.style.top = `${t.top}px`;
-      handleEl.style.left = `${Math.max(4, t.left - 24)}px`;
+      handleEl.style.left = `${t.left}px`;
       return;
     }
     handleEl?.remove();
@@ -54,7 +54,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     handleEl.dataset.blockHandle = "";
     handleEl.dataset.owner = owner;
     handleEl.style.top = `${t.top}px`;
-    handleEl.style.left = `${Math.max(4, t.left - 24)}px`;
+    handleEl.style.left = `${t.left}px`;
     const grip = s.ownerDoc.createElement("span");
     grip.className = "pde-handle-grip";
     grip.dataset.blockHandleGrip = "";
@@ -160,8 +160,10 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     hideMenu();
     menuEl = s.ownerDoc.createElement("div");
     menuEl.className = "pde-block-menu";
+    const wr = s.wrapper.getBoundingClientRect();
+    const hr = handleEl.getBoundingClientRect();
     menuEl.style.top = handleEl.style.top;
-    menuEl.style.left = `${Math.max(28, parseFloat(handleEl.style.left || "8") + 26)}px`;
+    menuEl.style.left = `${hr.right - wr.left + 4}px`;
     const ownerId = handleEl.dataset.owner ?? "";
     const depth = layoutDepthOf(s.getDoc(), ownerId);
     for (const item of MENU_ITEMS) {
@@ -177,6 +179,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
       menuEl.appendChild(btn);
     }
     s.ui.append(menuEl);
+    clampToWrapper(s, menuEl);
   }) as never);
 
   const onPointerLeave = (e: PointerEvent): void => {

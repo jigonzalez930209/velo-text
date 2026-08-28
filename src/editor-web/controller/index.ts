@@ -42,7 +42,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   wrapper.appendChild(container);
   const ui = ownerDoc.createElement("div");
   ui.className = "pde-ui-layer";
-  ui.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:100;";
+  ui.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;";
   wrapper.appendChild(ui);
 
   const s = {

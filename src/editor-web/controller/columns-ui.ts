@@ -5,7 +5,7 @@ import type { EditorState, InsertBlockType } from "./types.js";
 import { COLUMN_PRESETS } from "./column-presets.js";
 import { applyWidths, commitInsert, MAX_LAYOUT_DEPTH, layoutDepthOf } from "./nesting.js";
 import { makeBlock } from "./commands.js";
-import { wrapperRel } from "./table-resize.js";
+import { wrapperRel, clampToWrapper } from "./table-resize.js";
 import { bindColumnResize, findColumnsNode, showColumnGutters } from "./column-resize.js";
 
 export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
@@ -60,6 +60,7 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
       menuEl.appendChild(b);
     }
     s.ui.append(menuEl);
+    clampToWrapper(s, menuEl);
   }
 
   function showChrome(layoutEl: HTMLElement): void {
@@ -72,14 +73,15 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
     btnEl.className = "pde-columns-btn";
     btnEl.title = "Column layout";
     btnEl.innerHTML = getIconSvg("columns3", { size: 14 });
-    btnEl.style.left = `${t.left + t.width + 6}px`;
+    btnEl.style.left = `${Math.max(4, t.left + t.width - 28)}px`;
     btnEl.style.top = `${t.top}px`;
     btnEl.onclick = (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
-      showMenu(layoutEl, t.left + t.width + 6, t.top + 28);
+      showMenu(layoutEl, t.left + t.width - 28, t.top + 28);
     };
     s.ui.append(btnEl);
+    clampToWrapper(s, btnEl);
   }
 
   s.addBoth("click", ((e: MouseEvent) => {
