@@ -40,7 +40,7 @@ export { getIconSvg, getAllIcons, iconCss } from "../assets/icons/index.js";
 export { validateLatex, latexToHtml, latexToPlainText, equationCss } from "../core/equation/index.js";
 export { themes, themeCss, allThemesCss } from "../theme/index.js";
 export { renderDocumentToHtml, renderBlocksToHtml, reconcileDom } from "../editor-web/view/index.js";
-export { createEditor, openSizePicker, openMosaicPicker, clampTableSize } from "../editor-web/controller/index.js";
+export { createEditor, openSizePicker, openMosaicPicker, clampTableSize, placeOverlay } from "../editor-web/controller/index.js";
 export { mountVanillaEditor } from "../adapters/vanilla.js";
 export { createInMemoryRepository } from "../adapters/postgres-contract/index.js";
 export { collectOutline } from "../editor-web/ux/outline.js";
