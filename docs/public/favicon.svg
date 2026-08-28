@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#3659e3"/>
+  <path fill="#fff" d="M8 6h11l5 5v14a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3Z"/>
+  <path fill="#c9d4ff" d="M19 6v4a1 1 0 0 0 1 1h4L19 6Z"/>
+  <rect x="9" y="13" width="12" height="6" rx="3" fill="#3659e3"/>
+  <text x="15" y="17.6" text-anchor="middle" fill="#fff" font-family="ui-monospace, Menlo, monospace" font-size="4.2" font-weight="700">{{ }}</text>
+</svg>

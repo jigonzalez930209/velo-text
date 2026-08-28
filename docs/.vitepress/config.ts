@@ -9,7 +9,8 @@ const base = process.env.DOCS_BASE || "/";
 
 export default defineConfig({
   title: "velo-text",
-  description: "velo-text — zero_deps document editor, TypeScript strict, PDF",
+  description:
+    "Zero-runtime-dependency portable document editor. Canonical JSON AST, typed variables, tables, and deterministic PDF, ODT, and DOCX export.",
   lang: "en-US",
   base,
   head: [
@@ -17,6 +18,8 @@ export default defineConfig({
     ["meta", { name: "theme-color", content: "#3659e3" }],
   ],
   themeConfig: {
+    logo: { src: "/logo.svg", alt: "velo-text" },
+    siteTitle: "velo-text",
     nav: [
       { text: "Guide", link: "/guide/introduction" },
       { text: "API", link: "/api/overview" },
