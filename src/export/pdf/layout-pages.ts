@@ -4,6 +4,28 @@ import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
 import { emitColumns, emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
 
+/** Fit an image into the page content box without overflowing. */
+export function pdfImageDisplayPt(
+  widthUm: number,
+  heightUm: number,
+  maxWidthPt: number,
+  maxHeightPt: number,
+): { wPt: number; hPt: number } {
+  const wUm = widthUm > 0 ? widthUm : 150000;
+  const hUm = heightUm > 0 ? heightUm : 90000;
+  let wPt = Math.max(8, (wUm / 25400) * 72);
+  let hPt = Math.max(8, (hUm / 25400) * 72);
+  if (wPt > maxWidthPt && wPt > 0) {
+    hPt *= maxWidthPt / wPt;
+    wPt = maxWidthPt;
+  }
+  if (hPt > maxHeightPt && hPt > 0) {
+    wPt *= maxHeightPt / hPt;
+    hPt = maxHeightPt;
+  }
+  return { wPt, hPt };
+}
+
 export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   const m = pdfPageMetrics(doc);
   const pageHeightPt = m.heightPt;
@@ -73,41 +95,64 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   const pages: PdfPage[] = [];
   let cur: Array<{ line: PdfLine; yPt: number }> = [];
   let y = pageHeightPt - m.marginTopPt;
-  const overflow = (): boolean => y < bottomPt;
+  const usableH = pageHeightPt - m.marginTopPt - bottomPt;
+  const usableW = maxWidth;
+  const startPage = (): void => {
+    if (!cur.length) return;
+    pages.push(pageOf(cur));
+    cur = [];
+    y = pageHeightPt - m.marginTopPt;
+  };
+  const need = (heightPt: number): void => {
+    if (heightPt <= 0 || !cur.length) return;
+    if (y - heightPt < bottomPt) startPage();
+  };
+  let tableRow = -1;
   for (const line of lines) {
     if (line.style === "page-break") {
-      if (cur.length) pages.push(pageOf(cur));
-      cur = [];
+      startPage();
       y = pageHeightPt - m.marginTopPt;
       continue;
     }
-    if (line.style === "table-top" || line.style.startsWith("table-cell") || line.style.startsWith("flow-cell")) {
+    if (line.style === "table-top") {
+      cur.push({ line, yPt: y });
+      continue;
+    }
+    if (line.style.startsWith("table-cell") || line.style.startsWith("flow-cell")) {
+      const parts = line.style.split(" ");
+      const ri = Number(parts[3]);
+      const rowH = Number(parts[5]) || 30;
+      if (ri !== tableRow) {
+        need(rowH);
+        tableRow = ri;
+      }
       cur.push({ line, yPt: y });
       continue;
     }
     if (line.style === "table-bottom") {
+      need(24);
       cur.push({ line, yPt: y });
       y -= 24;
     } else if (line.style.startsWith("table-row-end")) {
       const rowH = Number(line.style.split(" ")[1]) || 30;
       cur.push({ line, yPt: y });
       y -= rowH;
+      tableRow = -1;
     } else if (line.style.startsWith("image ")) {
-      const hUm = Number(line.style.split(" ")[3]) || 90000;
-      const hPt = Math.min(360, Math.max(24, (hUm / 25400) * 72));
+      const parts = line.style.split(" ");
+      const { hPt } = pdfImageDisplayPt(Number(parts[2]) || 0, Number(parts[3]) || 0, usableW, usableH);
+      const cost = hPt + 13;
+      need(cost);
       cur.push({ line, yPt: y });
-      y -= hPt + 13;
+      y -= cost;
     } else {
       const ext = lineVerticalExtent(line, 16);
       const paraGap = line.style.endsWith(" last") ? 4 : 2;
+      const cost = ext.above + ext.below + paraGap;
+      need(cost);
       y -= ext.above;
       cur.push({ line, yPt: y });
       y -= ext.below + paraGap;
-    }
-    if (overflow()) {
-      pages.push(pageOf(cur));
-      cur = [];
-      y = pageHeightPt - m.marginTopPt;
     }
   }
   if (cur.length) pages.push(pageOf(cur));

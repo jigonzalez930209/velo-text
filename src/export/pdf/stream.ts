@@ -1,6 +1,7 @@
 import { helveticaWidthPt, MATH_CHIP_PAD_X, mathVisualExtents, pdfLiteralString, type MathBox } from "./equation.js";
 import { pdfEscape, type PdfLine, type PdfPage } from "./pdf-model.js";
 import type { PortableDocument } from "../../core/model/types.js";
+import { pdfImageDisplayPt } from "./layout-pages.js";
 
 export function pageContentStream(
   page: PdfPage,
@@ -96,8 +97,9 @@ export function pageContentStream(
       const wUm = Number(parts[2]) || 150000;
       const hUm = Number(parts[3]) || 90000;
       const objNum = imageObjects.get(assetId);
-      const wPt = Math.min(pageWidthPt - marginPt * 2, (wUm / 25400) * 72);
-      const hPt = Math.min(360, Math.max(24, (hUm / 25400) * 72));
+      const maxW = pageWidthPt - marginPt * 2;
+      const maxH = Math.max(24, y - marginPt);
+      const { wPt, hPt } = pdfImageDisplayPt(wUm, hUm, maxW, maxH);
       if (!objNum) {
         s += `BT /F1 9 Tf 1 0 0 1 ${marginPt} ${y} Tm (${pdfEscape(`[missing image ${assetId}]`)}) Tj ET\n`;
         continue;
