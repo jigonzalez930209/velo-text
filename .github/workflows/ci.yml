@@ -44,10 +44,8 @@ jobs:
         run: node --experimental-strip-types scripts/validate-fixtures.ts
       - name: Export smoke (PDF/ODT/DOCX deterministic)
         run: node --experimental-strip-types scripts/smoke-export.ts
-      - name: Build VitePress docs
+      - name: Build VitePress docs (includes playground)
         run: pnpm run docs:build
-      - name: Build playground
-        run: pnpm run playground:build
       - name: Visual HTML snapshots
         run: pnpm run test:visual && git diff --exit-code -- tests/visual/snapshots
       - name: Build artifacts
