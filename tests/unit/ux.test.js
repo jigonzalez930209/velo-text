@@ -207,7 +207,20 @@ test("ux: drag image into table cell and column", () => {
     });
     host.dispatchEvent(ev);
   };
-  dropAt(el.querySelector("table"), img.id);
+  const fig = el.querySelector("figure");
+  const dt = {
+    types: ["text/plain"],
+    files: [],
+    effectAllowed: "move",
+    dropEffect: "move",
+    setData() {},
+    getData: () => "",
+    setDragImage() {},
+  };
+  const start = new el.ownerDocument.defaultView.Event("dragstart", { bubbles: true, cancelable: true });
+  Object.defineProperty(start, "dataTransfer", { value: dt });
+  fig.dispatchEvent(start);
+  dropAt(el.querySelector("table"), "");
   const afterTable = editor.getDocument();
   const table = afterTable.root.children.find((b) => b.type === "table");
   assert(table.rows[0].cells[0].blocks.some((b) => b.id === img.id), "image in cell via table");

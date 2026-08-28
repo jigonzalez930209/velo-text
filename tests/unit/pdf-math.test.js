@@ -7,7 +7,7 @@ import { PdfWriter } from "../../dist/export/pdf/writer.js";
 import { buildPdfPages } from "../../dist/export/pdf/layout-pages.js";
 import { pageContentStream } from "../../dist/export/pdf/stream.js";
 import { validatePdf } from "../../dist/export/validate.js";
-import { createDocument, createIdGenerator, createTable } from "../../dist/core/model/factories.js";
+import { createDocument, createIdGenerator, createTable, createColumns, createParagraph, createText } from "../../dist/core/model/factories.js";
 import zlib from "node:zlib";
 
 test("math: fraction box has runs and rule", () => {
@@ -258,4 +258,17 @@ test("pdf: missing image placeholder does not crash", async () => {
   await w.write(doc, sink, {});
   const total = chunks.reduce((n, c) => n + c.length, 0);
   assert(total > 200);
+});
+
+test("pdf: custom columns have no cell borders", () => {
+  const g = createIdGenerator("cols");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
+  const cols = createColumns(g, 2);
+  cols.columns[0].blocks = [createParagraph(g, [createText(g, "Left")])];
+  cols.columns[1].blocks = [createParagraph(g, [createText(g, "Right")])];
+  doc.root.children.push(cols);
+  const pages = buildPdfPages(doc);
+  const { stream } = pageContentStream(pages[0], doc, new Map());
+  assert(!/re S/.test(stream), "column layout must not stroke boxes");
+  assert(stream.includes("Left") && stream.includes("Right"));
 });
