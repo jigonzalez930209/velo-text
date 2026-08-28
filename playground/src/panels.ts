@@ -1,8 +1,7 @@
 import {
   createInMemoryRepository,
   inspectVariables,
-  renderBlocksToHtml,
-  renderTemplate,
+  exportPdf,
   type Editor,
   type PortableDocument,
 } from "portable-doc-editor";
@@ -19,6 +18,7 @@ export function wirePanels(editor: Editor, els: {
   saveLabel: HTMLElement;
   revList: HTMLElement;
   resolveAssetUrl?: (assetId: string) => string | undefined;
+  getPdfAssets?: () => Record<string, { id: string; mediaType: string; data: Uint8Array }>;
 }): { refresh: (doc: PortableDocument) => void; parseData: () => Record<string, unknown> } {
   const repo = createInMemoryRepository();
   let expected = 0;
@@ -40,15 +40,37 @@ export function wirePanels(editor: Editor, els: {
     }
   }
 
+  let pdfUrl: string | null = null;
+  let pdfTimer = 0;
+
   function refreshPreview(): void {
     const data = parseData();
     const live = editor.getDocument();
-    const rendered = renderTemplate(live, data, { mode: "tolerant", missing: "keep" });
-    els.preview.innerHTML = renderBlocksToHtml(rendered.document, els.resolveAssetUrl);
-    const missing = inspectVariables(live).filter((v) => !(v.path.split(".")[0] in data) && data[v.path] === undefined);
-    els.unresolved.textContent = rendered.diagnostics.length
-      ? rendered.diagnostics.map((d) => d.message ?? d.code).join(" · ")
-      : (missing.length ? `Unresolved: ${missing.map((v) => v.path).join(", ")}` : "All variables resolved");
+    window.clearTimeout(pdfTimer);
+    pdfTimer = window.setTimeout(() => {
+      void (async () => {
+        const pdf = await exportPdf({
+          document: live,
+          data,
+          assets: els.getPdfAssets?.() ?? {},
+          options: { strict: false, missingVariable: "keep" },
+        });
+        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+        pdfUrl = URL.createObjectURL(new Blob([pdf.bytes as unknown as BlobPart], { type: "application/pdf" }));
+        els.preview.innerHTML = "";
+        const frame = document.createElement("iframe");
+        frame.title = "PDF preview";
+        frame.src = pdfUrl;
+        els.preview.appendChild(frame);
+        const missing = inspectVariables(live).filter((v) => !(v.path.split(".")[0] in data) && data[v.path] === undefined);
+        const map = pdf.diagnostics.map((d) => d.message);
+        els.unresolved.textContent = map.length
+          ? map.join(" · ")
+          : (missing.length ? `Unresolved: ${missing.map((v) => v.path).join(", ")}` : "PDF ready");
+      })().catch((err) => {
+        els.unresolved.textContent = String((err as Error).message ?? err);
+      });
+    }, 180);
   }
 
   function persist(doc: PortableDocument): void {

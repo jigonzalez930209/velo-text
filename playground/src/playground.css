@@ -166,7 +166,8 @@ body.pg-split .pg-editor-col {
 }
 body.pg-split .pde-toolbar,
 body.pg-split .pg-view-bar { grid-column: 1 / -1; }
-.pg-preview { min-height: 240px; border: 1px dashed var(--pde-color-border); border-radius: 8px; padding: 16px; }
+.pg-preview { min-height: 240px; border: 1px dashed var(--pde-color-border); border-radius: 8px; padding: 0; overflow: hidden; }
+.pg-preview iframe { width: 100%; min-height: 720px; border: 0; background: #fff; }
 
 @media (max-width: 960px) {
   .pg-layout { grid-template-columns: 1fr; }

@@ -9,13 +9,12 @@ import {
   createIdGenerator,
   createEditor,
   createTable,
-  exportDocument,
+  exportPdf,
   sniffImage,
   getDimensions,
   type PortableDocument,
   type ThemeName,
 } from "portable-doc-editor";
-import { createMemorySink } from "portable-doc-editor/adapters/browser";
 import { wireFormatPanel } from "./format-panel.ts";
 import { openColumnsMenu, openTableMenu, wireToolbar } from "./toolbar.ts";
 import { wirePanels } from "./panels.ts";
@@ -107,6 +106,15 @@ panels = wirePanels(editor, {
   saveLabel: document.getElementById("save-label") as HTMLElement,
   revList: document.getElementById("rev-list") as HTMLElement,
   resolveAssetUrl: (id) => assetUrls[id],
+  getPdfAssets: () => {
+    const live = editor.getDocument();
+    const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
+    for (const [id, bytes] of Object.entries(assetBytes)) {
+      const sniff = sniffImage(bytes);
+      assets[id] = { id, mediaType: sniff.mediaType ?? live.assets[id]?.mediaType ?? "image/png", data: bytes };
+    }
+    return assets;
+  },
 });
 try {
   const raw = localStorage.getItem("pde-playground-doc");
@@ -171,22 +179,29 @@ async function sha256(data: Uint8Array): Promise<string> {
 };
 
 (document.getElementById("btn-export-pdf") as HTMLButtonElement).onclick = async () => {
-  const liveDoc = editor.getDocument();
-  const { sink, getBytes } = createMemorySink();
-  const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
-  for (const [id, bytes] of Object.entries(assetBytes)) {
-    const sniff = sniffImage(bytes);
-    assets[id] = { id, mediaType: sniff.mediaType ?? liveDoc.assets[id]?.mediaType ?? "image/png", data: bytes };
-  }
-  await exportDocument({ document: liveDoc, data: panels.parseData(), format: "pdf", sink, assets, options: { strict: false } });
-  const bytes = getBytes();
-  const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
+  const pdf = await exportPdf({
+    document: editor.getDocument(),
+    data: panels.parseData(),
+    assets: ((): Record<string, { id: string; mediaType: string; data: Uint8Array }> => {
+      const live = editor.getDocument();
+      const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
+      for (const [id, bytes] of Object.entries(assetBytes)) {
+        const sniff = sniffImage(bytes);
+        assets[id] = { id, mediaType: sniff.mediaType ?? live.assets[id]?.mediaType ?? "image/png", data: bytes };
+      }
+      return assets;
+    })(),
+    options: { strict: false, missingVariable: "keep" },
+  });
+  const url = URL.createObjectURL(new Blob([pdf.bytes as unknown as BlobPart], { type: "application/pdf" }));
   const a = document.createElement("a");
   a.href = url;
   a.download = "playground.pdf";
   a.click();
   URL.revokeObjectURL(url);
-  status.textContent = `PDF · ${bytes.length} bytes`;
+  status.textContent = pdf.diagnostics.length
+    ? `PDF · ${pdf.byteLength} B · ${pdf.diagnostics.length} notes`
+    : `PDF · ${pdf.byteLength} bytes`;
 };
 
 panels.refresh(editor.getDocument());
