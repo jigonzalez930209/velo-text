@@ -68,88 +68,34 @@ export function validateLatex(latex: string): LatexValidationResult {
   return { valid: errors.length === 0, errors };
 }
 
-/**
- * Lightweight HTML rendering for web view.
- * For v1 we do not include a full TeX engine. Instead we:
- * - Escape HTML
- * - Replace \frac{a}{b} with a simple fraction layout
- * - Replace \sqrt{x} with sqrt styling
- * - Keep other commands as text with monospace fallback
- * This keeps zero runtime dependencies while providing a visual distinction.
- */
-export function latexToHtml(latex: string): string {
-  const escaped = escapeHtml(latex);
-  // Simple fraction: \frac{num}{den} -> <span class="pde-frac"><span class="pde-frac-num">num</span><span class="pde-frac-den">den</span></span>
-  let html = escaped
-    .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '<span class="pde-frac"><span class="pde-frac-num">$1</span><span class="pde-frac-den">$2</span></span>')
-    .replace(/\\sqrt\s*\{([^{}]+)\}/g, '<span class="pde-sqrt">√<span class="pde-sqrt-inner">$1</span></span>')
-    .replace(/\\(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|infty)\b/g, (_m, name: string) => {
-      const map: Record<string, string> = {
-        alpha: "α", beta: "β", gamma: "γ", delta: "δ", epsilon: "ε", zeta: "ζ", eta: "η",
-        theta: "θ", iota: "ι", kappa: "κ", lambda: "λ", mu: "μ", nu: "ν", xi: "ξ", omicron: "ο",
-        pi: "π", rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ", phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
-        Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Xi: "Ξ", Pi: "Π", Sigma: "Σ", Phi: "Φ", Psi: "Ψ", Omega: "Ω",
-        infty: "∞",
-      };
-      return map[name] ?? _m;
-    })
-    .replace(/\\hat\s*\{([^{}]+)\}/g, "$1̂")
-    .replace(/\\bar\s*\{([^{}]+)\}/g, "$1̄")
-    .replace(/\\vec\s*\{([^{}]+)\}/g, "$1⃗")
-    .replace(/\\tilde\s*\{([^{}]+)\}/g, "$1̃")
-    .replace(/\\begin\{[bBp]?matrix\}/g, "")
-    .replace(/\\end\{[bBp]?matrix\}/g, "")
-    .replace(/\\begin\{vmatrix\}/g, "")
-    .replace(/\\end\{vmatrix\}/g, "")
-    .replace(/\\\\/g, "<br>")
-    .replace(/\\(left|right)\b/g, "")
-    .replace(/\\\{/g, "{").replace(/\\\}/g, "}").replace(/\\\|/g, "‖");
-  const cmds: Array<[string, string]> = [
-    ["\\iiint", "∭"], ["\\iint", "∬"], ["\\oint", "∮"], ["\\int", "∫"],
-    ["\\sum", "∑"], ["\\prod", "∏"],
-    ["\\Leftrightarrow", "⇔"], ["\\Rightarrow", "⇒"], ["\\Leftarrow", "⇐"],
-    ["\\leftrightarrow", "↔"], ["\\rightarrow", "→"], ["\\leftarrow", "←"],
-    ["\\mapsto", "↦"], ["\\uparrow", "↑"], ["\\downarrow", "↓"], ["\\to", "→"],
-    ["\\otimes", "⊗"], ["\\oplus", "⊕"], ["\\times", "×"], ["\\cdot", "·"], ["\\circ", "∘"],
-    ["\\div", "÷"], ["\\pm", "±"], ["\\mp", "∓"], ["\\partial", "∂"], ["\\nabla", "∇"],
-    ["\\approx", "≈"], ["\\neq", "≠"], ["\\leq", "≤"], ["\\geq", "≥"], ["\\equiv", "≡"], ["\\propto", "∝"],
-    ["\\notin", "∉"], ["\\emptyset", "∅"], ["\\subset", "⊂"], ["\\supset", "⊃"],
-    ["\\cup", "∪"], ["\\cap", "∩"], ["\\forall", "∀"], ["\\exists", "∃"], ["\\in", "∈"],
-    ["\\lfloor", "⌊"], ["\\rfloor", "⌋"], ["\\lceil", "⌈"], ["\\rceil", "⌉"],
-    ["\\sin", "sin"], ["\\cos", "cos"], ["\\tan", "tan"], ["\\log", "log"], ["\\ln", "ln"],
-    ["\\exp", "exp"], ["\\lim", "lim"], ["\\max", "max"], ["\\min", "min"], ["\\det", "det"],
-  ];
-  for (const [cmd, ch] of cmds) html = html.split(cmd).join(ch);
-  // Superscript ^ and subscript _ with braces: x^{2} -> x<sup>2</sup>
-  html = html.replace(/\^\{([^{}]+)\}/g, "<sup>$1</sup>").replace(/_\{([^{}]+)\}/g, "<sub>$1</sub>");
-  // Simple ^x and _x without braces (single char)
-  html = html.replace(/\^([a-zA-Z0-9])/g, "<sup>$1</sup>").replace(/_([a-zA-Z0-9])/g, "<sub>$1</sub>");
-  return html;
-}
+export { latexToHtml } from "./html.js";
 
 export function latexToPlainText(latex: string): string {
-  // For PDF/ODT/DOCX fallback — keep raw LaTeX wrapped for readability
   return `$${latex}$`;
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-/**
- * CSS for equations — injected via theme or editor stylesheet.
- * Uses CSS variables for color adaptability.
- */
 export const equationCss = `
 .pde-equation {
   font-family: "Cambria Math", "Latin Modern Math", "STIX Two Math", serif;
+  display: inline-block;
+  vertical-align: middle;
   background: var(--pde-color-surface, #f7f8fa);
   border: 1px solid var(--pde-color-border, #d8dce3);
   border-radius: var(--pde-radius-sm, 4px);
   padding: 1px 6px;
-  margin: 0 2px;
+  margin: 4px;
   white-space: nowrap;
   color: var(--pde-color-text, #17191c);
+}
+.pde-equation sup {
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+}
+.pde-equation sub {
+  font-size: 0.72em;
+  vertical-align: sub;
+  line-height: 0;
 }
 .pde-equation--block {
   display: block;
@@ -157,10 +103,12 @@ export const equationCss = `
   margin: 12px auto;
   padding: 8px 12px;
   max-width: 90%;
+  white-space: normal;
 }
-.pde-frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 2px; }
-.pde-frac-num { display: block; border-bottom: 1px solid currentColor; padding: 0 4px; }
-.pde-frac-den { display: block; padding: 0 4px; }
-.pde-sqrt { position: relative; }
-.pde-sqrt-inner { border-top: 1px solid currentColor; margin-left: 2px; }
+.pde-frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 2px; line-height: 1.15; }
+.pde-frac-num { display: block; border-bottom: 1.5px solid currentColor; padding: 0 5px 1px; }
+.pde-frac-den { display: block; padding: 1px 5px 0; }
+.pde-sqrt { display: inline-flex; align-items: stretch; vertical-align: middle; }
+.pde-sqrt-sym { width: 0.62em; min-height: 1.05em; flex-shrink: 0; display: block; overflow: visible; }
+.pde-sqrt-inner { border-top: 1.35px solid currentColor; padding: 0.08em 0.28em 0.06em 0.04em; margin-left: -1px; line-height: 1.2; }
 `;
