@@ -97,7 +97,8 @@
     "playground:dev": "vitepress dev docs",
     "playground:build": "vitepress build docs",
     "dev": "node --experimental-strip-types scripts/dev-server.js",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "version:set": "bash scripts/set-version.sh"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",
