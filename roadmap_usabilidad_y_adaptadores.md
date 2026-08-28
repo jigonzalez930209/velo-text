@@ -5,7 +5,7 @@
 **Base:** [roadmap_editor_documental_portable.md](./roadmap_editor_documental_portable.md) (núcleo v1 ya en gran parte implementado).  
 **Objetivo:** que un usuario no-técnico sienta el editor como un producto, no como un AST con toolbar; y que un equipo pueda montarlo en Vue, React, Svelte, Vanilla, Angular o Astro **sin tocar el core**.
 
-**Regla:** cero dependencias runtime en `portable-doc-editor`. Los adaptadores de framework viven en paquetes o carpetas `adapters/*` y **solo** dependen del framework host + de esta biblioteca. El core no importa React/Vue/etc.
+**Regla:** cero dependencias runtime en `velo-text`. Los adaptadores de framework viven en paquetes o carpetas `adapters/*` y **solo** dependen del framework host + de esta biblioteca. El core no importa React/Vue/etc.
 
 **Leyenda:** `[ ]` pendiente · `[~]` hay ganchos · `[x]` hecho.
 

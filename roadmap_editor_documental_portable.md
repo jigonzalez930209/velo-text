@@ -145,7 +145,7 @@ Cada módulo declara las capacidades que necesita. Por ejemplo, el exportador DO
 ## 4. Estructura propuesta del repositorio
 
 ```text
-portable-doc-editor/
+velo-text/
 ├── src/
 │   ├── core/
 │   │   ├── model/
