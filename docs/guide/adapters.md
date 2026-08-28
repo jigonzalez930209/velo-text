@@ -17,7 +17,7 @@ editor.commands.insertVariable("name");
 editor.destroy(); // removes .pde-editor-wrapper
 ```
 
-CSS: `themes/base.css` + `themes/components.css`. Theme via `data-pde-theme` (`light-neutral` | `light-warm` | `dark-slate` | `dark-contrast`).
+CSS from the package: `import "velo-text/themes/base.css"` and `import "velo-text/themes/components.css"`. Theme via `data-pde-theme` (`light-neutral` | `light-warm` | `dark-slate` | `dark-contrast`).
 
 The editor is **client-only**. Astro/SSR should emit `renderDocumentToHtml` at build time and hydrate the editor in an island (`client:load`).
 

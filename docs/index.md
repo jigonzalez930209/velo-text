@@ -3,11 +3,14 @@ layout: home
 hero:
   name: velo-text
   text: Zero-deps document platform
-  tagline: TypeScript strict · Variables &#123;&#123;name&#125;&#125; · Tables · Images · LaTeX · PDF
+  tagline: Beta 1.0.0-beta.0 · TypeScript strict · Variables &#123;&#123;name&#125;&#125; · PDF
   actions:
     - theme: brand
       text: Get Started
       link: /guide/introduction
+    - theme: alt
+      text: Install (npm beta)
+      link: /guide/publish
     - theme: alt
       text: View API
       link: /api/overview
@@ -29,14 +32,15 @@ features:
     details: Micrometer units, line breaking, pagination widows/orphans, 4 themes with CSS tokens, equation rendering.
 ---
 
-## Quick start <Badge type="tip" text="pnpm only" />
+## Quick start <Badge type="warning" text="1.0.0-beta.0" />
+
+This is a **beta**. APIs can still change. Install the prerelease tag:
 
 ```bash
-pnpm add velo-text
-pnpm install
-pnpm run build
-pnpm run test # unit + conformance + integration + security
+pnpm add velo-text@beta
 ```
+
+Requires Node >= 18. Token and publish steps: [Publish to npm](/guide/publish).
 
 ```ts
 import { createDocument, createIdGenerator, exportDocument } from "velo-text";

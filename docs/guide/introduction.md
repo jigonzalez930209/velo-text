@@ -1,5 +1,8 @@
 # Introduction
 
+## Status
+**1.0.0-beta.0** — first public npm trial (`pnpm add velo-text@beta`). Not a frozen 1.0 API. See [Publish to npm](/guide/publish) for install and how to store the npm token.
+
 ## Goal
 `velo-text` is a self-contained, zero-runtime-dependency document platform that edits rich text, inserts variables `&#123;&#123;name&#125;&#125;`, handles tables (including cell alignment and column/row resize), column layouts, images and LaTeX, and exports the same document to **PDF, ODT, and DOCX** from browser or backend. LibreOffice/Word CI and full Office visual parity remain open.
 
@@ -14,11 +17,12 @@ Never HTML/DOCX/ODT/PDF. The canonical document is a versioned JSON AST (`Portab
 
 ## Getting started
 ```bash
-pnpm install
-pnpm run build        # tsc → dist/
-pnpm run check:types  # strict
-pnpm run test         # unit + conformance + integration + security
-pnpm run docs:dev     # vitepress (playground at /playground/)
+pnpm add velo-text@beta   # consumers
+pnpm install              # this repo
+pnpm run build            # tsc → dist/
+pnpm run check:types      # strict
+pnpm run test             # unit + conformance + integration + security
+pnpm run docs:dev         # vitepress (playground at /playground/)
 ```
 
 ## Hitos

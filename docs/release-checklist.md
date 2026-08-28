@@ -17,8 +17,10 @@ v1 product export is **PDF, ODT, and DOCX** via `exportDocument`. LibreOffice/Wo
 - [ ] Performance budgets checked (`docs/perf-budgets.md`)
 - [ ] `docs/api-report.md` regenerated (`node scripts/generate-api-report.js`) and reviewed for semver
 - [ ] `migrations/` applied on staging PG and downgrade tested if needed
-- [ ] `CHANGELOG.md` updated, version bumped per semver
-- [ ] Tag `vX.Y.Z` and GitHub release with `dist/` tarball
+- [ ] `CHANGELOG.md` updated, version bumped per semver (`1.0.0-beta.0` for this trial)
+- [ ] GitHub secret **`NPM_TOKEN`** set (never in git)
+- [ ] Push git tag `vX.Y.Z` (must match `package.json` version) → workflow **Publish npm**
+- [ ] Confirm npm `velo-text@beta` (or `@latest`) and the GitHub Release
 
 ## Remaining Office checks
 - [ ] Open and re-save in LibreOffice and Microsoft Word
