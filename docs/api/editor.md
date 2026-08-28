@@ -20,4 +20,4 @@
 
 `src/editor-web/accessibility/index.ts` — `announce`, `makeToolbarNavigable`, `trapFreeNavigation`, `checkContrast`, `validateImageAlt`.
 
-See `examples/vanilla-web.html` and playground.
+See `examples/vanilla/index.html`, `docs/guide/adapters.md`, and the in-docs [Playground](/playground/).
