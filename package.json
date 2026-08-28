@@ -1,14 +1,47 @@
 {
   "name": "velo-text",
-  "version": "0.1.0",
-  "description": "Editor documental portable con variables, imágenes y exportación PDF/ODT/DOCX — cero dependencias runtime",
+  "version": "1.0.0-beta.0",
+  "description": "Editor documental portable con variables, imágenes y exportación PDF/ODT/DOCX — cero dependencias runtime (beta)",
   "type": "module",
+  "license": "MIT",
   "engines": {
     "node": ">=18"
   },
   "packageManager": "pnpm@11.24.0",
   "main": "dist/public-api/index.js",
   "types": "dist/public-api/index.d.ts",
+  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist",
+    "themes",
+    "schemas",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/velo-text/velo-text.git"
+  },
+  "bugs": {
+    "url": "https://github.com/velo-text/velo-text/issues"
+  },
+  "homepage": "https://github.com/velo-text/velo-text#readme",
+  "keywords": [
+    "editor",
+    "document",
+    "pdf",
+    "docx",
+    "odt",
+    "template",
+    "typescript",
+    "zero-dependencies"
+  ],
   "exports": {
     ".": {
       "types": "./dist/public-api/index.d.ts",
@@ -37,7 +70,8 @@
     "./backend": {
       "types": "./dist/adapters/backend/index.d.ts",
       "default": "./dist/adapters/backend/index.js"
-    }
+    },
+    "./themes/*": "./themes/*"
   },
   "scripts": {
     "test": "node --experimental-vm-modules --experimental-strip-types scripts/runner.js",
@@ -62,7 +96,8 @@
     "docs:build": "vitepress build docs",
     "playground:dev": "vitepress dev docs",
     "playground:build": "vitepress build docs",
-    "dev": "node --experimental-strip-types scripts/dev-server.js"
+    "dev": "node --experimental-strip-types scripts/dev-server.js",
+    "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",

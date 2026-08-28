@@ -5,25 +5,35 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ## [Unreleased]
 
 ### Added
-- Playground lives in VitePress (`docs:dev` → `/playground/`); framework adapter samples for Vanilla, React, Vue, Svelte, Angular, Astro
+- (none yet)
+
+## [1.0.0-beta.0] - 2026-08-28
+
+First public **beta** on npm (`velo-text@beta`). Treat it as a trial API: layout, editor chrome, and export can still change before 1.0.0.
+
+### Added
+- npm package surface: `files`, `exports` (including `./themes/*` and `./backend`), `publishConfig.tag` `beta`, GitHub Action **Publish npm** (`NPM_TOKEN` secret)
+- Playground in VitePress (`docs:dev` → `/playground/`); framework samples (Vanilla, React, Vue, Svelte, Angular, Astro)
+- PDF **keep-together**: images, table rows, and lines move to the next page instead of being split; images scale to the usable page
+- Overlay menus: `placeOverlay` keeps dropdowns inside the viewport (right-side icons open to the left)
+- Editor page preview pushes blocks that would straddle a page band
 - `History` drives editor undo; paste goes through `handlePaste`; shortcuts via `attachInputPipeline` (`nativeTyping`)
-- `tests/security/`, `tests/integration/`, `LICENSE`, visual HTML snapshots gated in CI
-- Docs Vite alias to `src/` (playground and docs resolve the library without `dist/`)
-- Table **row height** drag (`heightUm`) and a table actions button beside the table (does not cover cells)
-- Image **align** (`left`/`center`/`right`) on `ImageBlockNode`; toolbar `setAlign` targets a selected figure
-- PDF: contiguous table rows; PNG **area-average downscale** when display size is smaller than source pixels
+- Table **row height** drag (`heightUm`) and a table actions button beside the table
+- Image **align** (`left`/`center`/`right`) on `ImageBlockNode`
+- PDF: contiguous table rows; PNG **area-average downscale**
 - Playground, examples, and HTTP API export **PDF, ODT, and DOCX**
-- `scripts/soak.js` repeated export; property tests in CI
+- `scripts/soak.js`; property tests in CI
 
 ### Changed
-- Source files capped at **250 lines** (controller, view, PDF/DOCX writers, pagination, CSS, unit tests split)
-- Table cell alignment (`setAlign`) targets the cell paragraph; render persists `text-align`
-- PDF tables advance Y per row; images use sanitized XObject names; playground export always sends `assetBytes`
+- Version scheme jumps from `0.1.0` to `1.0.0-beta.0` for a named public trial
+- Source files capped at **250 lines** where split
+- Table cell alignment (`setAlign`) targets the cell paragraph
 
 ### Fixed
-- Typing in table cells (menu overlay + parse moving text nodes)
-- Column resize targeting the wrong table; image resize box sized to the `<img>`, not the figure
-- PDF tables: no extra gap between rows (layout Y + draw height matched)
+- Toolbar dropdowns inheriting VitePress muted colors (looked disabled)
+- Menus clipped by `backdrop-filter` / overflow when still inside the toolbar
+- Typing in table cells; column resize; image resize box
+- PDF table row gaps
 
 ## [0.1.0] - 2026-08-27
 
@@ -49,4 +59,5 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ### Security
 - HTML paste allowlist, `javascript:` blocked, SVG sanitization, Zip bomb limits, S3 scoped keys, tenant isolation
 
+[1.0.0-beta.0]: https://github.com/velo-text/velo-text/releases/tag/v1.0.0-beta.0
 [0.1.0]: https://github.com/velo-text/velo-text/releases/tag/v0.1.0
