@@ -18,19 +18,29 @@
             <option value="dark-contrast">Dark contrast</option>
           </select>
         </label>
-        <div class="pg-export">
-          <button type="button" id="btn-export-pdf">PDF</button>
-          <button type="button" id="btn-export-odt">ODT</button>
-          <button type="button" id="btn-export-docx">DOCX</button>
-        </div>
+        <button type="button" id="btn-export-pdf">PDF</button>
+        <span id="save-label" class="pg-status">Saved</span>
         <span id="status" class="pg-status">ready</span>
       </div>
     </header>
     <div class="pg-layout">
       <div class="pg-editor-col">
         <div id="toolbar" class="pde-toolbar" role="toolbar" aria-label="Formatting"></div>
+        <div class="pg-view-bar">
+          <button type="button" id="view-editor">Editor</button>
+          <button type="button" id="view-preview">Preview</button>
+          <button type="button" id="view-split">Split</button>
+          <button type="button" id="btn-palette">Commands</button>
+          <button type="button" id="btn-find">Find</button>
+          <button type="button" id="btn-keys">?</button>
+          <button type="button" id="btn-page">Page</button>
+        </div>
         <div class="pg-paper">
           <div id="editor" class="pde-editor" contenteditable="true" role="textbox" aria-label="Document editor"></div>
+        </div>
+        <div id="preview-wrap" class="pg-preview-wrap">
+          <div id="preview" class="pde-editor pg-preview"></div>
+          <p id="unresolved" class="pg-status"></p>
         </div>
       </div>
       <aside class="pg-side">
@@ -42,11 +52,35 @@
           <h3>Insert</h3>
           <div class="quick">
             <button type="button" id="btn-eq">Equation</button>
-            <button type="button" id="btn-table">2×2 table</button>
-            <button type="button" id="btn-columns">2 columns</button>
+            <button type="button" id="btn-table">Table</button>
+            <button type="button" id="btn-columns">Columns</button>
             <button type="button" id="btn-image">Image…</button>
             <button type="button" id="btn-pagebreak">Page break</button>
+            <button type="button" id="btn-indent">Indent</button>
+            <button type="button" id="btn-outdent">Outdent</button>
+            <button type="button" id="btn-link">Link</button>
+            <label>Color <input type="color" id="fg-color" value="#17191c" /></label>
+            <label>Highlight <input type="color" id="bg-color" value="#fff59d" /></label>
+            <select id="font-family" aria-label="Font">
+              <option value="sans-serif">Sans</option>
+              <option value="serif">Serif</option>
+              <option value="monospace">Mono</option>
+            </select>
+            <select id="font-size" aria-label="Size">
+              <option value="11">11</option>
+              <option value="12" selected>12</option>
+              <option value="14">14</option>
+              <option value="18">18</option>
+            </select>
           </div>
+        </section>
+        <section class="pg-panel">
+          <h3>Outline</h3>
+          <div id="outline" class="pg-outline"></div>
+        </section>
+        <section class="pg-panel">
+          <h3>Revisions</h3>
+          <div id="rev-list" class="pg-outline"></div>
         </section>
         <section class="pg-panel">
           <h3>Template data</h3>
