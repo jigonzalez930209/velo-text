@@ -126,7 +126,7 @@ export function mountPlayground(root: HTMLElement): () => void {
     input.click();
   }
 
-  wireToolbar(editor, el("toolbar"), {
+  const unwireToolbar = wireToolbar(editor, el("toolbar"), {
     insertVariable: (path) => editor.commands.insertVariable(path),
     insertEquation: (latex) => editor.commands.insertEquation(latex),
     insertImage,
@@ -178,6 +178,7 @@ export function mountPlayground(root: HTMLElement): () => void {
 
   panels.refresh(editor.getDocument());
   return () => {
+    unwireToolbar();
     editor.destroy();
     for (const u of Object.values(assetUrls)) URL.revokeObjectURL(u);
   };

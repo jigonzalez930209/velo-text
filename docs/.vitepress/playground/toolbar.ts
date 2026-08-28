@@ -1,4 +1,4 @@
-import { getIconSvg, openMosaicPicker, openSizePicker, clampTableSize, COLUMN_PRESETS, makeToolbarNavigable, type Editor, type IconName } from "velo-text";
+import { getIconSvg, openMosaicPicker, openSizePicker, clampTableSize, COLUMN_PRESETS, makeToolbarNavigable, placeOverlay, type Editor, type IconName } from "velo-text";
 
 type DropItem = { label: string; icon?: IconName; run: () => void; keepOpen?: boolean };
 
@@ -31,6 +31,7 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
     g.appendChild(btn);
     return btn;
   };
+  const drops: Array<{ btn: HTMLButtonElement; menu: HTMLElement }> = [];
   const addDrop = (g: HTMLElement, icon: IconName, title: string, items: DropItem[], persist = false): HTMLElement => {
     const wrap = document.createElement("div");
     wrap.className = "pg-tb-dropwrap";
@@ -60,12 +61,18 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
     }
     btn.onclick = () => {
       const open = menu.hidden;
-      toolbar.querySelectorAll(".pg-tb-menu").forEach((m) => { (m as HTMLElement).hidden = true; });
+      drops.forEach((d) => {
+        d.menu.hidden = true;
+        d.btn.setAttribute("aria-expanded", "false");
+      });
       menu.hidden = !open;
       btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (!menu.hidden) placeOverlay(btn, menu);
     };
-    wrap.append(btn, menu);
+    wrap.append(btn);
     g.appendChild(wrap);
+    toolbar.ownerDocument.body.appendChild(menu);
+    drops.push({ btn, menu });
     return menu;
   };
 
@@ -162,7 +169,27 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
   sizeRow.appendChild(size);
   typeMenu.appendChild(sizeRow);
 
-  return makeToolbarNavigable(toolbar);
+  const navOff = makeToolbarNavigable(toolbar);
+  const onDocDown = (ev: Event): void => {
+    const t = ev.target as Node | null;
+    if (!t) return;
+    if (drops.some((d) => d.menu.contains(t) || d.btn.contains(t))) return;
+    for (const d of drops) {
+      d.menu.hidden = true;
+      d.btn.setAttribute("aria-expanded", "false");
+    }
+  };
+  const onResize = (): void => {
+    for (const d of drops) if (!d.menu.hidden) placeOverlay(d.btn, d.menu);
+  };
+  toolbar.ownerDocument.addEventListener("mousedown", onDocDown, true);
+  toolbar.ownerDocument.defaultView?.addEventListener("resize", onResize);
+  return () => {
+    navOff();
+    toolbar.ownerDocument.removeEventListener("mousedown", onDocDown, true);
+    toolbar.ownerDocument.defaultView?.removeEventListener("resize", onResize);
+    for (const d of drops) d.menu.remove();
+  };
 }
 
 export function openTableMenu(editor: Editor, anchor: HTMLElement): void {
