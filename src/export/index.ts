@@ -8,9 +8,9 @@ export * from "./layout/index.js";
 import type { PortableDocument, BinarySink, Clock, IdGenerator, AssetResolver } from "../core/model/types.js";
 import { renderTemplate, type RenderOptions } from "../template/resolver/resolver.js";
 import { validateDocument } from "../core/schema/validator.js";
-import { PdfWriter } from "./pdf/writer.js";
 import { OdtWriter } from "./odt/writer.js";
 import { DocxWriter } from "./docx/writer.js";
+import { exportPdf } from "./pdf/export-pdf.js";
 
 export type ExportFormat = "pdf" | "odt" | "docx";
 
@@ -43,32 +43,27 @@ export interface ExportResult {
  */
 export async function exportDocument(req: ExportRequest): Promise<ExportResult> {
   const { document, data = {}, format, sink, options = {}, assets = {} } = req;
+  if (format === "pdf") {
+    const pdf = await exportPdf({
+      document, data, assets, options, clock: req.clock, idGenerator: req.idGenerator, sink,
+    });
+    return { byteLength: pdf.byteLength, diagnostics: pdf.diagnostics, format };
+  }
 
-  // 1. validar
   const validation = validateDocument(document, { strict: options.strict ?? true });
   if (!validation.valid && (options.strict ?? true)) {
     throw new Error(`Document invalid: ${validation.errors.slice(0, 3).map((e) => e.message).join("; ")}`);
   }
-
-  // 2. resolver variables
   const rendered = renderTemplate(document, data as Record<string, unknown>, {
     locale: document.locale,
     missing: (options.missingVariable as RenderOptions["missing"]) ?? "error",
     mode: (options.strict ?? true) ? "strict" : "tolerant",
   });
-
   if (rendered.diagnostics.some((d) => d.severity === "error") && (options.strict ?? true)) {
     throw new Error(`Render failed: ${rendered.diagnostics.filter((d) => d.severity === "error").map((d) => d.message ?? d.code).join("; ")}`);
   }
-
-  // 3. writer por formato
   const clock = req.clock ?? { nowIso: () => new Date().toISOString() };
   switch (format) {
-    case "pdf": {
-      const w = new PdfWriter({ clock, idGenerator: req.idGenerator });
-      const res = await w.write(rendered.document, sink, assets);
-      return { byteLength: res.byteLength, diagnostics: rendered.diagnostics, format };
-    }
     case "odt": {
       const w = new OdtWriter({ clock });
       const res = await w.write(rendered.document, assets, sink);
