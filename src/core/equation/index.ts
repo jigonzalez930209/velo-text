@@ -83,19 +83,12 @@ export function latexToHtml(latex: string): string {
   let html = escaped
     .replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '<span class="pde-frac"><span class="pde-frac-num">$1</span><span class="pde-frac-den">$2</span></span>')
     .replace(/\\sqrt\s*\{([^{}]+)\}/g, '<span class="pde-sqrt">√<span class="pde-sqrt-inner">$1</span></span>')
-    .replace(/\\(alpha|beta|gamma|delta|epsilon|pi|theta|lambda|mu|sigma|omega|infty)\b/g, (_m, name) => {
+    .replace(/\\(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|infty)\b/g, (_m, name: string) => {
       const map: Record<string, string> = {
-        alpha: "α",
-        beta: "β",
-        gamma: "γ",
-        delta: "δ",
-        epsilon: "ε",
-        pi: "π",
-        theta: "θ",
-        lambda: "λ",
-        mu: "μ",
-        sigma: "σ",
-        omega: "ω",
+        alpha: "α", beta: "β", gamma: "γ", delta: "δ", epsilon: "ε", zeta: "ζ", eta: "η",
+        theta: "θ", iota: "ι", kappa: "κ", lambda: "λ", mu: "μ", nu: "ν", xi: "ξ", omicron: "ο",
+        pi: "π", rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ", phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
+        Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Xi: "Ξ", Pi: "Π", Sigma: "Σ", Phi: "Φ", Psi: "Ψ", Omega: "Ω",
         infty: "∞",
       };
       return map[name] ?? _m;
@@ -104,17 +97,27 @@ export function latexToHtml(latex: string): string {
     .replace(/\\bar\s*\{([^{}]+)\}/g, "$1̄")
     .replace(/\\vec\s*\{([^{}]+)\}/g, "$1⃗")
     .replace(/\\tilde\s*\{([^{}]+)\}/g, "$1̃")
-    .replace(/\\begin\{matrix\}/g, "")
-    .replace(/\\end\{matrix\}/g, "")
+    .replace(/\\begin\{[bBp]?matrix\}/g, "")
+    .replace(/\\end\{[bBp]?matrix\}/g, "")
+    .replace(/\\begin\{vmatrix\}/g, "")
+    .replace(/\\end\{vmatrix\}/g, "")
     .replace(/\\\\/g, "<br>")
-    .replace(/\\(left|right)\b/g, "");
+    .replace(/\\(left|right)\b/g, "")
+    .replace(/\\\{/g, "{").replace(/\\\}/g, "}").replace(/\\\|/g, "‖");
   const cmds: Array<[string, string]> = [
     ["\\iiint", "∭"], ["\\iint", "∬"], ["\\oint", "∮"], ["\\int", "∫"],
-    ["\\sum", "∑"], ["\\prod", "∏"], ["\\lim", "lim"],
-    ["\\rightarrow", "→"], ["\\leftarrow", "←"], ["\\to", "→"],
-    ["\\times", "×"], ["\\cdot", "·"], ["\\div", "÷"], ["\\pm", "±"],
-    ["\\leq", "≤"], ["\\geq", "≥"], ["\\neq", "≠"],
-    ["\\sin", "sin"], ["\\cos", "cos"], ["\\ln", "ln"],
+    ["\\sum", "∑"], ["\\prod", "∏"],
+    ["\\Leftrightarrow", "⇔"], ["\\Rightarrow", "⇒"], ["\\Leftarrow", "⇐"],
+    ["\\leftrightarrow", "↔"], ["\\rightarrow", "→"], ["\\leftarrow", "←"],
+    ["\\mapsto", "↦"], ["\\uparrow", "↑"], ["\\downarrow", "↓"], ["\\to", "→"],
+    ["\\otimes", "⊗"], ["\\oplus", "⊕"], ["\\times", "×"], ["\\cdot", "·"], ["\\circ", "∘"],
+    ["\\div", "÷"], ["\\pm", "±"], ["\\mp", "∓"], ["\\partial", "∂"], ["\\nabla", "∇"],
+    ["\\approx", "≈"], ["\\neq", "≠"], ["\\leq", "≤"], ["\\geq", "≥"], ["\\equiv", "≡"], ["\\propto", "∝"],
+    ["\\notin", "∉"], ["\\emptyset", "∅"], ["\\subset", "⊂"], ["\\supset", "⊃"],
+    ["\\cup", "∪"], ["\\cap", "∩"], ["\\forall", "∀"], ["\\exists", "∃"], ["\\in", "∈"],
+    ["\\lfloor", "⌊"], ["\\rfloor", "⌋"], ["\\lceil", "⌈"], ["\\rceil", "⌉"],
+    ["\\sin", "sin"], ["\\cos", "cos"], ["\\tan", "tan"], ["\\log", "log"], ["\\ln", "ln"],
+    ["\\exp", "exp"], ["\\lim", "lim"], ["\\max", "max"], ["\\min", "min"], ["\\det", "det"],
   ];
   for (const [cmd, ch] of cmds) html = html.split(cmd).join(ch);
   // Superscript ^ and subscript _ with braces: x^{2} -> x<sup>2</sup>
