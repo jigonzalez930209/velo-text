@@ -38,8 +38,14 @@ export { getIconSvg, getAllIcons, iconCss } from "../assets/icons/index.js";
 export { validateLatex, latexToHtml, latexToPlainText, equationCss } from "../core/equation/index.js";
 export { themes, themeCss, allThemesCss } from "../theme/index.js";
 export { renderDocumentToHtml, renderBlocksToHtml, reconcileDom } from "../editor-web/view/index.js";
-export { createEditor } from "../editor-web/controller/index.js";
+export { createEditor, openSizePicker, openMosaicPicker, clampTableSize } from "../editor-web/controller/index.js";
+export { mountVanillaEditor } from "../adapters/vanilla.js";
+export { createInMemoryRepository } from "../adapters/postgres-contract/index.js";
+export { collectOutline } from "../editor-web/ux/outline.js";
+export { findTextHits, replaceTextInDocument } from "../editor-web/ux/find-text.js";
+export { COLUMN_PRESETS } from "../editor-web/controller/column-presets.js";
 export { registerCommand, getCommand, listCommands } from "../editor-web/toolbar/index.js";
+export { makeToolbarNavigable } from "../editor-web/accessibility/index.js";
 export { intentToOperation } from "../editor-web/input/index.js";
 export {
   registerPlugin,
@@ -57,3 +63,4 @@ export type { ThemeName, ThemeTokens } from "../theme/index.js";
 export type { ExportFormat, ExportRequest, ExportResult } from "../export/index.js";
 export type { IconName, IconOptions } from "../assets/icons/index.js";
 export type { PluginDef } from "../core/plugin/index.js";
+export type { Editor, EditorOptions } from "../editor-web/controller/types.js";

@@ -5,6 +5,7 @@
 import { XmlWriter } from "../xml/writer.js";
 import { ZipWriter } from "../zip/zipWriter.js";
 import type { PortableDocument, BinarySink, Clock } from "../../core/model/types.js";
+import { prepareExportImages } from "../images/prepare.js";
 
 interface ResolvedAssetStub {
   id: string;
@@ -27,19 +28,14 @@ export class OdtWriter {
     zip.add("meta.xml", this.buildMeta(document));
     zip.add("settings.xml", this.buildSettings());
 
-    const assetMap: Record<string, ResolvedAssetStub> = assets ?? {};
-    // fallback: document.assets keys
-    for (const [id, a] of Object.entries(document.assets ?? {})) {
-      if (!assetMap[id]?.data) {
-        // no binary, skip embedding; manifest already has entry but no file -> still need to include placeholder? Skip
-        void a;
-      }
+    const input: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
+    for (const [id, asset] of Object.entries(assets ?? {})) {
+      if (asset.data) input[id] = { id, mediaType: asset.mediaType, data: asset.data };
     }
-    for (const [id, asset] of Object.entries(assetMap)) {
-      if (asset.data) {
-        const ext = asset.mediaType.split("/")[1]!.replace("svg+xml", "svg");
-        zip.add(`Pictures/${id}.${ext}`, asset.data);
-      }
+    const prepared = await prepareExportImages(document, input);
+    for (const [id, asset] of Object.entries(prepared)) {
+      const ext = asset.mediaType.split("/")[1]!.replace("svg+xml", "svg");
+      zip.add(`Pictures/${id}.${ext}`, asset.data);
     }
 
     const bytes = zip.build();
@@ -72,6 +68,8 @@ export class OdtWriter {
       "xmlns:draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
       "xmlns:fo": "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
       "xmlns:style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+      "xmlns:svg": "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0",
+      "xmlns:xlink": "http://www.w3.org/1999/xlink",
       "office:version": "1.3",
     });
     w.open("office:body").open("office:text");
@@ -152,8 +150,12 @@ export class OdtWriter {
           break;
         }
         const ext = asset.mediaType.split("/")[1]!.replace("svg+xml", "svg");
-        w.open("text:p")
-          .open("draw:frame", { "draw:name": block.id as string, "draw:style-name": "Graphics", "svg:width": "5cm", "svg:height": "3cm" });
+        const align = block.align === "center" || block.align === "right" ? (block.align as string) : "left";
+        const para = align === "left" ? "Standard" : `Align_${align}`;
+        const wCm = (((block.widthUm as number) ?? 150000) / 10_000).toFixed(2);
+        const hCm = (((block.heightUm as number) ?? 90000) / 10_000).toFixed(2);
+        w.open("text:p", { "text:style-name": para })
+          .open("draw:frame", { "draw:name": block.id as string, "draw:style-name": "Graphics", "svg:width": `${wCm}cm`, "svg:height": `${hCm}cm` });
         w.selfClose("draw:image", {
           "xlink:href": `Pictures/${block.assetId as string}.${ext}`,
           "xlink:type": "simple",
@@ -214,11 +216,21 @@ export class OdtWriter {
 
   private buildStyles(_doc: PortableDocument): string {
     const w = new XmlWriter().declaration();
-    w.open("office:document-styles", { "xmlns:office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0", "office:version": "1.3" });
+    w.open("office:document-styles", {
+      "xmlns:office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+      "xmlns:style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+      "xmlns:fo": "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
+      "office:version": "1.3",
+    });
     w.open("office:styles");
     w.open("style:default-style", { "style:family": "paragraph" }).selfClose("style:paragraph-properties").close();
     w.open("style:style", { "style:name": "Standard", "style:family": "paragraph" }).close();
     w.open("style:style", { "style:name": "Heading_1", "style:family": "paragraph", "style:parent-style-name": "Standard" }).close();
+    for (const a of ["center", "right"] as const) {
+      w.open("style:style", { "style:name": `Align_${a}`, "style:family": "paragraph", "style:parent-style-name": "Standard" });
+      w.selfClose("style:paragraph-properties", { "fo:text-align": a });
+      w.close();
+    }
     w.close().close();
     return w.toString();
   }
