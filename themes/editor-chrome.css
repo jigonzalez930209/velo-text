@@ -52,19 +52,20 @@
   user-select: text;
   -webkit-user-select: text;
 }
-.pde-editor th { background: var(--pde-color-surface); font-weight: 600; }
+.pde-editor th { background: var(--pde-color-surface); font-weight: 600; text-align: center; }
 .pde-editor figure.pde-image-block {
-  display: inline-block;
-  width: fit-content;
+  display: block;
+  width: 100%;
   max-width: 100%;
   margin: 0.8em 0;
   text-align: left;
-  vertical-align: top;
 }
 .pde-editor figure.pde-image-block img {
-  display: block;
+  display: inline-block;
   max-width: 100%;
+  width: auto;
   height: auto;
+  vertical-align: top;
   border-radius: var(--pde-radius-md);
   cursor: nwse-resize;
 }
