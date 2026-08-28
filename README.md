@@ -1,4 +1,4 @@
-# portable-doc-editor
+# velo-text
 
 Portable document editor with variables `{{name}}`, tables, images, LaTeX equations and deterministic export to **PDF, ODT, and DOCX** — **zero runtime dependencies**, TypeScript strict. LibreOffice/Word CI and full visual parity across Office formats are still open.
 
@@ -7,7 +7,7 @@ Portable document editor with variables `{{name}}`, tables, images, LaTeX equati
 ## Install
 
 ```bash
-pnpm add portable-doc-editor
+pnpm add velo-text
 # or local
 pnpm install
 pnpm run build
@@ -18,8 +18,8 @@ Requires Node >=18. Uses `pnpm` exclusively (see `packageManager`).
 ## Quick start
 
 ```ts
-import { createDocument, createIdGenerator, exportDocument } from "portable-doc-editor";
-import { createBufferSink } from "portable-doc-editor/dist/adapters/backend/index.js";
+import { createDocument, createIdGenerator, exportDocument } from "velo-text";
+import { createBufferSink } from "velo-text/backend";
 
 const doc = createDocument({ idGenerator: createIdGenerator("doc"), clock: { nowIso: () => new Date().toISOString() } });
 doc.root.children.push(
@@ -51,7 +51,7 @@ const pdfBytes = getBuffer(); // Uint8Array
 </script>
 ```
 
-See `examples/vanilla-web.html`, `examples/backend.mjs`, `examples/postgres.mjs`, `examples/s3.mjs`, and `docs/playground/`.
+See `examples/` (vanilla, React, Vue, Svelte, Angular, Astro), `examples/backend.mjs`, `examples/postgres.mjs`, `examples/s3.mjs`. Interactive playground: `pnpm docs:dev` → `/playground/`.
 
 ## Features
 
@@ -82,7 +82,7 @@ pnpm run test:security    # XSS / prototype / SVG / LaTeX corpus
 pnpm run test:visual      # HTML snapshots in tests/visual/snapshots
 pnpm run fuzz -- --iterations=5000
 pnpm run build            # tsc → dist/
-pnpm playground:dev       # Vite playground (resolves src/ via alias; no dist required)
+pnpm docs:dev             # VitePress docs + playground at /playground/
 ```
 
 ## Zero dependencies
