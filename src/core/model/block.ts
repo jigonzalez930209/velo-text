@@ -56,9 +56,24 @@ export interface TableRow {
   heightUm?: number;
 }
 
+export interface TableLook {
+  headerRow?: boolean;
+  totalRow?: boolean;
+  bandedRows?: boolean;
+  firstColumn?: boolean;
+  lastColumn?: boolean;
+  bandedColumns?: boolean;
+}
+
+export type TableDensity = "compact" | "normal" | "large";
+export type TablePreset = "plain" | "grid" | "grid-banded" | "list" | "list-header" | "accent";
+
 export interface TableStyle {
   border?: string;
   width?: string;
+  density?: TableDensity;
+  preset?: TablePreset;
+  look?: TableLook;
 }
 
 export interface TableNode {
