@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * HTTP document API — Phase 10.2 using in-memory repo (no pg driver).
- * GET/PUT /documents/:id  POST /documents  POST /documents/:id/export?format=pdf|odt|docx
+ * POST /documents/:id/export?format=pdf  — same `exportPdf` as playground preview (do not fork a second generator).
+ * Hosts (Express / Vercel): `const { bytes } = await exportPdf({ document, data, assets, options: { strict: false } })`
  */
 import http from "node:http";
 import { createDocument, createIdGenerator, exportDocument, validateDocument, normalizeDocument } from "../dist/public-api/index.js";
