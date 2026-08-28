@@ -135,24 +135,29 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
           for (const col of cols) {
             let cellH = 28;
             for (const bl of col.blocks) {
-              if (bl.type === "paragraph") cellH += 14;
-              else cellH += 18;
+              if (bl.type === "image") cellH += Math.min(120, Math.max(36, ((bl.heightUm ?? 90000) / 25400) * 72));
+              else cellH += 16;
             }
             h = Math.max(h, cellH);
           }
           for (let ci = 0; ci < cols.length; ci++) {
             const col = cols[ci]!;
             const segs2: Segment[] = [];
+            let imgBits = "";
             for (const bl of col.blocks) {
               if (bl.type === "paragraph") segs2.push(...inlineToSegments(bl.children as never, 9));
               else if (bl.type === "heading") segs2.push(...inlineToSegments(bl.children as never, 11));
+              else if (bl.type === "image") {
+                const im = bl as { assetId: string; widthUm?: number; heightUm?: number };
+                imgBits = ` ${im.assetId} ${im.widthUm ?? 0} ${im.heightUm ?? 0}`;
+              }
             }
             lines.push({
               segments: segs2,
               yPt: 0,
               sizePt: 9,
               align: "left",
-              style: `table-cell ${ci} ${b.id} 0 ${colW[ci]} ${h}`,
+              style: `flow-cell ${ci} ${b.id} 0 ${colW[ci]} ${h}${imgBits}`,
             });
           }
           lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: `table-row-end ${h}` });
@@ -203,7 +208,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         }
         continue;
       }
-      if (line.style.startsWith("table-cell")) {
+      if (line.style.startsWith("table-cell") || line.style.startsWith("flow-cell")) {
         cur.push({ line, yPt: y });
         continue;
       }

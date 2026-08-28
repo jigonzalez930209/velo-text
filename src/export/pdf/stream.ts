@@ -24,7 +24,7 @@ export function pageContentStream(
     if (line.style === "table-top" || line.style === "table-bottom" || line.style.startsWith("table-row-end")) {
       continue;
     }
-    if (line.style.startsWith("table-cell")) {
+    if (line.style.startsWith("table-cell") || line.style.startsWith("flow-cell")) {
       const parts = line.style.split(" ");
       const rowId = parts[2];
       const ri = Number(parts[3]);
@@ -34,16 +34,18 @@ export function pageContentStream(
       if (tableState === null || tableState.row !== ri) {
         tableState = { colW: [], row: ri, x: marginPt, y };
       }
-      s += `0.3 w 0.45 0.45 0.45 RG\n`;
-      s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
+      if (line.style.startsWith("table-cell")) {
+        s += `0.3 w 0.45 0.45 0.45 RG\n`;
+        s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
+      }
       const segs = line.segments;
       let textW = 0;
       for (const seg of segs) {
         textW += seg.kind === "text" ? helveticaWidthPt(seg.text, 9) : seg.kind === "math" ? seg.math.widthPt : 0;
       }
-      const cellAlign = parts[6] === "center" || parts[6] === "right" || line.align === "center" || line.align === "right"
-        ? (parts[6] === "right" || line.align === "right" ? "right" : "center")
-        : "left";
+      const cellAlign = line.style.startsWith("table-cell") && (parts[6] === "center" || parts[6] === "right")
+        ? parts[6]
+        : (line.align === "center" || line.align === "right" ? line.align : "left");
       let sx = tableState.x + 4;
       if (cellAlign === "center") sx = tableState.x + Math.max(4, (cw - textW) / 2);
       else if (cellAlign === "right") sx = tableState.x + Math.max(4, cw - 4 - textW);
@@ -58,6 +60,16 @@ export function pageContentStream(
         }
       }
       s += `ET\n`;
+      const imgId = line.style.startsWith("flow-cell") ? parts[6] : undefined;
+      const objNum = imgId ? imageObjects.get(imgId) : undefined;
+      if (objNum && imgId) {
+        const wUm = Number(parts[7]) || 150000;
+        const hUm = Number(parts[8]) || 90000;
+        const wPt = Math.min(cw - 8, (wUm / 25400) * 72);
+        const hPt = Math.min(rowH - 12, Math.max(16, (hUm / 25400) * 72));
+        const name = `Im${imgId.replace(/[^A-Za-z0-9]/g, "_")}`;
+        s += `q ${wPt.toFixed(2)} 0 0 ${hPt.toFixed(2)} ${(tableState.x + 4).toFixed(2)} ${(y - 12 - hPt).toFixed(2)} cm /${name} Do Q\n`;
+      }
       tableState.x += cw;
       cursorX = tableState.x;
       continue;

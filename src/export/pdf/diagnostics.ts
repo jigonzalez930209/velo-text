@@ -57,7 +57,7 @@ function walkBlocks(blocks: BlockNode[] | undefined, path: string, out: PdfDiag[
     } else if (b.type === "columns") {
       for (const col of (b as { columns: Array<{ id: string; blocks: BlockNode[] }> }).columns) {
         for (const inner of col.blocks) {
-          if (inner.type !== "paragraph" && inner.type !== "heading") {
+          if (inner.type !== "paragraph" && inner.type !== "heading" && inner.type !== "image") {
             out.push({ code: "pdf-column-block-skipped", message: `Column ${inner.type} is not drawn in PDF`, severity: "warning", path: `${p}/${col.id}/${inner.id}` });
           }
         }
