@@ -43,7 +43,6 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
   function hideImgResize(): void {
     imgResizeEl?.remove();
     imgResizeEl = null;
-    hideImageMeta(s);
   }
 
   const sync = (): void => syncImageResizeOverlay(s);
