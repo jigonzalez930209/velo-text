@@ -1,8 +1,26 @@
-# Roadmap técnico: editor documental portable con variables, imágenes y exportación PDF, ODT y DOCX
+# Roadmap técnico: editor documental portable con variables, imágenes y exportación PDF
 
-**Versión:** 1.0  
+**Versión:** 1.1  
 **Fecha:** 27 de agosto de 2026  
-**Objetivo:** diseñar e implementar una biblioteca autocontenida, sin dependencias de ejecución, capaz de editar documentos enriquecidos, insertar variables como `{{name}}`, manejar tablas e imágenes y exportar el mismo documento desde frontend o backend a PDF, ODT y DOCX.
+**Objetivo:** diseñar e implementar una biblioteca autocontenida, sin dependencias de ejecución, capaz de editar documentos enriquecidos, insertar variables como `{{name}}`, manejar tablas e imágenes y exportar el mismo documento desde frontend o backend a **PDF, ODT y DOCX**. Interoperabilidad LibreOffice/Word en CI y paridad visual completa con PDF siguen abiertas (§2.4).
+
+**Leyenda de estado** (revisión contra el repo, 27 ago 2026): `[x]` hecho · `[~]` parcial / contrato sin host real · `[ ]` pendiente.
+
+**Siguiente documento:** [roadmap_usabilidad_y_adaptadores.md](./roadmap_usabilidad_y_adaptadores.md) — 10 features de usabilidad + adaptadores Vue, React, Svelte, Vanilla, Angular y Astro.
+
+### Estado contra el código
+
+| Área | Estado | Notas |
+| --- | --- | --- |
+| Hito A (vertical demostrable) | `[x]` | AST, editor, `{{name}}`, PNG/JPEG, JSON, **PDF**, temas |
+| Hito B (MVP usable) | `[~]` | Tablas, 4 temas, S3/PG como **puertos**; HTTP de ejemplo in-memory; sin `pg` ni SDK S3 |
+| Hito C (v1.0 dura) | `[~]` | Repeat rows, SVG/WebP, layout, fuzz, docs; falta OMML, fuentes PDF embebidas, goldens perceptuales, PG real |
+| Fases 0–3, 5.1, 6, 7.1 (subset), 8.1, 9.1, 11, 12.1 (base) | `[x]` / `[~]` | Ver fases abajo |
+| Fase 4 editor | `[~]` | `contenteditable` + `domToAst`; color/fuente/sangría/link en playground; **no** intent→op por tecla |
+| Fase 5.2 / 10 | `[~]` | Contrato + in-memory + SQL + SigV4 + `examples/http-api.mjs`; no driver `pg` |
+| Fase 7.1.3 fuentes PDF | `[~]` | Standard-14 Helvetica/Symbol documentado; **sin TTF embebido** (licencias) |
+| `tests/property/` | `[x]` | Ops aleatorias + idempotencia |
+| Colaboración CRDT, import DOCX/ODT, OfficeMath | `[ ]` | Fuera de v1 (§2.2) |
 
 ## 1. Resumen ejecutivo
 
@@ -13,12 +31,12 @@ La biblioteca tendrá cinco capas claramente separadas:
 1. **Core documental:** árbol canónico, operaciones, selección, historial, normalización y validación.
 2. **Editor web:** `contenteditable`, toolbar, selección visual, portapapeles, drag and drop y temas.
 3. **Motor de plantillas:** variables escalares, rutas, valores con formato y repetición de filas.
-4. **Exportadores:** PDF, DOCX y ODT implementados dentro del proyecto.
+4. **Exportadores:** PDF, ODT y DOCX de producto (`exportDocument`); paridad visual Office vs PDF incompleta.
 5. **Adaptadores:** persistencia PostgreSQL, almacenamiento compatible con S3, red y sistema de archivos.
 
 La expresión “sin librerías externas” se definirá de forma verificable como **cero dependencias de ejecución**. Se usarán únicamente APIs estándar de JavaScript, Web APIs disponibles y módulos incluidos en la propia biblioteca. El repositorio podrá usar herramientas de desarrollo solo si se decide hacerlo, pero el artefacto distribuido no dependerá de ellas. Para cumplir de forma estricta, el plan también contempla un runner de pruebas y scripts de construcción internos.
 
-> **Decisión clave:** el documento canónico nunca será HTML, DOCX, ODT ni PDF. Será un AST JSON versionado. HTML será solo una vista editable; PDF, DOCX y ODT serán salidas derivadas. Esto evita que cada formato se convierta en una fuente de verdad diferente.
+> **Decisión clave:** el documento canónico nunca será HTML, DOCX, ODT ni PDF. Será un AST JSON versionado. HTML será solo una vista editable; PDF, ODT y DOCX son salidas derivadas. Esto evita que cada formato se convierta en una fuente de verdad diferente.
 
 ---
 
@@ -26,22 +44,23 @@ La expresión “sin librerías externas” se definirá de forma verificable co
 
 ### 2.1 Funciones incluidas en la primera versión estable
 
-- Texto, párrafos, títulos, citas, separadores, listas ordenadas y no ordenadas.
-- Negrita, cursiva, subrayado, tachado, código, color, fondo, tamaño y familia tipográfica.
-- Alineación, sangría, espaciado, márgenes documentales y saltos de página.
-- Tablas con filas, columnas, celdas, encabezados, combinación básica y estilos.
-- Variables en cualquier nodo textual y dentro de celdas: `{{name}}`, `{{customer.address.city}}`.
-- Variables tipadas como nodos atómicos para evitar que una edición parcial rompa la expresión.
-- Imágenes WebP, PNG, JPEG/JPG y SVG.
-- Deshacer/rehacer, navegación por teclado, pegar texto/HTML seguro y copiar.
-- Exportación determinista a PDF, ODT y DOCX en navegador y backend.
-- Cuatro temas incluidos: dos claros y dos oscuros.
-- Todos los colores y dimensiones visuales configurables con propiedades CSS.
-- Persistencia amigable con PostgreSQL mediante `jsonb` y tablas relacionales auxiliares. PostgreSQL recomienda normalmente `jsonb` por su procesamiento e indexación, aunque no preserva el orden de las claves, por lo cual el orden documental deberá representarse como arrays. citeturn1search15turn1search16
-- Imágenes en almacenamiento compatible con S3, sin incrustar binarios grandes en el documento.
-- URLs firmadas con vida limitada para carga y descarga. Este patrón permite acceso temporal sin entregar credenciales al cliente. citeturn1search14turn1search17
-- Ecuacciones latex sencillas.
-- Todos los svg de botones y similares tienen que estar incluidos con posibilidad de cambio de colores.
+- `[x]` Texto, párrafos, títulos, citas, separadores, listas ordenadas y no ordenadas.
+- `[x]` Negrita, cursiva, subrayado, tachado, código. Color, fondo, tamaño y familia: modelo + parse/render + UI en playground (panel Insert).
+- `[x]` Alineación, saltos de página y **sangría** (`indent` / outdent, `indentLevel` en el AST).
+- `[x]` Tablas: filas, columnas, resize, menú, **merge right / split**.
+- `[x]` Variables en texto y celdas: `{{name}}`, `{{customer.address.city}}`.
+- `[x]` Variables como nodos atómicos. Popover de path / format / fallback.
+- `[x]` Imágenes WebP, PNG, JPEG/JPG y SVG (sniff + sanitizar SVG).
+- `[x]` Deshacer/rehacer (snapshots), atajos, pegar HTML allowlist, copiar.
+- `[x]` Exportación **PDF** en navegador (`Blob`) y backend (`File`/`Buffer`) con reloj/IDs inyectables.
+- `[x]` Cuatro temas: `light-neutral`, `light-warm`, `dark-slate`, `dark-contrast`.
+- `[x]` Colores y radios vía tokens CSS `--pde-*`.
+- `[~]` Persistencia PostgreSQL: contrato + SQL + in-memory + **HTTP de ejemplo** (`examples/http-api.mjs`). Sin driver `pg`.
+- `[~]` Assets por referencia (no binarios en el AST). Store + GC en memoria.
+- `[~]` URLs prefirmadas SigV4 en el adaptador; **sin bucket real en CI**.
+- `[x]` Ecuaciones LaTeX sencillas (`\frac`, `\sqrt`, `^/_`, griego).
+- `[x]` Iconos SVG inline con `currentColor`.
+- `[x]` Extra post-v1 en el editor: columnas (presets + gutters), mosaico hasta 3 filas, inserción de tabla tipo Word 4×10.
 
 ### 2.2 Fuera del alcance inicial
 
@@ -57,6 +76,19 @@ Estas funciones se dejan como extensiones posteriores para proteger la calidad d
 ### 2.3 Criterio de paridad frontend/backend
 
 La misma entrada lógica debe generar el mismo contenido, metadatos y estructura en ambos entornos. Los bytes pueden diferir si incluyen fechas de empaquetado, identificadores aleatorios o compresión distinta. Para pruebas deterministas se inyectarán reloj, generador de IDs y política de compresión.
+
+### 2.4 Versión 1.5 — TODO (mínimo)
+
+Superficie de producto ODT/DOCX (playground, ejemplos, HTTP, docs) **hecha**. Sigue el trabajo de paridad e interoperabilidad Office.
+
+- `[x]` Playground y ejemplos: botones ODT / DOCX otra vez.
+- `[x]` HTTP `POST /documents/:id/export?format=odt|docx`.
+- `[~]` Paridad con PDF: tablas continuas, alineación de imágenes, desescalado al incrustar, tamaños reales.
+- `[ ]` Interoperabilidad LibreOffice / Word en CI (no solo validadores propios).
+- `[~]` Columnas, ecuaciones e imágenes con calidad de documento en ambos formatos.
+- `[x]` Documentar ODT/DOCX como formatos soportados (README, docs, matriz).
+
+Hasta entonces el hueco principal es **abrir/guardar en LO/Word en CI** y acercar tablas/imágenes al nivel PDF.
 
 ---
 
@@ -848,7 +880,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 ## 14. Roadmap de implementación con depth 3
 
-## Fase 0. Definición ejecutable del producto
+## Fase 0. Definición ejecutable del producto — **`[x]` hecho**
 
 ### 0.1 Cerrar el contrato de alcance
 
@@ -872,7 +904,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** revisión de arquitectura, matriz de trazabilidad y prueba de un spike que cree ZIP, PDF mínimo y DOM editable sin paquetes externos.
 
-## Fase 1. Infraestructura y harness de pruebas
+## Fase 1. Infraestructura y harness de pruebas — **`[x]` hecho**
 
 ### 1.1 Construcción reproducible
 
@@ -896,7 +928,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** un test deliberadamente fallido debe bloquear CI; builds repetidos con reloj fijo deben producir hashes idénticos.
 
-## Fase 2. AST, esquema y operaciones
+## Fase 2. AST, esquema y operaciones — **`[x]` hecho** (`tests/property` + fuzz)
 
 ### 2.1 Implementar nodos
 
@@ -940,7 +972,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** property testing con miles de operaciones aleatorias; normalización idempotente; undo completo vuelve al hash inicial.
 
-## Fase 3. Motor de variables
+## Fase 3. Motor de variables — **`[x]` hecho** (falta popover de edición 3.1.3)
 
 ### 3.1 Lexer y parser
 
@@ -984,7 +1016,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** corpus de expresiones válidas/inválidas, inyección de prototipo, locales y zonas horarias, variables dentro de cada posición de una tabla.
 
-## Fase 4. Editor web
+## Fase 4. Editor web — **`[~]` parcial** (DOM es superficie de tipeo; no hay ops por cada tecla; IME/móvil no matriz)
 
 ### 4.1 Render y reconciliación
 
@@ -1028,7 +1060,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** suites por evento, IME, teclado completo, snapshots DOM, paste malicioso y E2E de edición de tabla.
 
-## Fase 5. Assets e imágenes
+## Fase 5. Assets e imágenes — **`[~]` parcial** (5.1 `[x]`; 5.2 contrato + fake, sin S3 de integración)
 
 ### 5.1 Validación binaria
 
@@ -1072,7 +1104,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** bytes falsificados, SVG hostil, URL expirada, reintento de PUT, dedupe y eliminación concurrente.
 
-## Fase 6. Layout compartido
+## Fase 6. Layout compartido — **`[x]` hecho** (flotantes fuera de v1, como se planeó)
 
 ### 6.1 Medición
 
@@ -1116,7 +1148,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** golden layout, documentos grandes, tablas en límites de página y Unicode.
 
-## Fase 7. Exportador PDF
+## Fase 7. Exportador PDF — **`[~]` parcial** (subset usable; 7.1.3 Standard-14 `[x]`, TTF embebido `[ ]`; goldens perceptuales `[ ]`)
 
 ### 7.1 Escritor binario
 
@@ -1160,7 +1192,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** xref corrupto detectado, fuentes Unicode, 100 páginas, transparencia e hipervínculos.
 
-## Fase 8. Exportador ODT
+## Fase 8. Exportador ODT — producto `[x]` (paridad vs PDF `[~]`)
 
 ### 8.1 XML ODF
 
@@ -1204,7 +1236,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** schema ODF, apertura real, tablas con spans, SVG y estilos de página.
 
-## Fase 9. Exportador DOCX
+## Fase 9. Exportador DOCX — producto `[x]` (paridad vs PDF `[~]`)
 
 ### 9.1 Open XML
 
@@ -1248,7 +1280,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** tablas complejas, imágenes, listas anidadas, Unicode, headers básicos si son incluidos.
 
-## Fase 10. PostgreSQL y API backend
+## Fase 10. PostgreSQL y API backend — **`[~]` contrato** (10.1 in-memory + SQL; 10.2 ejemplo HTTP in-memory; driver `pg` `[ ]`)
 
 ### 10.1 Repositorio documental
 
@@ -1292,7 +1324,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** integración con PostgreSQL real, carreras de actualización, rollback, recuperación de revisión y aislamiento tenant.
 
-## Fase 11. Temas, API y empaquetado
+## Fase 11. Temas, API y empaquetado — **`[x]` hecho** (Shadow DOM opcional no; tarball publish no verificado aquí)
 
 ### 11.1 Theming
 
@@ -1336,7 +1368,7 @@ Los números deberán recalibrarse con hardware de referencia y datos reales, pe
 
 **Pruebas de fase:** instalar desde tarball vacío, verificar cero dependencias, ejecutar ejemplos y comprobar overrides CSS.
 
-## Fase 12. Endurecimiento y release
+## Fase 12. Endurecimiento y release — **`[~]` parcial** (fuzz, threat-model, budgets, checklist; autosave playground `[x]`; jobs/pentest `[ ]`)
 
 ### 12.1 Seguridad
 
@@ -1545,53 +1577,54 @@ function exportDocument(request):
 
 ## 18. Hitos recomendados
 
-### Hito A: vertical demostrable
+### Hito A: vertical demostrable — **`[x]`**
 
-- AST v1.
-- Editor de párrafos y texto.
-- `{{name}}` como nodo.
-- PNG/JPEG.
-- Guardado JSON.
-- PDF, ODT y DOCX simples.
-- Un tema claro y uno oscuro.
+- `[x]` AST v1.
+- `[x]` Editor de párrafos y texto.
+- `[x]` `{{name}}` como nodo.
+- `[x]` PNG/JPEG.
+- `[x]` Guardado JSON (`getDocument` / stringify).
+- `[x]` PDF.
+- `[x]` ODT y DOCX de producto (`exportDocument`, playground, HTTP) — paridad Office `[~]` (§2.4).
+- `[x]` Un tema claro y uno oscuro (de hecho cuatro).
 
-### Hito B: MVP usable
+### Hito B: MVP usable — **`[~]`**
 
-- Tablas y variables en celdas.
-- Cuatro temas.
-- S3 compatible.
-- PostgreSQL con revisiones.
-- Exportadores con imágenes.
-- Seguridad y accesibilidad base.
+- `[x]` Tablas y variables en celdas.
+- `[x]` Cuatro temas.
+- `[~]` S3 compatible (firma + fake adapter).
+- `[~]` PostgreSQL con revisiones (SQL + in-memory; sin Postgres real).
+- `[x]` Exportadores con imágenes.
+- `[x]` Seguridad y accesibilidad base (paste, contrast helper, toolbar).
 
-### Hito C: versión 1.0
+### Hito C: versión 1.0 — **`[~]`**
 
-- Repetición de filas.
-- SVG/WebP con fallback.
-- Layout robusto.
-- Conformidad e interoperabilidad.
-- Benchmarks y fuzzing.
-- Documentación y ejemplos completos.
+- `[x]` Repetición de filas.
+- `[~]` SVG/WebP; fallback PNG en DOCX antiguo no automático.
+- `[x]` Layout (paginación, widows/orphans, diagnósticos).
+- `[~]` Conformidad (99 fixtures × 3 formatos); interoperabilidad Word/LO manual.
+- `[x]` Benchmarks y fuzzing (scripts).
+- `[x]` Documentación y ejemplos (vanilla, backend, postgres, s3).
 
 ---
 
 ## 19. Primera secuencia de implementación recomendada
 
-1. Crear schema v1 y 30 fixtures.
-2. Implementar validador y canonical JSON.
-3. Implementar operaciones primitivas e historial.
-4. Construir editor web de párrafos.
-5. Añadir `VariableNode` y catálogo de variables.
-6. Añadir imágenes PNG/JPEG con AssetRef local.
-7. Implementar XmlWriter, CRC32 y ZipWriter STORE.
-8. Exportar ODT mínimo.
-9. Exportar DOCX mínimo.
-10. Implementar PDF mínimo y luego layout compartido.
-11. Añadir tablas de extremo a extremo.
-12. Añadir persistencia PostgreSQL y assets S3.
-13. Añadir SVG/WebP y variantes.
-14. Endurecer seguridad, accesibilidad y rendimiento.
-15. Congelar API solo después de probar dos integraciones reales.
+1. `[x]` Crear schema v1 y 30 fixtures (hay 33).
+2. `[x]` Implementar validador y canonical JSON.
+3. `[x]` Implementar operaciones primitivas e historial.
+4. `[x]` Construir editor web de párrafos.
+5. `[x]` Añadir `VariableNode` y catálogo de variables (chips + popover path/format/fallback).
+6. `[x]` Añadir imágenes PNG/JPEG con AssetRef local.
+7. `[x]` Implementar XmlWriter, CRC32 y ZipWriter STORE.
+8. `[x]` Exportar ODT mínimo.
+9. `[x]` Exportar DOCX mínimo.
+10. `[x]` Implementar PDF mínimo y luego layout compartido.
+11. `[x]` Añadir tablas de extremo a extremo (más columnas/mosaico).
+12. `[~]` Añadir persistencia PostgreSQL y assets S3 (puertos, no hosts).
+13. `[x]` SVG/WebP en paquete; **fallback PNG en DOCX** para consumidores antiguos (placeholder raster).
+14. `[~]` Endurecer seguridad, accesibilidad y rendimiento (base hecha; soak/pentest `[ ]`).
+15. `[ ]` Congelar API solo después de probar dos integraciones reales (apps host).
 
 ---
 
@@ -1608,6 +1641,10 @@ function exportDocument(request):
 - **Estrategia:** verticales pequeñas que atraviesen edición, persistencia y los tres exportadores.
 
 El enfoque reduce el acoplamiento y permite ampliar el editor sin hipotecar la persistencia. La parte más costosa no será el toolbar, sino la combinación de selección web, maquetación, fuentes y conformidad DOCX/ODT/PDF. Por eso esas capacidades deben validarse desde el primer hito, no dejarse para el final.
+
+**Hecho en esta pasada (editor/export/tests):** color/fuente/sangría UI, popover de variables, merge de celdas, fallback PNG DOCX, `tests/property`, HTTP in-memory (`examples/http-api.mjs`), autosave playground, política PDF Standard-14 (`src/export/pdf/fonts.ts`).
+
+**Sigue fuera o host-only (cero deps / §2.2):** driver PostgreSQL real / Testcontainers; S3 de integración; TTF embebido; goldens perceptuales; Word/LibreOffice en CI; intent→operation por tecla; pentest; congelar API tras dos apps reales; CRDT / import DOCX / OfficeMath. Soak corto: `scripts/soak.js`. Usabilidad y wrappers: [roadmap_usabilidad_y_adaptadores.md](./roadmap_usabilidad_y_adaptadores.md).
 
 ---
 
