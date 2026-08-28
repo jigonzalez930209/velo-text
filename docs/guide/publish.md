@@ -19,17 +19,18 @@ Nothing else. No `.npmrc` in the repo.
 
 ## 2. Ship a version (this is the release)
 
-On `main`, with `package.json` already at `1.0.0-beta.0`:
+On `main`, bump version then push the matching tag (that starts **Publish npm**):
 
 ```bash
-git add -A
-git commit -m "release: 1.0.0-beta.0"
+pnpm version:set 1.0.0-beta.1
+# edit CHANGELOG.md if needed
+git add -A && git commit -m "release: 1.0.0-beta.1"
+git tag v1.0.0-beta.1
 git push origin HEAD
-git tag v1.0.0-beta.0
-git push origin v1.0.0-beta.0
+git push origin v1.0.0-beta.1
 ```
 
-Pushing the tag **`v1.0.0-beta.0`** starts **Publish npm**:
+`scripts/set-version.sh` writes `package.json` and the current-version docs. The git tag must equal `package.json` `version` (`v` + version).
 
 1. Runs checks (types, lint, unit, integration, security, PDF smoke).
 2. Publishes to [npmjs.com/package/velo-text](https://www.npmjs.com/package/velo-text) with tag `beta` (any `package.json` version that contains `-` uses `beta`; a clean `1.0.0` uses `latest`).
