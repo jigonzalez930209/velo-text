@@ -66,11 +66,15 @@ const GREEK: Record<string, string> = {
 const OPS: Record<string, string> = {
   "\\cdot": "\u00B7", "\\times": "\u00D7", "\\div": "\u00F7", "\\pm": "\u00B1",
   "\\leq": "\u00A3", "\\geq": "\u00B3", "\\neq": "\u00B9", "\\infty": "\u00A5",
-  "\\rightarrow": "\u00AE", "\\leftarrow": "\u00AC", "\\sum": "S", "\\prod": "P",
-  "\\int": "\u00F2", "\\partial": "\u00B6",
+  "\\rightarrow": "\u00AE", "\\leftarrow": "\u00AC", "\\leftrightarrow": "\u00AB",
+  "\\sum": "S", "\\prod": "P", "\\int": "\u00F2", "\\partial": "\u00B6",
+  "\\approx": "\u00BB", "\\in": "\u00CE", "\\notin": "\u00CF",
 };
 
-const SYMBOL_CMD: Record<string, string> = { ...GREEK, ...OPS };
+const SYMBOL_CMD: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(GREEK).map(([k, v]) => [`\\${k}`, v])),
+  ...OPS,
+};
 
 export function parseMath(latex: string, baseSizePt = 11): MathBox {
   let input = latex.replace(/\s+/g, " ").trim();
@@ -197,6 +201,7 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
           continue;
         }
         if (cmd === "\\left" || cmd === "\\right") continue;
+        if (cmd === "\\begin" || cmd === "\\end") { parseGroup(); continue; }
         const mapped = SYMBOL_CMD[cmd];
         if (mapped !== undefined) {
           flushBase();

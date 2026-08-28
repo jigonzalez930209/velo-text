@@ -1,13 +1,19 @@
 import type { PortableDocument } from "../../core/model/types.js";
 import { parseMath, helveticaWidthPt } from "./equation.js";
 import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
+import { pdfPageMetrics } from "./page-metrics.js";
 
 export function buildPdfPages(doc: PortableDocument): PdfPage[] {
-    const pageHeightPt = 842; // A4
-    const pageWidthPt = 595;
-    const marginPt = 57;
-    const maxWidth = pageWidthPt - marginPt * 2;
+    const m = pdfPageMetrics(doc);
+    const pageHeightPt = m.heightPt;
+    const pageWidthPt = m.widthPt;
+    const marginPt = m.marginLeftPt;
+    const bottomPt = m.marginBottomPt;
+    const maxWidth = pageWidthPt - m.marginLeftPt - m.marginRightPt;
     const lines: PdfLine[] = [];
+    const pageOf = (rows: PdfPage["lines"]): PdfPage => ({
+      lines: rows, widthPt: pageWidthPt, heightPt: pageHeightPt, marginPt,
+    });
 
     const inlineToSegments = (children: Array<{ type: string; text?: string; source?: string; latex?: string }>, sizePt: number): Segment[] => {
       const segs: Segment[] = [];
@@ -173,13 +179,14 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     // Paginate lines: assign y positions, splitting at page-break lines
     const pages: PdfPage[] = [];
     let cur: Array<{ line: PdfLine; yPt: number }> = [];
-    let y = pageHeightPt - marginPt;
+    let y = pageHeightPt - m.marginTopPt;
     const lineH = 16;
+    const overflow = (): boolean => y < bottomPt;
     for (const line of lines) {
       if (line.style === "page-break") {
-        if (cur.length) pages.push({ lines: cur });
+        if (cur.length) pages.push(pageOf(cur));
         cur = [];
-        y = pageHeightPt - marginPt;
+        y = pageHeightPt - m.marginTopPt;
         continue;
       }
       if (line.style === "table-top") {
@@ -189,10 +196,10 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       if (line.style === "table-bottom") {
         cur.push({ line, yPt: y });
         y -= 8;
-        if (y < marginPt) {
-          pages.push({ lines: cur });
+        if (overflow()) {
+          pages.push(pageOf(cur));
           cur = [];
-          y = pageHeightPt - marginPt;
+          y = pageHeightPt - m.marginTopPt;
         }
         continue;
       }
@@ -204,10 +211,10 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         const rowH = Number(line.style.split(" ")[1]) || 30;
         cur.push({ line, yPt: y });
         y -= rowH;
-        if (y < marginPt) {
-          pages.push({ lines: cur });
+        if (overflow()) {
+          pages.push(pageOf(cur));
           cur = [];
-          y = pageHeightPt - marginPt;
+          y = pageHeightPt - m.marginTopPt;
         }
         continue;
       }
@@ -217,22 +224,22 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         const hPt = Math.min(360, Math.max(24, (hUm / 25400) * 72));
         cur.push({ line, yPt: y });
         y -= hPt + 10;
-        if (y < marginPt) {
-          pages.push({ lines: cur });
+        if (overflow()) {
+          pages.push(pageOf(cur));
           cur = [];
-          y = pageHeightPt - marginPt;
+          y = pageHeightPt - m.marginTopPt;
         }
         continue;
       }
       cur.push({ line, yPt: y });
       y -= lineH;
-      if (y < marginPt) {
-        pages.push({ lines: cur });
+      if (overflow()) {
+        pages.push(pageOf(cur));
         cur = [];
-        y = pageHeightPt - marginPt;
+        y = pageHeightPt - m.marginTopPt;
       }
     }
-    if (cur.length) pages.push({ lines: cur });
-    if (pages.length === 0) pages.push({ lines: [] });
+    if (cur.length) pages.push(pageOf(cur));
+    if (pages.length === 0) pages.push(pageOf([]));
     return pages;
   }

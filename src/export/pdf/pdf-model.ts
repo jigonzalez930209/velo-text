@@ -19,6 +19,9 @@ export interface PdfLine {
 
 export interface PdfPage {
   lines: Array<{ line: PdfLine; yPt: number }>;
+  widthPt: number;
+  heightPt: number;
+  marginPt: number;
   objNum?: number;
 }
 

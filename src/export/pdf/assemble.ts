@@ -74,7 +74,7 @@ export function assemblePdf(
       u8("\nendstream\nendobj"),
     ]));
     const pageNum = objects.length + 1;
-    addObj(u8(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents ${contentNum} 0 R /Resources << ${fonts} ${xObjRes}>> >>\nendobj`));
+    addObj(u8(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.widthPt} ${page.heightPt}] /Contents ${contentNum} 0 R /Resources << ${fonts} ${xObjRes}>> >>\nendobj`));
     (page as { objNum?: number }).objNum = pageNum;
   }
 

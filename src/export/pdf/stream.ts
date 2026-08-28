@@ -9,10 +9,10 @@ export function pageContentStream(
 ): { stream: string } {
   void doc;
   let s = "";
-  const marginPt = 57;
+  const marginPt = page.marginPt;
   let cursorX = marginPt;
   let tableState: { colW: number[]; row: number; x: number; y: number } | null = null;
-  const pageWidthPt = 595;
+  const pageWidthPt = page.widthPt;
 
   for (const { line, yPt } of page.lines) {
     const y = yPt;
