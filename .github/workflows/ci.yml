@@ -4,17 +4,22 @@ on:
     branches: [main, master]
   pull_request:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.24.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -46,12 +51,31 @@ jobs:
       - name: Export smoke (PDF/ODT/DOCX deterministic)
         run: node --experimental-strip-types scripts/smoke-export.ts
       - name: Build VitePress docs (includes playground)
+        env:
+          DOCS_BASE: /velo-text/
         run: pnpm run docs:build
       - name: Visual HTML snapshots
         run: pnpm run test:visual && git diff --exit-code -- tests/visual/snapshots
+      - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/.vitepress/dist
       - name: Build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: dist
           path: dist/
+
+  deploy-docs:
+    needs: verify
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
