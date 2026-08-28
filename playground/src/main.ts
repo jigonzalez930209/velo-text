@@ -9,26 +9,32 @@ import {
   createIdGenerator,
   createEditor,
   createTable,
-  getIconSvg,
   exportDocument,
-  type IconName,
+  sniffImage,
+  getDimensions,
   type PortableDocument,
   type ThemeName,
-} from "../../dist/public-api/index.js";
-import { createMemorySink } from "../../dist/adapters/browser/index.js";
+} from "portable-doc-editor";
+import { createMemorySink } from "portable-doc-editor/adapters/browser";
+import { wireFormatPanel } from "./format-panel.ts";
+import { openColumnsMenu, openTableMenu, wireToolbar } from "./toolbar.ts";
+import { wirePanels } from "./panels.ts";
 
 const idGen = createIdGenerator("play");
 const clock = { nowIso: () => new Date().toISOString() };
 let doc = createDocument({ idGenerator: idGen, clock });
 doc.metadata.title = "Playground Document";
+doc.variableSchema = { name: "string", total: "number" };
+for (const [level, text] of [[1, "Welcome"], [2, "Setup"], [2, "Tables"], [3, "Cells"], [2, "Variables"], [1, "Export"]] as const) {
+  doc.root.children.push({ type: "heading", id: idGen.next(), level, children: [{ type: "text", id: idGen.next(), text }] });
+}
 doc.root.children.push(
-  { type: "heading", id: idGen.next(), level: 1, children: [{ type: "text", id: idGen.next(), text: "Welcome to the playground" }] },
   { type: "paragraph", id: idGen.next(), children: [
     { type: "text", id: idGen.next(), text: "Type here. Insert variables " },
     { type: "variable", id: idGen.next(), path: "name", source: "{{name}}", valueType: "string" },
-    { type: "text", id: idGen.next(), text: ", equations " },
-    { type: "equation", id: idGen.next(), latex: "E = mc^2" },
-    { type: "text", id: idGen.next(), text: ", tables and images. Hover a block and drag the handle on the left to reorder." },
+    { type: "text", id: idGen.next(), text: " and total " },
+    { type: "variable", id: idGen.next(), path: "total", source: "{{total | currency:ARS}}", valueType: "number", format: "currency:ARS" },
+    { type: "text", id: idGen.next(), text: ". Use Ctrl+K or / in an empty paragraph." },
   ] },
   createTable(idGen, 2, 2),
 );
@@ -54,68 +60,65 @@ const status = document.getElementById("status") as HTMLElement;
 const jsonTa = document.getElementById("json") as HTMLTextAreaElement;
 const dataTa = document.getElementById("data") as HTMLTextAreaElement;
 const varChips = document.getElementById("var-chips") as HTMLElement;
-
 const assetBytes: Record<string, Uint8Array> = {};
 const assetUrls: Record<string, string> = {};
 
+async function registerImage(file: File): Promise<{ assetId: string; widthUm?: number; heightUm?: number; error?: string }> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sniff = sniffImage(bytes);
+  const mediaType = (sniff.mediaType ?? file.type ?? "image/png") as never;
+  const dim = getDimensions(bytes, sniff.mediaType ?? file.type);
+  const assetId = `asset_${Date.now().toString(36)}`;
+  const sha256Hex = await sha256(bytes);
+  const live = editor.getDocument();
+  live.assets[assetId] = {
+    id: assetId, kind: "image", mediaType,
+    storageKey: `playground/${assetId}`, sha256: sha256Hex, byteLength: bytes.length, alt: file.name,
+  };
+  assetBytes[assetId] = bytes;
+  assetUrls[assetId] = URL.createObjectURL(file);
+  let widthUm: number | undefined;
+  let heightUm: number | undefined;
+  if (dim) {
+    const maxW = 150000;
+    const scale = Math.min(1, maxW / Math.round((dim.widthPx * 25400) / 96));
+    widthUm = Math.max(20000, Math.round((dim.widthPx * 25400) / 96 * scale));
+    heightUm = Math.max(12000, Math.round((dim.heightPx * 25400) / 96 * scale));
+  }
+  return { assetId, widthUm, heightUm };
+}
+
+let panels: ReturnType<typeof wirePanels>;
 const editor = createEditor(editorEl, {
   document: doc,
   theme: "light-neutral",
   resolveAssetUrl: (id) => assetUrls[id],
-  onChange: (d) => {
-    jsonTa.value = JSON.stringify(d, null, 2);
-    status.textContent = `${d.root.children.length} blocks · rev ${d.revision}`;
-  },
+  getVariableCatalog: () => ["name", "customer.name", "total", "date"],
+  getTemplateData: () => panels?.parseData() ?? {},
+  onImageFile: (file) => registerImage(file),
+  onChange: (d) => panels?.refresh(d),
 });
 
-type ToolbarItem = { icon: IconName; title: string; run: () => void; group: string };
+panels = wirePanels(editor, {
+  status, jsonTa, dataTa,
+  outline: document.getElementById("outline") as HTMLElement,
+  preview: document.getElementById("preview") as HTMLElement,
+  unresolved: document.getElementById("unresolved") as HTMLElement,
+  saveLabel: document.getElementById("save-label") as HTMLElement,
+  revList: document.getElementById("rev-list") as HTMLElement,
+  resolveAssetUrl: (id) => assetUrls[id],
+});
+try {
+  const raw = localStorage.getItem("pde-playground-doc");
+  if (raw) editor.setDocument(JSON.parse(raw) as PortableDocument);
+} catch { /* ignore */ }
 
-const items: ToolbarItem[] = [
-  { icon: "undo2", title: "Undo (Ctrl+Z)", group: "history", run: () => editor.undo() },
-  { icon: "redo2", title: "Redo (Ctrl+Y)", group: "history", run: () => editor.redo() },
-  { icon: "bold", title: "Bold", group: "marks", run: () => editor.commands.toggleMark("bold") },
-  { icon: "italic", title: "Italic", group: "marks", run: () => editor.commands.toggleMark("italic") },
-  { icon: "underline", title: "Underline", group: "marks", run: () => editor.commands.toggleMark("underline") },
-  { icon: "strikethrough", title: "Strikethrough", group: "marks", run: () => editor.commands.toggleMark("strike") },
-  { icon: "code", title: "Code", group: "marks", run: () => editor.commands.toggleMark("code") },
-  { icon: "heading1", title: "Title (H1)", group: "blocks", run: () => editor.commands.setHeading(1) },
-  { icon: "heading2", title: "Subtitle (H2)", group: "blocks", run: () => editor.commands.setHeading(2) },
-  { icon: "heading3", title: "Heading 3", group: "blocks", run: () => editor.commands.setHeading(3) },
-  { icon: "quote", title: "Quote", group: "blocks", run: () => editor.commands.toggleQuote() },
-  { icon: "listUnordered", title: "Bullet list", group: "blocks", run: () => editor.commands.toggleList("unordered") },
-  { icon: "listOrdered", title: "Numbered list", group: "blocks", run: () => editor.commands.toggleList("ordered") },
-  { icon: "alignLeft", title: "Align left", group: "align", run: () => editor.commands.setAlign("left") },
-  { icon: "alignCenter", title: "Align center", group: "align", run: () => editor.commands.setAlign("center") },
-  { icon: "alignRight", title: "Align right", group: "align", run: () => editor.commands.setAlign("right") },
-  { icon: "alignJustify", title: "Justify", group: "align", run: () => editor.commands.setAlign("justify") },
-  { icon: "variable", title: "Insert {{name}}", group: "insert", run: () => insertVariable("name") },
-  { icon: "equation", title: "Insert equation", group: "insert", run: () => insertEquation("\\frac{a}{b}") },
-  { icon: "table", title: "Insert 2×2 table", group: "insert", run: () => editor.commands.insertTable(2, 2) },
-  { icon: "columns3", title: "Insert 2 columns", group: "insert", run: () => editor.commands.insertColumns(2) },
-  { icon: "imagePlus", title: "Insert image", group: "insert", run: () => insertImage() },
-  { icon: "eraser", title: "Clear formatting", group: "marks", run: () => editor.commands.clearFormat() },
-];
-
-let currentGroup = "";
-for (const item of items) {
-  if (item.group !== currentGroup) {
-    toolbar.appendChild(div("pde-toolbar-group"));
-    currentGroup = item.group;
-  }
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.title = item.title;
-  btn.setAttribute("aria-label", item.title);
-  btn.innerHTML = getIconSvg(item.icon, { size: 18 });
-  btn.addEventListener("mousedown", (e) => e.preventDefault());
-  btn.onclick = () => item.run();
-  toolbar.lastElementChild?.appendChild(btn);
-}
-function div(cls: string): HTMLElement {
-  const d = document.createElement("div");
-  d.className = cls;
-  return d;
-}
+wireToolbar(editor, toolbar, {
+  insertVariable: (path) => editor.commands.insertVariable(path),
+  insertEquation: (latex) => editor.commands.insertEquation(latex),
+  insertImage,
+});
+wireFormatPanel(editor);
 
 for (const v of ["name", "customer.name", "total | currency:ARS", "date | date:dd/MM/yyyy"]) {
   const b = document.createElement("button");
@@ -128,19 +131,6 @@ for (const v of ["name", "customer.name", "total | currency:ARS", "date | date:d
   varChips.appendChild(b);
 }
 
-function insertVariable(path: string): void {
-  editor.commands.insertVariable(path);
-}
-function insertEquation(latex: string): void {
-  editor.commands.insertEquation(latex);
-}
-
-(document.getElementById("btn-eq") as HTMLButtonElement).onclick = () => insertEquation("E = mc^2");
-(document.getElementById("btn-table") as HTMLButtonElement).onclick = () => editor.commands.insertTable(2, 2);
-(document.getElementById("btn-columns") as HTMLButtonElement).onclick = () => editor.commands.insertColumns(2);
-(document.getElementById("btn-pagebreak") as HTMLButtonElement).onclick = () => editor.commands.insertBlock("pageBreak");
-(document.getElementById("btn-image") as HTMLButtonElement).onclick = () => insertImage();
-
 function insertImage(): void {
   const input = document.createElement("input");
   input.type = "file";
@@ -148,23 +138,8 @@ function insertImage(): void {
   input.onchange = async () => {
     const file = input.files?.[0];
     if (!file) return;
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const assetId = `asset_${Date.now().toString(36)}`;
-    const sha256Hex = await sha256(bytes);
-    (doc as PortableDocument).assets[assetId] = {
-      id: assetId,
-      kind: "image",
-      mediaType: file.type as never,
-      storageKey: `playground/${assetId}`,
-      sha256: sha256Hex,
-      byteLength: bytes.length,
-      alt: file.name,
-    };
-    assetBytes[assetId] = bytes;
-    assetUrls[assetId] = URL.createObjectURL(file);
-    const live = editor.getDocument();
-    live.assets[assetId] = (doc as PortableDocument).assets[assetId]!;
-    editor.commands.insertImage(assetId);
+    const { assetId, widthUm, heightUm } = await registerImage(file);
+    editor.commands.insertImage(assetId, widthUm, heightUm);
   };
   input.click();
 }
@@ -174,6 +149,20 @@ async function sha256(data: Uint8Array): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+(document.getElementById("btn-eq") as HTMLButtonElement).onclick = () => editor.openEquationEditor();
+(document.getElementById("btn-table") as HTMLButtonElement).onclick = function () { openTableMenu(editor, this); };
+(document.getElementById("btn-columns") as HTMLButtonElement).onclick = function () { openColumnsMenu(editor, this); };
+(document.getElementById("btn-pagebreak") as HTMLButtonElement).onclick = () => editor.commands.insertBlock("pageBreak");
+(document.getElementById("btn-image") as HTMLButtonElement).onclick = () => insertImage();
+(document.getElementById("btn-palette") as HTMLButtonElement).onclick = () => editor.openCommandPalette();
+(document.getElementById("btn-find") as HTMLButtonElement).onclick = () => editor.openFind(true);
+(document.getElementById("btn-keys") as HTMLButtonElement).onclick = () => editor.openShortcuts();
+(document.getElementById("btn-page") as HTMLButtonElement).onclick = () => {
+  const on = !document.body.classList.contains("pg-page");
+  document.body.classList.toggle("pg-page", on);
+  editor.setPagePreview(on);
+};
+
 (document.getElementById("theme") as HTMLSelectElement).onchange = (e) => {
   const theme = (e.target as HTMLSelectElement).value as ThemeName;
   document.documentElement.setAttribute("data-pde-theme", theme);
@@ -181,39 +170,23 @@ async function sha256(data: Uint8Array): Promise<string> {
   editor.setTheme(theme);
 };
 
-async function doExport(fmt: "pdf" | "odt" | "docx"): Promise<void> {
-  let data: Record<string, unknown> = {};
-  try {
-    data = JSON.parse(dataTa.value);
-  } catch {
-    alert("Invalid JSON in Data");
-    return;
-  }
+(document.getElementById("btn-export-pdf") as HTMLButtonElement).onclick = async () => {
   const liveDoc = editor.getDocument();
   const { sink, getBytes } = createMemorySink();
   const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
   for (const [id, bytes] of Object.entries(assetBytes)) {
-    const ref = liveDoc.assets[id];
-    const mediaType = ref?.mediaType ?? (bytes[0] === 0xff ? "image/jpeg" : "image/png");
-    assets[id] = { id, mediaType, data: bytes };
-    if (!liveDoc.assets[id] && ref) liveDoc.assets[id] = ref;
+    const sniff = sniffImage(bytes);
+    assets[id] = { id, mediaType: sniff.mediaType ?? liveDoc.assets[id]?.mediaType ?? "image/png", data: bytes };
   }
-  await exportDocument({ document: liveDoc, data, format: fmt, sink, assets, options: { strict: false } });
+  await exportDocument({ document: liveDoc, data: panels.parseData(), format: "pdf", sink, assets, options: { strict: false } });
   const bytes = getBytes();
-  const mime = fmt === "pdf" ? "application/pdf" : fmt === "odt" ? "application/vnd.oasis.opendocument.text" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  const blob = new Blob([bytes as unknown as BlobPart], { type: mime });
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(new Blob([bytes as unknown as BlobPart], { type: "application/pdf" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = `playground.${fmt}`;
+  a.download = "playground.pdf";
   a.click();
   URL.revokeObjectURL(url);
-  status.textContent = `Exported ${fmt.toUpperCase()} · ${bytes.length} bytes`;
-}
+  status.textContent = `PDF · ${bytes.length} bytes`;
+};
 
-(document.getElementById("btn-export-pdf") as HTMLButtonElement).onclick = () => doExport("pdf");
-(document.getElementById("btn-export-odt") as HTMLButtonElement).onclick = () => doExport("odt");
-(document.getElementById("btn-export-docx") as HTMLButtonElement).onclick = () => doExport("docx");
-
-jsonTa.value = JSON.stringify(editor.getDocument(), null, 2);
-status.textContent = `${editor.getDocument().root.children.length} blocks · rev 0`;
+panels.refresh(editor.getDocument());
