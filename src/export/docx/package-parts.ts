@@ -13,10 +13,11 @@ export function buildContentTypes(doc: PortableDocument): string {
     w.selfClose("Override", { PartName: "/docProps/app.xml", ContentType: "application/vnd.openxmlformats-officedocument.extended-properties+xml" });
     const exts = new Set<string>();
     for (const a of Object.values(doc.assets ?? {})) {
-      const ext = a.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
+      const fallback = a.mediaType === "image/svg+xml" || a.mediaType === "image/webp";
+      const ext = fallback ? "png" : a.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
       if (!exts.has(ext)) {
         exts.add(ext);
-        const ct = a.mediaType === "image/svg+xml" ? "image/svg+xml" : `image/${ext}`;
+        const ct = fallback ? "image/png" : (a.mediaType === "image/svg+xml" ? "image/svg+xml" : `image/${ext}`);
         w.selfClose("Default", { Extension: ext, ContentType: ct });
       }
     }
@@ -44,7 +45,8 @@ export function buildDocRels(doc: PortableDocument): string {
     let id = 1;
     for (const [assetId] of Object.entries(doc.assets ?? {})) {
       const asset = doc.assets[assetId]!;
-      const ext = asset.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
+      const fallback = asset.mediaType === "image/svg+xml" || asset.mediaType === "image/webp";
+      const ext = fallback ? "png" : asset.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
       w.selfClose("Relationship", {
         Id: `rId_${assetId}`,
         Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",

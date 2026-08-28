@@ -1,5 +1,6 @@
 import { XmlWriter } from "../xml/writer.js";
 import type { PortableDocument } from "../../core/model/types.js";
+import { umToEmu } from "../layout/units.js";
 
 export function buildDocument(doc: PortableDocument): string {
     const w = new XmlWriter().declaration();
@@ -112,10 +113,11 @@ function writeBlock(w: XmlWriter, block: Record<string, unknown>, doc: PortableD
           w.open("w:p").open("w:r").open("w:t").text(`[missing image ${block.assetId as string}]`).close().close().close();
           break;
         }
-        w.open("w:p").open("w:r").open("w:drawing");
-        // inline image — simplify EMU conversion: 1px ~ 9525 EMU
-        const widthEmu = 2_000_000;
-        const heightEmu = 1_200_000;
+        w.open("w:p");
+        writeParagraphProps(w, block);
+        w.open("w:r").open("w:drawing");
+        const widthEmu = umToEmu((block.widthUm as number) ?? 150000);
+        const heightEmu = umToEmu((block.heightUm as number) ?? 90000);
         w.open("wp:inline", { distT: "0", distB: "0", distL: "0", distR: "0" });
         w.selfClose("wp:extent", { cx: String(widthEmu), cy: String(heightEmu) });
         w.selfClose("wp:docPr", { id: "1", name: block.id as string, descr: asset.alt ?? "" });

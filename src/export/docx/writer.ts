@@ -5,6 +5,8 @@
 import { ZipWriter } from "../zip/zipWriter.js";
 import type { PortableDocument, BinarySink, Clock } from "../../core/model/types.js";
 import { buildDocument } from "./document-xml.js";
+import { placeholderPng, needsRasterFallback } from "../../assets/png/placeholder.js";
+import { prepareExportImages } from "../images/prepare.js";
 import {
   buildAppProps,
   buildContentTypes,
@@ -43,13 +45,21 @@ export class DocxWriter {
     zip.add("docProps/core.xml", buildCoreProps(document));
     zip.add("docProps/app.xml", buildAppProps());
 
-    const assetMap: Record<string, ResolvedAssetStub> = assets ?? {};
-    for (const [id, asset] of Object.entries(assetMap)) {
-      if (asset.data) {
-        const ext = asset.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
-        zip.add(`word/media/${id}.${ext}`, asset.data);
+    const input: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
+    for (const [id, asset] of Object.entries(assets ?? {})) {
+      if (asset.data) input[id] = { id, mediaType: asset.mediaType, data: asset.data };
+    }
+    const prepared = await prepareExportImages(document, input);
+    let needPng = false;
+    for (const [id, asset] of Object.entries(prepared)) {
+      const ext = asset.mediaType.split("/")[1]!.replace("jpeg", "jpg").replace("svg+xml", "svg");
+      zip.add(`word/media/${id}.${ext}`, asset.data);
+      if (needsRasterFallback(asset.mediaType)) {
+        zip.add(`word/media/${id}.png`, placeholderPng());
+        needPng = true;
       }
     }
+    void needPng;
 
     const bytes = zip.build();
     await sink.write(bytes);
