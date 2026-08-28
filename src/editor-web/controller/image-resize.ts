@@ -1,20 +1,55 @@
 import { umToPx } from "../../export/layout/units.js";
 import type { EditorState } from "./types.js";
 
+function placeOverlay(wrapper: HTMLElement, overlay: HTMLElement, figure: HTMLElement): void {
+  const img = figure.querySelector("img") as HTMLElement | null;
+  const target = img ?? figure;
+  const rect = target.getBoundingClientRect();
+  const origin = wrapper.getBoundingClientRect();
+  overlay.style.left = `${rect.left - origin.left}px`;
+  overlay.style.top = `${rect.top - origin.top}px`;
+  overlay.style.width = `${rect.width}px`;
+  overlay.style.height = `${rect.height}px`;
+}
+
+/** Keep the resize frame and alt/caption box on the bitmap after layout changes. */
+export function syncImageResizeOverlay(s: EditorState): void {
+  const overlay = s.ui.querySelector(".pde-image-resize") as HTMLElement | null;
+  const ownerId = overlay?.dataset.imgOwner;
+  const figure = ownerId
+    ? s.container.querySelector(`figure[data-node-id="${ownerId}"]`) as HTMLElement | null
+    : null;
+  if (overlay && figure) placeOverlay(s.wrapper, overlay, figure);
+  const box = s.wrapper.querySelector(".pde-img-meta") as HTMLElement | null;
+  if (!box) return;
+  if (!figure) { box.remove(); return; }
+  const img = figure.querySelector("img") ?? figure;
+  const r = img.getBoundingClientRect();
+  const w = s.wrapper.getBoundingClientRect();
+  box.style.left = `${r.left - w.left}px`;
+  box.style.top = `${r.bottom - w.top + 6}px`;
+}
+
 export function attachImageResize(s: EditorState): { hideImgResize: () => void } {
   let imgResizeEl: HTMLElement | null = null;
   function hideImgResize(): void { imgResizeEl?.remove(); imgResizeEl = null; }
 
+  const sync = (): void => syncImageResizeOverlay(s);
+  const view = s.ownerDoc.defaultView;
+  view?.addEventListener("resize", sync);
+  s.container.addEventListener("scroll", sync);
+  const RO = view?.ResizeObserver;
+  const ro = typeof RO === "function" ? new RO(sync) : null;
+  ro?.observe(s.wrapper);
+  s.cleanup.push(() => {
+    view?.removeEventListener("resize", sync);
+    s.container.removeEventListener("scroll", sync);
+    ro?.disconnect();
+  });
+
   function positionImgResize(figure: HTMLElement): void {
     if (!imgResizeEl) return;
-    const img = figure.querySelector("img") as HTMLElement | null;
-    const target = img ?? figure;
-    const rect = target.getBoundingClientRect();
-    const origin = s.wrapper.getBoundingClientRect();
-    imgResizeEl.style.left = `${rect.left - origin.left}px`;
-    imgResizeEl.style.top = `${rect.top - origin.top}px`;
-    imgResizeEl.style.width = `${rect.width}px`;
-    imgResizeEl.style.height = `${rect.height}px`;
+    placeOverlay(s.wrapper, imgResizeEl, figure);
   }
 
   function findImageBlock(id: string) {
@@ -40,7 +75,9 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
   }
 
   s.addBoth("click", ((e: MouseEvent) => {
-    const figure = (e.target as HTMLElement).closest?.("figure[data-node-type='image']") as HTMLElement | null;
+    const t = e.target as HTMLElement;
+    if (t.closest?.(".pde-img-meta, .pde-image-resize")) return;
+    const figure = t.closest?.("figure[data-node-type='image']") as HTMLElement | null;
     if (!figure) { hideImgResize(); return; }
     e.stopPropagation();
     hideImgResize();
@@ -55,6 +92,7 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
       imgResizeEl.appendChild(h);
     }
     s.ui.append(imgResizeEl);
+    view?.requestAnimationFrame(sync);
   }) as never);
 
   s.addBoth("pointerdown", ((e: PointerEvent) => {
@@ -77,11 +115,11 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
       const img = figure.querySelector("img");
       if (img) {
         img.style.width = `${Math.round(umToPx(newWUm))}px`;
-        img.style.height = `${Math.round(umToPx(newHUm))}px`;
+        img.style.height = "auto";
       }
       figure.setAttribute("data-width-um", String(newWUm));
-      figure.setAttribute("data-height-um", String(newHUm));
       positionImgResize(figure);
+      sync();
     };
     const onUp = (): void => {
       s.ownerDoc.removeEventListener("pointermove", onMove);
@@ -92,6 +130,7 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
         imgNode.heightUm = Number(figure.getAttribute("data-height-um")) || startHUm;
         s.opts.onChange?.(s.getDoc());
       }
+      sync();
     };
     s.ownerDoc.addEventListener("pointermove", onMove);
     s.ownerDoc.addEventListener("pointerup", onUp);

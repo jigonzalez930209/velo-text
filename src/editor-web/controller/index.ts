@@ -8,14 +8,19 @@ import { createIdGenerator, createSystemClock } from "../../core/model/factories
 import { normalizeDocument } from "../../core/normalize/normalize.js";
 import { renderBlocksToHtml } from "../view/index.js";
 import { domToAst } from "../view/parse.js";
-import { MAX_HISTORY, COALESCE_MS, BLOCK_SEL, type Editor, type EditorOptions, type EditorState } from "./types.js";
+import { History } from "../../core/history/history.js";
+import { MAX_HISTORY, BLOCK_SEL, type Editor, type EditorOptions, type EditorState } from "./types.js";
 import { bindCommands } from "./commands.js";
 import { attachBlockHandles } from "./handles.js";
 import { attachImageResize } from "./image-resize.js";
 import { attachTableUi } from "./table-ui.js";
 import { attachColumnsUi } from "./columns-ui.js";
+import { attachVariableUi } from "./variable-ui.js";
+import { attachEditing, composingOf } from "./host.js";
+import { attachHostUx } from "../ux/attach.js";
 
 export type { Editor, EditorOptions, InsertBlockType } from "./types.js";
+export { openSizePicker, openMosaicPicker, clampTableSize } from "./size-picker.js";
 
 export function createEditor(container: HTMLElement, opts: EditorOptions): Editor {
   let doc = normalizeDocument(opts.document);
@@ -23,8 +28,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   const idGen = opts.idGenerator ?? createIdGenerator("ed");
   const clock = opts.clock ?? createSystemClock();
   void clock;
-  const undoStack: PortableDocument[] = [];
-  const redoStack: PortableDocument[] = [];
+  const history = new History(MAX_HISTORY);
   const cleanup: Array<() => void> = [];
   const ownerDoc = container.ownerDocument;
 
@@ -43,7 +47,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
 
   const s = {
     container, wrapper, ui, ownerDoc, opts, idGen, cleanup,
-    undoStack, redoStack, lastChangeTime: 0, suppress: false, destroyed: false, theme,
+    lastChangeTime: 0, suppress: false, destroyed: false, theme,
     getDoc: () => doc,
     setDoc: (d: PortableDocument) => { doc = d; },
     render: () => { /* filled below */ },
@@ -77,40 +81,31 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   applyTheme(theme);
 
   s.pushSnapshot = () => {
-    undoStack.push(JSON.parse(JSON.stringify(doc)));
-    if (undoStack.length > MAX_HISTORY) undoStack.shift();
-    redoStack.length = 0;
+    history.push({ document: JSON.parse(JSON.stringify(doc)), inverses: [], ops: [], intent: "edit", time: Date.now() });
+    history.checkpoint();
     s.lastChangeTime = Date.now();
   };
 
   s.render = () => {
     if (s.destroyed) return;
     s.suppress = true;
-    container.innerHTML = renderBlocksToHtml(doc);
-    const resolve = opts.resolveAssetUrl;
-    if (resolve) {
-      for (const img of Array.from(container.querySelectorAll("img[data-asset-id]"))) {
-        const url = resolve(img.getAttribute("data-asset-id") ?? "");
-        if (url) (img as HTMLImageElement).src = url;
-      }
-    }
+    container.innerHTML = renderBlocksToHtml(doc, opts.resolveAssetUrl);
     s.suppress = false;
   };
 
   s.syncFromDom = (allowCoalesce = false) => {
-    if (s.suppress) return;
+    if (s.suppress || composingOf(container)) return;
     let next: PortableDocument;
     try { next = normalizeDocument(domToAst(container, doc, idGen)); } catch { return; }
     if (JSON.stringify(next) === JSON.stringify(doc)) return;
-    const now = Date.now();
-    if (allowCoalesce && now - s.lastChangeTime < COALESCE_MS && undoStack.length) {
-      undoStack[undoStack.length - 1] = JSON.parse(JSON.stringify(doc));
-    } else {
-      undoStack.push(JSON.parse(JSON.stringify(doc)));
-      if (undoStack.length > MAX_HISTORY) undoStack.shift();
-    }
-    s.lastChangeTime = now;
-    redoStack.length = 0;
+    history.push({
+      document: JSON.parse(JSON.stringify(doc)),
+      inverses: [],
+      ops: [],
+      intent: allowCoalesce ? "typing" : "edit",
+      time: Date.now(),
+    });
+    s.lastChangeTime = Date.now();
     doc = next;
     opts.onChange?.(doc);
   };
@@ -119,32 +114,25 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   container.addEventListener("input", onInput);
   cleanup.push(() => container.removeEventListener("input", onInput));
 
-  const onKeyDown = (e: KeyboardEvent): void => {
-    const mod = e.metaKey || e.ctrlKey;
-    if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
-    else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
-  };
-  container.addEventListener("keydown", onKeyDown);
-  cleanup.push(() => container.removeEventListener("keydown", onKeyDown));
-
   function undo(): void {
-    const prev = undoStack.pop();
+    const prev = history.undo(JSON.parse(JSON.stringify(doc)));
     if (!prev) return;
-    redoStack.push(JSON.parse(JSON.stringify(doc)));
     doc = prev; s.render(); opts.onChange?.(doc);
   }
   function redo(): void {
-    const next = redoStack.pop();
+    const next = history.redo(JSON.parse(JSON.stringify(doc)));
     if (!next) return;
-    undoStack.push(JSON.parse(JSON.stringify(doc)));
     doc = next; s.render(); opts.onChange?.(doc);
   }
 
   const cmds = bindCommands(s);
+  cleanup.push(attachEditing(s, cmds, { undo, redo }));
   const handles = attachBlockHandles(s, cmds);
   const imgUi = attachImageResize(s);
   const tableUi = attachTableUi(s);
   const columnsUi = attachColumnsUi(s);
+  const varUi = attachVariableUi(s);
+  const ux = attachHostUx(s, cmds, { undo, redo });
   s.render();
 
   return {
@@ -153,8 +141,8 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     setTheme: applyTheme,
     getTheme: () => theme,
     undo, redo,
-    canUndo: () => undoStack.length > 0,
-    canRedo: () => redoStack.length > 0,
+    canUndo: () => history.canUndo(),
+    canRedo: () => history.canRedo(),
     commands: {
       toggleMark: cmds.toggleMark,
       setHeading: cmds.setHeading,
@@ -167,16 +155,32 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
       insertImage: cmds.insertImage,
       insertTable: cmds.insertTable,
       insertColumns: cmds.insertColumns,
+      insertColumnMosaic: cmds.insertColumnMosaic,
       insertBlock: cmds.insertBlock,
       deleteCurrentBlock: cmds.deleteCurrentBlock,
+      setColor: cmds.setColor,
+      setHighlight: cmds.setHighlight,
+      setFontFamily: cmds.setFontFamily,
+      setFontSizePt: cmds.setFontSizePt,
+      indent: cmds.indent,
+      insertLink: cmds.insertLink,
     },
+    openCommandPalette: ux.openCommandPalette,
+    openFind: ux.openFind,
+    openShortcuts: ux.openShortcuts,
+    openEquationEditor: ux.openEquationEditor,
+    setPagePreview: ux.setPagePreview,
+    getOutline: ux.getOutline,
+    focusBlock: ux.focusBlock,
     destroy() {
       s.destroyed = true;
       cleanup.forEach((fn) => fn());
+      ux.destroy();
       handles.hideHandle();
       imgUi.hideImgResize();
       tableUi.hideTableUi();
       columnsUi.hideColumnsUi();
+      varUi.hideVariableUi();
       handles.hideDropLine();
       wrapper.remove();
     },

@@ -3,7 +3,7 @@ import { normalizeDocument } from "../../core/normalize/normalize.js";
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import type { bindCommands } from "./commands.js";
-import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH } from "./nesting.js";
+import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH, moveBlockToHost } from "./nesting.js";
 import { wrapperRel } from "./table-resize.js";
 
 const MENU_ITEMS: Array<{ label: string; icon: IconName; type: InsertBlockType }> = [
@@ -69,11 +69,21 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     s.ui.append(handleEl);
   }
 
+  function handleHost(from: HTMLElement | null): HTMLElement | null {
+    const blockEl = siblingBlockEl(s.container, from);
+    if (!blockEl) return null;
+    const layout = blockEl.closest?.("table.pde-table, [data-node-type='columns']") as HTMLElement | null;
+    if (layout && layout !== blockEl && s.container.contains(layout)) {
+      return siblingBlockEl(s.container, layout) ?? layout;
+    }
+    return blockEl;
+  }
+
   const onHoverMove = (e: PointerEvent): void => {
     if (s.destroyed || dragging) return;
     const t = e.target as HTMLElement;
     if (t.closest?.(".pde-block-handle, .pde-block-menu, .pde-table-menu")) return;
-    const blockEl = siblingBlockEl(s.container, t.closest?.(BLOCK_SEL) as HTMLElement | null);
+    const blockEl = handleHost(t.closest?.(BLOCK_SEL) as HTMLElement | null);
     if (blockEl) positionHandle(blockEl);
   };
   s.wrapper.addEventListener("pointermove", onHoverMove);
@@ -93,6 +103,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
     const parent = findParentList(s.getDoc(), owner);
     const fromIndex = parent?.index ?? s.indexOfBlockEl(blockEl);
     let toIndex = fromIndex;
+    let hostEl: HTMLElement | null = null;
     dragging = true;
     s.wrapper.classList.add("pde-dragging");
     blockEl.classList.add("pde-drag-source");
@@ -107,6 +118,11 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
         if (ev.clientY > r.top + r.height / 2) target = i;
       }
       toIndex = target;
+      hostEl = (s.ownerDoc.elementFromPoint?.(ev.clientX, ev.clientY) as HTMLElement | null)
+        ?.closest?.("td, th, .pde-column") as HTMLElement | null;
+      if (hostEl && (!s.container.contains(hostEl) || blockEl.contains(hostEl))) hostEl = null;
+      for (const el of s.container.querySelectorAll(".pde-drop-host")) el.classList.remove("pde-drop-host");
+      hostEl?.classList.add("pde-drop-host");
       for (const el of els) el.classList.remove("pde-drop-above", "pde-drop-below");
       const dest = els[toIndex];
       if (dest && toIndex !== fromIndex) {
@@ -122,6 +138,8 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
       s.wrapper.classList.remove("pde-dragging");
       blockEl.classList.remove("pde-drag-source");
       hideDropLine();
+      for (const el of s.container.querySelectorAll(".pde-drop-host")) el.classList.remove("pde-drop-host");
+      if (hostEl && moveBlockToHost(s, owner, hostEl)) return;
       const list = parent?.list ?? s.getDoc().root.children;
       if (toIndex !== fromIndex && toIndex >= 0 && toIndex < list.length) {
         s.pushSnapshot();

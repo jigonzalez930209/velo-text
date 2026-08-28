@@ -77,6 +77,8 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
         for (const row of tblNode.rows) row.cells.splice(cellIndex, 1);
       }
     }));
+    addBtn("columns3", "Merge cell right", () => tableOp(() => mergeRight(tblNode, rowIndex, cellIndex)));
+    addBtn("split", "Split merged cell", () => tableOp(() => splitCell(s, tblNode, rowIndex, cellIndex)));
     addBtn("trash", "Delete table", () => tableOp(() => {
       const found = findParentList(s.getDoc(), tblNode.id ?? "");
       if (found) found.list.splice(found.index, 1);
@@ -86,6 +88,7 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
 
   s.addBoth("click", ((e: MouseEvent) => {
     const el = e.target as HTMLElement | null;
+    if (el?.closest?.(".pde-col-handle, .pde-row-handle, .pde-table-btn, .pde-table-menu")) return;
     const table = el?.closest?.("table.pde-table") as HTMLTableElement | null;
     if (!table || !s.container.contains(table)) { hideTableUi(); return; }
     showChrome(table);
@@ -111,6 +114,31 @@ function cloneRow(s: EditorState, tbl: TableLike, srcIdx: number, atIdx: number)
   copy.id = s.idGen.next();
   for (const c of copy.cells) c.id = s.idGen.next();
   tbl.rows.splice(Math.max(0, Math.min(atIdx, tbl.rows.length)), 0, copy);
+}
+
+function mergeRight(tbl: TableLike, rowIndex: number, cellIndex: number): void {
+  const row = tbl.rows[rowIndex];
+  const cell = row?.cells[cellIndex];
+  const next = row?.cells[cellIndex + 1];
+  if (!cell || !next) return;
+  cell.colSpan = (cell.colSpan || 1) + (next.colSpan || 1);
+  if (next.blocks) cell.blocks = [...(cell.blocks ?? []), ...next.blocks];
+  row.cells.splice(cellIndex + 1, 1);
+}
+
+function splitCell(s: EditorState, tbl: TableLike, rowIndex: number, cellIndex: number): void {
+  const row = tbl.rows[rowIndex];
+  const cell = row?.cells[cellIndex];
+  if (!cell || (cell.colSpan || 1) <= 1) return;
+  const extra = cell.colSpan - 1;
+  cell.colSpan = 1;
+  for (let i = 0; i < extra; i++) {
+    row.cells.splice(cellIndex + 1 + i, 0, {
+      id: s.idGen.next(),
+      colSpan: 1,
+      blocks: [{ type: "paragraph", id: s.idGen.next(), children: [] }],
+    } as never);
+  }
 }
 
 function insertCol(s: EditorState, tbl: TableLike, atIdx: number): void {

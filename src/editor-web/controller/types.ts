@@ -9,6 +9,9 @@ export interface EditorOptions {
   clock?: Clock;
   onChange?: (doc: PortableDocument) => void;
   resolveAssetUrl?: (assetId: string) => string | undefined;
+  onImageFile?: (file: File) => Promise<{ assetId: string; error?: string; widthUm?: number; heightUm?: number }>;
+  getVariableCatalog?: () => string[];
+  getTemplateData?: () => Record<string, unknown>;
 }
 
 export type InsertBlockType =
@@ -46,9 +49,23 @@ export interface Editor {
     insertImage(assetId: string, widthUm?: number, heightUm?: number): void;
     insertTable(rows: number, cols: number): void;
     insertColumns(countOrPcts?: number | number[]): void;
+    insertColumnMosaic(counts: number[]): void;
     insertBlock(type: InsertBlockType): void;
     deleteCurrentBlock(): void;
+    setColor(color: string): void;
+    setHighlight(color: string): void;
+    setFontFamily(family: string): void;
+    setFontSizePt(pt: number): void;
+    indent(delta?: number): void;
+    insertLink(href: string): void;
   };
+  openCommandPalette(): void;
+  openFind(replace?: boolean): void;
+  openShortcuts(): void;
+  openEquationEditor(opts?: { latex?: string; display?: boolean }): void;
+  setPagePreview(on: boolean): void;
+  getOutline(): Array<{ id: string; level: 1 | 2 | 3; text: string }>;
+  focusBlock(id: string): boolean;
   destroy(): void;
 }
 
@@ -66,8 +83,6 @@ export interface EditorState {
   opts: EditorOptions;
   idGen: IdGenerator;
   cleanup: Array<() => void>;
-  undoStack: PortableDocument[];
-  redoStack: PortableDocument[];
   lastChangeTime: number;
   suppress: boolean;
   destroyed: boolean;

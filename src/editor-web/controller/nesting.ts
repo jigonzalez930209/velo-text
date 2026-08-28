@@ -98,10 +98,15 @@ export function locateInsert(s: EditorState): { list: BlockNode[]; index: number
 }
 
 export function commitInsert(s: EditorState, node: BlockNode, loc?: ReturnType<typeof locateInsert>): boolean {
+  return commitInsertMany(s, [node], loc);
+}
+
+export function commitInsertMany(s: EditorState, nodes: BlockNode[], loc?: ReturnType<typeof locateInsert>): boolean {
+  if (!nodes.length) return false;
   const at = loc ?? locateInsert(s);
-  if (isLayout(node) && at.depth >= MAX_LAYOUT_DEPTH) return false;
+  if (nodes.some(isLayout) && at.depth >= MAX_LAYOUT_DEPTH) return false;
   s.pushSnapshot();
-  at.list.splice(at.index + 1, 0, node);
+  at.list.splice(at.index + 1, 0, ...nodes);
   s.setDoc(normalizeDocument(s.getDoc()));
   s.render();
   s.opts.onChange?.(s.getDoc());
@@ -144,6 +149,30 @@ export function applyWidths(node: ColumnsNode, pcts: number[], idGen: { next: ()
     if (extra && node.columns.length) node.columns[node.columns.length - 1]!.blocks.push(...extra.blocks);
   }
   pcts.forEach((p, i) => { node.columns[i]!.widthPct = p; });
+}
+
+export function locFromHostEl(s: EditorState, el: HTMLElement | null): ReturnType<typeof locateInsert> | null {
+  const host = el?.closest?.("td, th, .pde-column") as HTMLElement | null;
+  if (!host || !s.container.contains(host)) return null;
+  const id = host.getAttribute("data-node-id") ?? "";
+  const list = findHostBlocks(s.getDoc(), id);
+  if (!list) return null;
+  return { list, index: list.length - 1, depth: layoutDepthOf(s.getDoc(), id) };
+}
+
+export function moveBlockToHost(s: EditorState, blockId: string, hostEl: HTMLElement): boolean {
+  const dest = locFromHostEl(s, hostEl);
+  const src = findParentList(s.getDoc(), blockId);
+  if (!dest || !src) return false;
+  if (src.list === dest.list) return false;
+  s.pushSnapshot();
+  const [item] = src.list.splice(src.index, 1);
+  if (!item) return false;
+  dest.list.push(item);
+  s.setDoc(normalizeDocument(s.getDoc()));
+  s.render();
+  s.opts.onChange?.(s.getDoc());
+  return true;
 }
 
 export function siblingBlockEl(container: HTMLElement, from: HTMLElement | null): HTMLElement | null {

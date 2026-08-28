@@ -6,13 +6,16 @@ import { COLUMN_PRESETS } from "./column-presets.js";
 import { applyWidths, commitInsert, MAX_LAYOUT_DEPTH, layoutDepthOf } from "./nesting.js";
 import { makeBlock } from "./commands.js";
 import { wrapperRel } from "./table-resize.js";
+import { bindColumnResize, findColumnsNode, showColumnGutters } from "./column-resize.js";
 
 export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
   let menuEl: HTMLElement | null = null;
   let btnEl: HTMLButtonElement | null = null;
+  let gutterEl: HTMLElement | null = null;
   function hideMenu(): void { menuEl?.remove(); menuEl = null; }
   function hideBtn(): void { btnEl?.remove(); btnEl = null; }
-  function hideColumnsUi(): void { hideMenu(); hideBtn(); }
+  function hideGutters(): void { gutterEl?.remove(); gutterEl = null; }
+  function hideColumnsUi(): void { hideMenu(); hideBtn(); hideGutters(); }
 
   function applyPreset(layout: ColumnsNode, pcts: number[]): void {
     s.pushSnapshot();
@@ -25,7 +28,7 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
   function showMenu(layoutEl: HTMLElement, x: number, y: number): void {
     hideMenu();
     const id = layoutEl.getAttribute("data-node-id") ?? "";
-    const layout = findColumns(s, id);
+    const layout = findColumnsNode(s, id);
     if (!layout) return;
     menuEl = s.ownerDoc.createElement("div");
     menuEl.className = "pde-block-menu pde-columns-menu";
@@ -61,6 +64,8 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
 
   function showChrome(layoutEl: HTMLElement): void {
     hideBtn();
+    hideGutters();
+    gutterEl = showColumnGutters(s, layoutEl);
     const t = wrapperRel(s, layoutEl);
     btnEl = s.ownerDoc.createElement("button");
     btnEl.type = "button";
@@ -79,6 +84,7 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
 
   s.addBoth("click", ((e: MouseEvent) => {
     const el = e.target as HTMLElement | null;
+    if (el?.closest?.(".pde-gutter-handle")) return;
     const layout = el?.closest?.(".pde-columns") as HTMLElement | null;
     if (!layout || !s.container.contains(layout)) { hideColumnsUi(); return; }
     showChrome(layout);
@@ -95,24 +101,7 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
     }
   };
 
+  bindColumnResize(s);
+
   return { hideColumnsUi };
-}
-
-function collectLayouts(s: EditorState): ColumnsNode[] {
-  const out: ColumnsNode[] = [];
-  const walk = (blocks: ColumnsNode["columns"][number]["blocks"]): void => {
-    for (const b of blocks) {
-      if (b.type === "columns") {
-        out.push(b);
-        for (const c of b.columns) walk(c.blocks);
-      }
-      if (b.type === "table") for (const row of b.rows) for (const cell of row.cells) walk(cell.blocks);
-    }
-  };
-  walk(s.getDoc().root.children);
-  return out;
-}
-
-function findColumns(s: EditorState, id: string): ColumnsNode | null {
-  return collectLayouts(s).find((c) => c.id === id) ?? null;
 }

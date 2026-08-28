@@ -1,8 +1,11 @@
+import { latexToHtml } from "../../core/equation/index.js";
 import type { BlockNode } from "../../core/model/types.js";
 import { createText, createImageBlock, createTable, createParagraph, createHeading, createColumns } from "../../core/model/factories.js";
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
-import { commitInsert, deleteCurrent, insertAfterId } from "./nesting.js";
+import { commitInsert, commitInsertMany, deleteCurrent, insertAfterId } from "./nesting.js";
+import { indent, insertLink, setColor, setFontFamily, setFontSizePt, setHighlight } from "./format-commands.js";
+import { syncImageResizeOverlay } from "./image-resize.js";
 
 export function makeBlock(s: EditorState, type: InsertBlockType): BlockNode {
   const { idGen } = s;
@@ -96,6 +99,7 @@ export function bindCommands(s: EditorState) {
         }
       }
       s.syncFromDom();
+      syncImageResizeOverlay(s);
     },
     clearFormat(): void {
       s.container.focus();
@@ -109,19 +113,25 @@ export function bindCommands(s: EditorState) {
       span.setAttribute("data-node-id", s.idGen.next());
       span.setAttribute("data-path", path);
       span.setAttribute("data-source", source);
+      if (format) span.setAttribute("data-format", format);
+      if (fallback) span.setAttribute("data-fallback", fallback);
       span.setAttribute("contenteditable", "false");
       span.className = "pde-variable";
       span.textContent = source;
       insertInlineAtCaret(span);
     },
-    insertEquation(latex: string): void {
+    insertEquation(latex: string, display?: boolean): void {
+      if (display) {
+        commitInsert(s, { type: "equation-block", id: s.idGen.next(), latex });
+        return;
+      }
       const span = s.ownerDoc.createElement("span");
       span.setAttribute("data-node-type", "equation");
       span.setAttribute("data-node-id", s.idGen.next());
       span.setAttribute("data-latex", latex);
       span.setAttribute("contenteditable", "false");
       span.className = "pde-equation";
-      span.textContent = latex;
+      span.innerHTML = latexToHtml(latex);
       insertInlineAtCaret(span);
     },
     insertImage(assetId: string, widthUm = 150000, heightUm = 90000): void {
@@ -133,16 +143,33 @@ export function bindCommands(s: EditorState) {
     insertColumns(countOrPcts: number | number[] = 2): void {
       commitInsert(s, createColumns(s.idGen, countOrPcts));
     },
+    insertColumnMosaic(counts: number[]): void {
+      const rows = counts.filter((n) => n >= 2 && n <= 4).slice(0, 3);
+      if (!rows.length) return;
+      commitInsertMany(s, rows.map((n) => createColumns(s.idGen, n)));
+    },
     insertBlock(type: InsertBlockType): void {
       commitInsert(s, makeBlock(s, type));
     },
     deleteCurrentBlock(): void {
       deleteCurrent(s);
     },
+    setColor(color: string): void { setColor(s, color); },
+    setHighlight(color: string): void { setHighlight(s, color); },
+    setFontFamily(family: string): void { setFontFamily(s, family); },
+    setFontSizePt(pt: number): void { setFontSizePt(s, pt); },
+    indent(delta = 1): void { indent(s, delta); },
+    insertLink(href: string): void { insertLink(s, href); },
   };
 }
 
 function alignTarget(s: EditorState): HTMLElement | null {
+  const overlay = s.ui.querySelector(".pde-image-resize") as HTMLElement | null;
+  const ownerId = overlay?.dataset.imgOwner;
+  if (ownerId) {
+    const fig = s.container.querySelector(`figure[data-node-id="${ownerId}"]`) as HTMLElement | null;
+    if (fig && s.container.contains(fig)) return fig;
+  }
   const sel = s.selection();
   const node = sel?.anchorNode as Node | null;
   const el = node?.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement | null);
