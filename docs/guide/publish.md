@@ -2,7 +2,7 @@
 
 Releases go out **only from GitHub CI**. Do not publish from your laptop.
 
-Current version: **`1.0.0-beta.0`** (npm dist-tag `beta`).
+Current version: **`1.0.0-beta.1`** (npm dist-tag `beta`).
 
 ```bash
 pnpm add velo-text@beta
