@@ -18,9 +18,14 @@ test("equation: latexToHtml renders frac", () => {
   assert(html.includes("a") && html.includes("b"));
 });
 
-test("equation: latexToHtml handles sqrt", () => {
-  const html = latexToHtml("\\sqrt{x}");
+test("equation: latexToHtml nested frac sqrt superscript", () => {
+  const html = latexToHtml("x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}");
+  assert(html.includes("pde-frac"));
   assert(html.includes("pde-sqrt"));
+  assert(html.includes("<sup>2</sup>"));
+  assert(html.includes("±"));
+  assert(!html.includes("\\frac"));
+  assert(!html.includes("\\sqrt"));
 });
 
 test("equation: latexToHtml maps sum int pi", () => {

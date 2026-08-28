@@ -20,9 +20,9 @@ test("math: fraction box has runs and rule", () => {
 
 test("math: sqrt has radical + overline", () => {
   const m = parseMath("\\sqrt{x}");
-  const hasRad = m.runs.some((r) => r.font === "Symbol");
-  assert(hasRad, "radical glyph via Symbol");
-  assert(m.rules.length >= 1, "overline rule");
+  assert((m.paths?.length ?? 0) >= 1, "radical drawn as a connected path");
+  const xs = m.paths[0].points.map((p) => p.xPt);
+  assert(xs[xs.length - 1] > xs[0], "vinculum extends over the radicand");
 });
 
 test("math: sup/sub + greek + operators", () => {
@@ -64,6 +64,11 @@ test("math: parseMath handles edge latex", () => {
   assert(braces.runs.length >= 1);
   const nested = parseMath("\\frac{\\frac{a}{b}}{c}");
   assert(nested.runs.length >= 2);
+  const quad = parseMath("x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}");
+  const quadText = quad.runs.map((r) => r.text).join("");
+  assert(quadText.includes("2a"), quadText);
+  assert(!quadText.includes("{"), quadText);
+  assert((quad.paths?.length ?? 0) >= 1, "sqrt path inside frac");
   const delim = parseMath("E = mc^{2} \\left[ 100 \\right]");
   const joined = delim.runs.map((r) => r.text).join("");
   assert(!joined.includes("\\left") && !joined.includes("\\right"), joined);
@@ -229,6 +234,20 @@ test("pdf: header cells center their text", () => {
   assert(tms[0] > 61, `header text should be inset from cell padding, got ${tms[0]}`);
 });
 
+test("pdf: inline math line uses chip extents so neighbors do not overlap", () => {
+  const g = createIdGenerator("eqh");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
+  const frac = { type: "equation", id: g.next(), latex: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}" };
+  doc.root.children.push({ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "Above" }] });
+  doc.root.children.push({ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "Q " }, frac, { type: "text", id: g.next(), text: " end" }] });
+  doc.root.children.push({ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "Below" }] });
+  const pages = buildPdfPages(doc);
+  const ys = pages[0].lines.filter((l) => l.line.style.startsWith("paragraph")).map((l) => l.yPt);
+  assert(ys.length >= 3);
+  assert(ys[0] - ys[1] > 28, `gap above math too small: ${ys[0] - ys[1]}`);
+  assert(ys[1] - ys[2] > 28, `gap below math too small: ${ys[1] - ys[2]}`);
+});
+
 test("pdf: inline math stays with preceding words when they fit", () => {
   const g = createIdGenerator("eq");
   const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
@@ -242,7 +261,7 @@ test("pdf: inline math stays with preceding words when they fit", () => {
     ],
   });
   const pages = buildPdfPages(doc);
-  const para = pages[0].lines.filter((l) => l.line.style === "paragraph");
+  const para = pages[0].lines.filter((l) => l.line.style.startsWith("paragraph"));
   assert(para.length === 1, `expected one line, got ${para.length}`);
   const kinds = para[0].line.segments.map((s) => s.kind);
   assert(kinds.includes("text") && kinds.includes("math"));

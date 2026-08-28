@@ -156,7 +156,6 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   gear.click();
   const menu = root.querySelector(".pde-table-menu");
   assert(menu, "table menu present");
-  // Insert row below
   const btn = Array.from(menu.querySelectorAll("button")).find((b) => b.textContent.includes("Insert row below"));
   btn.click();
   const d1 = editor.getDocument();
