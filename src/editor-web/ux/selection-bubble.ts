@@ -1,6 +1,7 @@
 import { getIconSvg, type IconName } from "../../assets/icons/index.js";
 import type { bindCommands } from "../controller/commands.js";
 import type { EditorState } from "../controller/types.js";
+import { clampToWrapper } from "../controller/table-resize.js";
 
 export function attachSelectionBubble(s: EditorState, cmds: ReturnType<typeof bindCommands>): { destroy: () => void } {
   let bubble: HTMLElement | null = null;
@@ -48,6 +49,7 @@ export function attachSelectionBubble(s: EditorState, cmds: ReturnType<typeof bi
     bubble.style.left = `${Math.max(8, r.left - w.left)}px`;
     bubble.style.top = `${Math.max(0, r.top - w.top - 40)}px`;
     s.wrapper.appendChild(bubble);
+    clampToWrapper(s, bubble);
   }
 
   const onSel = (): void => {

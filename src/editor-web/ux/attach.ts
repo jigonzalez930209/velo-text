@@ -35,6 +35,11 @@ export function attachHostUx(
   const links = attachLinkUi(s, cmds);
   const drop = attachImageDrop(s, cmds);
   let pageOn = false;
+  const prevRender = s.render;
+  s.render = () => {
+    prevRender();
+    if (pageOn) applyPagePreview(s, true);
+  };
   return {
     openCommandPalette: palette.open,
     openFind: find.open,

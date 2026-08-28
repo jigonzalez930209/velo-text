@@ -1,5 +1,6 @@
 import type { bindCommands } from "../controller/commands.js";
 import type { EditorState } from "../controller/types.js";
+import { clampToWrapper } from "../controller/table-resize.js";
 
 export function attachLinkUi(s: EditorState, cmds: ReturnType<typeof bindCommands>): { destroy: () => void } {
   let pop: HTMLElement | null = null;
@@ -33,6 +34,7 @@ export function attachLinkUi(s: EditorState, cmds: ReturnType<typeof bindCommand
       hide();
     });
     s.wrapper.appendChild(pop);
+    clampToWrapper(s, pop);
   }) as never);
 
   const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") hide(); };
