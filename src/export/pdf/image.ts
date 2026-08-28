@@ -13,6 +13,8 @@ export interface DecodedImage {
   heightPx: number;
   /** Raw RGB bytes (3 bytes per pixel) for uncompressed PDF embedding */
   rgb?: Uint8Array;
+  /** Optional DeviceGray alpha for /SMask (transparent SVG corners) */
+  alpha?: Uint8Array;
   /** Raw JPEG bytes for DCTDecode embedding */
   jpeg?: Uint8Array;
 }
@@ -190,9 +192,6 @@ export function encodeRgbImageData(rgb: Uint8Array, width: number, height: numbe
   return rgb; // RGB scanlines are directly embeddable when uncompressed
 }
 
-/**
- * Decode an image for PDF embedding. Tries PNG decode (sync via cache); JPEG passes through.
- */
 export async function decodeImageForPdf(data: Uint8Array, mediaType: string): Promise<DecodedImage | null> {
   const sniffed = sniffImage(data).mediaType;
   const mt = sniffed ?? mediaType;
@@ -204,7 +203,52 @@ export async function decodeImageForPdf(data: Uint8Array, mediaType: string): Pr
     const infl = await getInflate();
     return decodePngImage(data, infl ?? undefined);
   }
+  if (mt === "image/svg+xml" || mediaType === "image/svg+xml") {
+    const raster = await rasterizeSvg(data);
+    if (raster) return raster;
+    const { placeholderPng } = await import("../../assets/png/placeholder.js");
+    const infl = await getInflate();
+    return decodePngImage(placeholderPng(), infl ?? undefined);
+  }
   return null;
+}
+
+async function rasterizeSvg(data: Uint8Array): Promise<DecodedImage | null> {
+  const g = globalThis as unknown as { document?: { createElement: (t: string) => HTMLCanvasElement }; Image?: new () => HTMLImageElement; URL?: typeof URL };
+  if (!g.document || !g.Image || !g.URL) return null;
+  const blob = new Blob([data as unknown as BlobPart], { type: "image/svg+xml" });
+  const url = g.URL.createObjectURL(blob);
+  try {
+    const img = new g.Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("svg"));
+      img.src = url;
+    });
+    const canvas = g.document.createElement("canvas");
+    canvas.width = Math.max(1, img.naturalWidth || 200);
+    canvas.height = Math.max(1, img.naturalHeight || 80);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0);
+    const raw = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const rgb = new Uint8Array(canvas.width * canvas.height * 3);
+    const alpha = new Uint8Array(canvas.width * canvas.height);
+    let anyTrans = false;
+    for (let i = 0, j = 0, a = 0; i < raw.length; i += 4, j += 3, a++) {
+      const aa = raw[i + 3] ?? 255;
+      if (aa < 255) anyTrans = true;
+      rgb[j] = raw[i]!;
+      rgb[j + 1] = raw[i + 1]!;
+      rgb[j + 2] = raw[i + 2]!;
+      alpha[a] = aa;
+    }
+    return { widthPx: canvas.width, heightPx: canvas.height, rgb, ...(anyTrans ? { alpha } : {}) };
+  } catch {
+    return null;
+  } finally {
+    g.URL.revokeObjectURL(url);
+  }
 }
 
 export async function ensureInflateLoaded(): Promise<void> {

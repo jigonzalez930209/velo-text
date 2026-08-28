@@ -27,12 +27,18 @@ export interface MathRule {
   heightPt: number;
 }
 
+export interface MathPath {
+  points: Array<{ xPt: number; yPt: number }>;
+  widthPt: number;
+}
+
 export interface MathBox {
   widthPt: number;
   ascentPt: number;
   descentPt: number;
   runs: MathRun[];
   rules: MathRule[];
+  paths?: MathPath[];
 }
 
 // ── Helvetica AFM widths (per 1000 units) — standard set ──
@@ -83,14 +89,26 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
   const rules: MathRule[] = [];
 
   function parseGroup(): string {
+    while (input[pos] === " ") pos++;
     if (input[pos] === "{") {
       pos++;
+      let depth = 1;
       let out = "";
-      while (pos < input.length && input[pos] !== "}") {
-        out += input[pos];
+      while (pos < input.length && depth > 0) {
+        const c = input[pos]!;
+        if (c === "\\" && pos + 1 < input.length) {
+          out += c + input[pos + 1];
+          pos += 2;
+          continue;
+        }
+        if (c === "{") depth++;
+        else if (c === "}") {
+          depth--;
+          if (depth === 0) { pos++; return out; }
+        }
+        out += c;
         pos++;
       }
-      pos++; // skip '}'
       return out;
     }
     if (input[pos] === "\\") {
@@ -107,6 +125,7 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
   function parseExpr(sizePt: number): MathBox {
     const localRuns: MathRun[] = [];
     const localRules: MathRule[] = [];
+    const localPaths: MathPath[] = [];
     let lx = 0;
     let ascent = 0;
     let descent = 0;
@@ -151,6 +170,9 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
         const yOff = isSup ? sizePt * 0.45 : -sizePt * 0.18;
         for (const r of subBox.runs) localRuns.push({ ...r, xPt: r.xPt + lx, yPt: r.yPt + yOff });
         for (const rl of subBox.rules) localRules.push({ ...rl, xPt: rl.xPt + lx, yPt: rl.yPt + yOff });
+        for (const p of subBox.paths ?? []) {
+          localPaths.push({ widthPt: p.widthPt, points: p.points.map((pt) => ({ xPt: pt.xPt + lx, yPt: pt.yPt + yOff })) });
+        }
         lx += subBox.widthPt;
         ascent = Math.max(ascent, yOff + subBox.ascentPt);
         descent = Math.max(descent, -yOff + subBox.descentPt);
@@ -176,6 +198,14 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
           const denBaselineY = -(gap + ruleT + denBox.ascentPt);
           for (const r of numBox.runs) localRuns.push({ ...r, xPt: r.xPt + lx + (w - numBox.widthPt) / 2, yPt: r.yPt + numBaselineY });
           for (const r of denBox.runs) localRuns.push({ ...r, xPt: r.xPt + lx + (w - denBox.widthPt) / 2, yPt: r.yPt + denBaselineY });
+          const shiftBox = (box: MathBox, dx: number, dy: number) => {
+            for (const rl of box.rules) localRules.push({ ...rl, xPt: rl.xPt + dx, yPt: rl.yPt + dy });
+            for (const p of box.paths ?? []) {
+              localPaths.push({ widthPt: p.widthPt, points: p.points.map((pt) => ({ xPt: pt.xPt + dx, yPt: pt.yPt + dy })) });
+            }
+          };
+          shiftBox(numBox, lx + (w - numBox.widthPt) / 2, numBaselineY);
+          shiftBox(denBox, lx + (w - denBox.widthPt) / 2, denBaselineY);
           localRules.push({ xPt: lx, yPt: -ruleT / 2, widthPt: w, heightPt: ruleT });
           lx += w;
           ascent = Math.max(ascent, numAscent);
@@ -186,18 +216,31 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
           flushBase();
           const innerSrc = parseGroup();
           const innerBox = parseExprFromString(innerSrc, sizePt * 0.95);
-          const rad = sizePt * 0.8;
-          const tick = Math.max(0.5, sizePt * 0.06);
-          const radX = lx;
-          // radical sign (Symbol \xD6) drawn slightly oversized
-          localRuns.push({ text: "\u00D6", font: "Symbol", sizePt: sizePt * 1.3, xPt: radX, yPt: innerBox.descentPt - sizePt * 0.05 });
-          const overlineX = radX + rad * 0.55;
-          const overlineW = innerBox.widthPt + sizePt * 0.1;
-          localRules.push({ xPt: overlineX, yPt: innerBox.ascentPt + sizePt * 0.04, widthPt: overlineW, heightPt: tick });
-          for (const r of innerBox.runs) localRuns.push({ ...r, xPt: r.xPt + radX + rad * 0.8, yPt: r.yPt });
-          lx += rad * 0.8 + innerBox.widthPt + sizePt * 0.2;
-          ascent = Math.max(ascent, innerBox.ascentPt + sizePt * 0.1);
-          descent = Math.max(descent, innerBox.descentPt);
+          const sw = Math.max(0.7, sizePt * 0.075);
+          const top = innerBox.ascentPt + sizePt * 0.1;
+          const bot = -Math.max(innerBox.descentPt, sizePt * 0.18);
+          const x0 = lx;
+          const x1 = x0 + sizePt * 0.16;
+          const x2 = x0 + sizePt * 0.42;
+          const x3 = x2 + innerBox.widthPt + sizePt * 0.14;
+          localPaths.push({
+            widthPt: sw,
+            points: [
+              { xPt: x0, yPt: top - (top - bot) * 0.42 },
+              { xPt: x1, yPt: bot },
+              { xPt: x2, yPt: top },
+              { xPt: x3, yPt: top },
+            ],
+          });
+          const contentX = x2 + sizePt * 0.06;
+          for (const r of innerBox.runs) localRuns.push({ ...r, xPt: r.xPt + contentX, yPt: r.yPt });
+          for (const rl of innerBox.rules) localRules.push({ ...rl, xPt: rl.xPt + contentX, yPt: rl.yPt });
+          for (const p of innerBox.paths ?? []) {
+            localPaths.push({ widthPt: p.widthPt, points: p.points.map((pt) => ({ xPt: pt.xPt + contentX, yPt: pt.yPt })) });
+          }
+          lx = x3 + sizePt * 0.06;
+          ascent = Math.max(ascent, top + sw);
+          descent = Math.max(descent, -bot);
           continue;
         }
         if (cmd === "\\left" || cmd === "\\right") continue;
@@ -221,13 +264,38 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
       pos++;
     }
     flushBase();
-    return { widthPt: lx, ascentPt: ascent, descentPt: descent, runs: localRuns, rules: localRules };
+    return { widthPt: lx, ascentPt: ascent, descentPt: descent, runs: localRuns, rules: localRules, paths: localPaths };
   }
 
   const main = parseExpr(baseSizePt);
   runs.push(...main.runs);
   rules.push(...main.rules);
-  return { widthPt: main.widthPt, ascentPt: main.ascentPt, descentPt: main.descentPt, runs, rules };
+  return { widthPt: main.widthPt, ascentPt: main.ascentPt, descentPt: main.descentPt, runs, rules, paths: main.paths };
+}
+
+/** Padding of the PDF math chip, shared by paint and line layout. */
+export const MATH_CHIP_PAD_X = 5;
+export const MATH_CHIP_PAD_Y = 8;
+
+export function mathVisualExtents(math: MathBox): { abovePt: number; belowPt: number; innerH: number } {
+  let top = math.ascentPt;
+  let bot = math.descentPt;
+  for (const path of math.paths ?? []) {
+    for (const pt of path.points) {
+      top = Math.max(top, pt.yPt);
+      bot = Math.max(bot, -pt.yPt);
+    }
+  }
+  for (const r of math.runs) {
+    top = Math.max(top, r.yPt + r.sizePt * 0.8);
+    bot = Math.max(bot, -r.yPt + r.sizePt * 0.25);
+  }
+  const innerH = Math.max(14, top + bot);
+  return {
+    abovePt: top + MATH_CHIP_PAD_Y,
+    belowPt: bot + MATH_CHIP_PAD_Y,
+    innerH,
+  };
 }
 
 /**

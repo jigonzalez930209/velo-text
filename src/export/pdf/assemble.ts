@@ -17,16 +17,23 @@ function concat(parts: Uint8Array[]): Uint8Array {
   return out;
 }
 
-function imageXObject(num: number, img: DecodedImage): Uint8Array | null {
+function imageXObject(num: number, img: DecodedImage, smaskNum?: number): Uint8Array | null {
   if (img.jpeg && img.widthPx && img.heightPx) {
     const dict = `<< /Type /XObject /Subtype /Image /Width ${img.widthPx} /Height ${img.heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.jpeg.length} >>`;
     return concat([u8(`${num} 0 obj\n${dict}\nstream\n`), img.jpeg, u8("\nendstream\nendobj")]);
   }
   if (img.rgb && img.widthPx && img.heightPx) {
-    const dict = `<< /Type /XObject /Subtype /Image /Width ${img.widthPx} /Height ${img.heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length ${img.rgb.length} >>`;
+    const smask = smaskNum ? ` /SMask ${smaskNum} 0 R` : "";
+    const dict = `<< /Type /XObject /Subtype /Image /Width ${img.widthPx} /Height ${img.heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Length ${img.rgb.length}${smask} >>`;
     return concat([u8(`${num} 0 obj\n${dict}\nstream\n`), img.rgb, u8("\nendstream\nendobj")]);
   }
   return null;
+}
+
+function alphaMaskXObject(num: number, img: DecodedImage): Uint8Array | null {
+  if (!img.alpha || !img.widthPx || !img.heightPx) return null;
+  const dict = `<< /Type /XObject /Subtype /Image /Width ${img.widthPx} /Height ${img.heightPx} /ColorSpace /DeviceGray /BitsPerComponent 8 /Length ${img.alpha.length} >>`;
+  return concat([u8(`${num} 0 obj\n${dict}\nstream\n`), img.alpha, u8("\nendstream\nendobj")]);
 }
 
 export function assemblePdf(
@@ -53,8 +60,14 @@ export function assemblePdf(
     void ref;
     const img = decoded.get(id);
     if (!img) continue;
+    let smaskNum: number | undefined;
+    if (img.alpha) {
+      const maskNum = objects.length + 1;
+      const maskBody = alphaMaskXObject(maskNum, img);
+      if (maskBody) smaskNum = addObj(maskBody);
+    }
     const num = objects.length + 1;
-    const body = imageXObject(num, img);
+    const body = imageXObject(num, img, smaskNum);
     if (!body) continue;
     imageObjects.set(id, addObj(body));
   }
@@ -84,7 +97,7 @@ export function assemblePdf(
   const infoNum = objects.length + 1;
   const now = clock.nowIso();
   const title = (doc.metadata?.title as string | undefined) ?? "Portable Document";
-  addObj(u8(`${infoNum} 0 obj\n<< /Title (${pdfEscape(title)}) /Creator (portable-doc-editor) /CreationDate (D:${now.replace(/[-:T]/g, "").slice(0, 14)}) >>\nendobj`));
+  addObj(u8(`${infoNum} 0 obj\n<< /Title (${pdfEscape(title)}) /Creator (velo-text) /CreationDate (D:${now.replace(/[-:T]/g, "").slice(0, 14)}) >>\nendobj`));
 
   const header = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]);
   const parts: Uint8Array[] = [header];
