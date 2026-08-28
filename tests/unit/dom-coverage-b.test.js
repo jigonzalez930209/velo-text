@@ -57,6 +57,21 @@ test("dom input: pipeline", () => {
   teardownDom();
 });
 
+test("dom input: nativeTyping leaves insertText unprevented", () => {
+  const dom = setupDom('<div id="ed" contenteditable="true"></div>');
+  const ed = dom.window.document.getElementById("ed");
+  const intents = [];
+  const off = attachInputPipeline(ed, { nativeTyping: true, onIntent: (i) => intents.push(i) });
+  const ev = new dom.window.InputEvent("beforeinput", { inputType: "insertText", data: "a", bubbles: true, cancelable: true });
+  ed.dispatchEvent(ev);
+  assert(ev.defaultPrevented === false);
+  assert(!intents.some((i) => i.type === "insertText"));
+  ed.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true }));
+  assert(intents.some((i) => i.type === "toggleMark"));
+  off();
+  teardownDom();
+});
+
 // ── clipboard ──
 test("dom clipboard: full", async () => {
   // handlePaste with internal fragment

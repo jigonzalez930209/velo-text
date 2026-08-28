@@ -23,6 +23,21 @@ test("equation: latexToHtml handles sqrt", () => {
   assert(html.includes("pde-sqrt"));
 });
 
+test("equation: latexToHtml maps sum int pi", () => {
+  const html = latexToHtml("\\sum_{n=1}^{\\infty} \\int \\pi");
+  assert(html.includes("∑"));
+  assert(html.includes("∫"));
+  assert(html.includes("π"));
+});
+
+test("equation: latexToHtml strips left/right delimiters", () => {
+  const html = latexToHtml("E = mc^2 \\left[ 100 \\right]");
+  assert(!html.includes("\\left"));
+  assert(!html.includes("\\right"));
+  assert(html.includes("[") && html.includes("]"));
+  assert(html.includes("<sup>2</sup>"));
+});
+
 test("icons: getIconSvg uses currentColor by default", () => {
   const svg = getIconSvg("bold");
   assert(svg.includes("currentColor"));

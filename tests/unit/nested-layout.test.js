@@ -66,7 +66,8 @@ test("nested-layout: presets keep content and change slot count", () => {
   assert(node.columns[0].blocks[0].id === "keep");
   applyWidths(node, [50, 50], g);
   assert(node.columns.length === 2);
-  assert(COLUMN_PRESETS.some((x) => x.id === "25-50-25"));
+  assert(COLUMN_PRESETS.length === 4);
+  assert(COLUMN_PRESETS.some((x) => x.id === "50-50"));
 });
 
 test("nested-layout: depth 3 allowed, depth 4 rejected", () => {

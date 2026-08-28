@@ -89,6 +89,51 @@ test("controller-ui: block drag reorder runs", () => {
   teardown();
 });
 
+test("controller-ui: hover inside table cell attaches handle to table, not inner paragraph", () => {
+  const { dom, el, root } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("tbl");
+  doc.root.children.push({
+    type: "table",
+    id: "tbl1",
+    columns: [{ id: g.next(), widthUm: 40000 }, { id: g.next(), widthUm: 40000 }],
+    rows: [
+      { id: g.next(), cells: [
+        { id: g.next(), colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: "cellp", children: [{ type: "text", id: g.next(), text: "a" }] }] },
+        { id: g.next(), colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: g.next(), children: [] }] },
+      ] },
+    ],
+  });
+  createEditor(el, { document: doc });
+  const inner = el.querySelector('[data-node-id="cellp"]');
+  inner.dispatchEvent(ev(dom.window, "mouseover", { target: inner }));
+  const handle = root.querySelector(".pde-block-handle");
+  assert(handle, "handle should appear");
+  assert(handle.dataset.owner === "tbl1", "handle should own the table, not the cell paragraph");
+  teardown();
+});
+
+test("controller-ui: pointerdown on table cell does not prevent default caret placement", () => {
+  const { dom, el } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("tbl");
+  doc.root.children.push({
+    type: "table",
+    id: "tbl1",
+    columns: [{ id: g.next(), widthUm: 40000 }],
+    rows: [
+      { id: g.next(), cells: [{ id: g.next(), colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: "cellp", children: [{ type: "text", id: g.next(), text: "a" }] }] }] },
+    ],
+  });
+  createEditor(el, { document: doc });
+  const td = el.querySelector("td[data-col-index]");
+  assert(td, "cell rendered with data-col-index");
+  const down = ev(dom.window, "pointerdown", { target: td, clientX: 10, clientY: 10 });
+  td.dispatchEvent(down);
+  assert(down.defaultPrevented === false, "cell click must not steal caret");
+  teardown();
+});
+
 test("controller-ui: table menu insert/delete row and col resize", () => {
   const { dom, el, root } = setup();
   const doc = baseDoc();
@@ -119,14 +164,25 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   // re-click table to re-show column handles after re-render
   const table2 = el.querySelector('table[data-node-type="table"]');
   table2.dispatchEvent(ev(dom.window, "click", { target: table2 }));
-  // col resize: pointerdown on col handle then move/up
-  const colHandle = root.querySelector(".pde-col-handle");
+  const colHandles = root.querySelectorAll(".pde-col-handle");
+  assert(colHandles.length === 1, "two-column table has one internal divider handle");
+  const colHandle = colHandles[0];
   assert(colHandle, "col handle present");
+  const before = editor.getDocument().root.children[0].columns[0].widthUm;
+  colHandle.dispatchEvent(ev(dom.window, "pointerdown", { target: colHandle, clientX: 100, clientY: 0 }));
+  dom.window.document.dispatchEvent(ev(dom.window, "pointerup", { clientX: 100, clientY: 0 }));
+  assert(editor.getDocument().root.children[0].columns[0].widthUm === before, "click without drag must not snap column width");
   colHandle.dispatchEvent(ev(dom.window, "pointerdown", { target: colHandle, clientX: 100, clientY: 0 }));
   dom.window.document.dispatchEvent(ev(dom.window, "pointermove", { clientX: 200, clientY: 0 }));
   dom.window.document.dispatchEvent(ev(dom.window, "pointerup", { clientX: 200, clientY: 0 }));
   const d2 = editor.getDocument();
   assert(d2.root.children[0].columns[0].widthUm > 40000, "column width increased");
+  const table3 = el.querySelector('table[data-node-type="table"]');
+  table3.dispatchEvent(ev(dom.window, "click", { target: table3 }));
+  root.querySelector(".pde-table-btn").click();
+  const merge = Array.from(root.querySelectorAll(".pde-table-menu button")).find((b) => b.textContent.includes("Merge cell right"));
+  merge.click();
+  assert(editor.getDocument().root.children[0].rows[0].cells[0].colSpan === 2);
   teardown();
 });
 
@@ -151,6 +207,26 @@ test("controller-ui: image resize updates widthUm", () => {
   const img = editor.getDocument().root.children[0];
   assert(img.type === "image");
   assert(img.widthUm > 100000, "image width increased");
+  teardown();
+});
+
+test("controller-ui: image align center persists on selected figure", () => {
+  const { el, root } = setup();
+  const doc = baseDoc();
+  doc.assets["a1"] = { id: "a1", kind: "image", mediaType: "image/png", storageKey: "k", sha256: "a".repeat(64), byteLength: 10, alt: "x" };
+  const g = createIdGenerator("img");
+  doc.root.children.push({ type: "image", id: g.next(), assetId: "a1", widthUm: 80000, heightUm: 50000 });
+  const editor = createEditor(el, { document: doc });
+  const figure = el.querySelector('figure[data-node-type="image"]');
+  figure.dispatchEvent(ev(el.ownerDocument.defaultView, "click", { target: figure }));
+  assert(root.querySelector(".pde-image-resize"), "resize overlay present");
+  editor.commands.setAlign("center");
+  const img = editor.getDocument().root.children[0];
+  assert(img.type === "image" && img.align === "center");
+  const overlay = root.querySelector(".pde-image-resize");
+  overlay.style.left = "99px";
+  editor.commands.setAlign("right");
+  assert(root.querySelector(".pde-image-resize").style.left !== "99px", "resize frame follows the image");
   teardown();
 });
 

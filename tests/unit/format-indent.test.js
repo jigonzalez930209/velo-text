@@ -1,0 +1,35 @@
+import { JSDOM } from "jsdom";
+import { createDocument, createIdGenerator } from "../../dist/core/model/factories.js";
+import { createEditor } from "../../dist/editor-web/controller/index.js";
+
+test("format: indent sets indentLevel on paragraph", () => {
+  const dom = new JSDOM(`<!DOCTYPE html><body><div id="ed"></div></body>`, { pretendToBeVisual: true });
+  globalThis.document = dom.window.document;
+  globalThis.window = dom.window;
+  globalThis.Node = dom.window.Node;
+  const el = dom.window.document.getElementById("ed");
+  const g = createIdGenerator("f");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-01-01T00:00:00.000Z" } });
+  doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "hi" }] });
+  const editor = createEditor(el, { document: doc });
+  const p = el.querySelector('[data-node-id="p1"]');
+  const range = dom.window.document.createRange();
+  range.selectNodeContents(p);
+  const sel = dom.window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  editor.commands.indent(1);
+  const live = editor.getDocument().root.children[0];
+  assert(live.type === "paragraph");
+  assert(live.indentLevel === 1);
+  const varSpan = el.querySelector("[data-node-type=variable]");
+  void varSpan;
+  editor.commands.insertVariable("name", "upper", "x");
+  const v = el.querySelector("[data-node-type=variable]");
+  v.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+  assert(el.parentElement.querySelector(".pde-var-popover") || document.querySelector(".pde-var-popover"));
+  editor.destroy();
+  delete globalThis.document;
+  delete globalThis.window;
+  delete globalThis.Node;
+});

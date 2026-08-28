@@ -168,3 +168,21 @@ test("controller: destroy cleans up", () => {
   editor.commands.insertTable(2, 2);
   teardown();
 });
+
+test("controller: paste preventDefault and drops script tags", () => {
+  const { dom, el } = setup();
+  const doc = baseDoc();
+  doc.root.children.push({ type: "paragraph", id: "p1", children: [{ type: "text", id: "t1", text: "x" }] });
+  createEditor(el, { document: doc });
+  const clipboardData = {
+    getData: (type) => (type === "text/html" ? '<p>safe</p><script>alert(1)</script>' : "safe"),
+  };
+  const ev = new dom.window.Event("paste", { bubbles: true, cancelable: true });
+  Object.defineProperty(ev, "clipboardData", { value: clipboardData });
+  el.dispatchEvent(ev);
+  assert(ev.defaultPrevented === true, "paste must be intercepted");
+  assert(!el.innerHTML.toLowerCase().includes("<script"), "script must not land in host");
+  const z = new dom.window.KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true, cancelable: true });
+  el.dispatchEvent(z);
+  teardown();
+});
