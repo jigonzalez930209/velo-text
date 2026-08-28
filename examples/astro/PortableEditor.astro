@@ -1,0 +1,8 @@
+---
+/**
+ * Astro island — client only. Do not hydrate the AST on the server.
+ * Use renderDocumentToHtml in a server component for static HTML.
+ */
+import PortableEditor from "../react/PortableEditor.jsx";
+---
+<PortableEditor client:load document={Astro.props.document} theme="light-neutral" />

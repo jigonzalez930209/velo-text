@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>vanilla mountVanillaEditor</title>
+  <link rel="stylesheet" href="../../themes/base.css" />
+  <link rel="stylesheet" href="../../themes/components.css" />
+</head>
+<body data-pde-theme="light-neutral">
+  <h1>Vanilla</h1>
+  <div id="host"></div>
+  <button id="var">Insert variable</button>
+  <button id="pdf">PDF</button>
+  <--+<button id="odt">ODT</button>
+  <button id="docx">DOCX</button>
+  <script type="module">
+    import {
+      createDocument, createIdGenerator, mountVanillaEditor, exportDocument,
+    } from "../../dist/public-api/index.js";
+    const MIME = {
+      pdf: "application/pdf",
+      odt: "application/vnd.oasis.opendocument.text",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+    const g = createIdGenerator("v");
+    const doc = createDocument({ idGenerator: g, clock: { nowIso: () => new Date().toISOString() } });
+    doc.root.children.push({ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "Hello" }] });
+    const el = document.getElementById("host");
+    const editor = mountVanillaEditor(el, { document: doc });
+    document.getElementById("var").onclick = () => editor.commands.insertVariable("name");
+    async function doExport(format) {
+      const chunks = [];
+      await exportDocument({ document: editor.getDocument(), data: { name: "Ada" }, format, sink: { write(c){chunks.push(c)}, close(){} }, options: { strict: false } });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(chunks, { type: MIME[format] }));
+      a.download = "vanilla." + format;
+      a.click();
+    }
+    document.getElementById("pdf").onclick = () => doExport("pdf");
+    document.getElementById("odt").onclick = () => doExport("odt");
+    document.getElementById("docx").onclick = () => doExport("docx");
+  </script>
+</body>
+</html>

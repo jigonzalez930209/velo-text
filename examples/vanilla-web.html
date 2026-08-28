@@ -13,11 +13,16 @@
 <body data-pde-theme="light-neutral">
   <h1>Ejemplo vanilla-web (sin framework)</h1>
   <div id="editor" class="pde-root" data-pde-theme="light-neutral" contenteditable="true"></div>
-  <button id="export-pdf">Exportar PDF</button>
-  <button id="export-odt">Exportar ODT</button>
-  <button id="export-docx">Exportar DOCX</button>
+  <button id="export-pdf">PDF</button>
+  <button id="export-odt">ODT</button>
+  <button id="export-docx">DOCX</button>
   <script type="module">
     import { createDocument, createIdGenerator, exportDocument, renderDocumentToHtml } from "../dist/public-api/index.js";
+    const MIME = {
+      pdf: "application/pdf",
+      odt: "application/vnd.oasis.opendocument.text",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
     const idGen = createIdGenerator("ex");
     const doc = createDocument({ idGenerator: idGen, clock: { nowIso: () => new Date().toISOString() }});
     doc.root.children.push(
@@ -27,13 +32,13 @@
     const editor = document.getElementById("editor");
     editor.innerHTML = renderDocumentToHtml(doc).replace(/^<div[^>]*>/,"").replace(/<\/div>$/,"");
 
-    async function doExport(fmt){
+    async function doExport(format){
       const chunks=[];
       const sink={ write(c){chunks.push(c)}, close(){}};
-      await exportDocument({ document: doc, data:{ customer:{name:"Ana"}, total: 12345.6 }, format: fmt, sink, options:{ strict:false }});
-      const blob=new Blob(chunks,{type: fmt==="pdf"?"application/pdf": fmt==="odt"?"application/vnd.oasis.opendocument.text":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+      await exportDocument({ document: doc, data:{ customer:{name:"Ana"}, total: 12345.6 }, format, sink, options:{ strict:false }});
+      const blob=new Blob(chunks,{type: MIME[format]});
       const url=URL.createObjectURL(blob);
-      const a=document.createElement("a"); a.href=url; a.download=`demo.${fmt}`; a.click();
+      const a=document.createElement("a"); a.href=url; a.download="demo."+format; a.click();
     }
     document.getElementById("export-pdf").onclick=()=>doExport("pdf");
     document.getElementById("export-odt").onclick=()=>doExport("odt");
