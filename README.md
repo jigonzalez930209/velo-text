@@ -96,6 +96,7 @@ pnpm run test:visual      # HTML snapshots in tests/visual/snapshots
 pnpm run fuzz -- --iterations=5000
 pnpm run build            # tsc → dist/
 pnpm docs:dev             # VitePress docs + playground at /playground/
+pnpm version:set 1.0.0-beta.1   # bump version (then tag v1.0.0-beta.1 and push)
 ```
 
 Publish is **GitHub Actions only** (push tag `v1.0.0-beta.0` after setting secret `NPM_TOKEN`).
