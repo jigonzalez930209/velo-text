@@ -6,10 +6,15 @@ function placeOverlay(wrapper: HTMLElement, overlay: HTMLElement, figure: HTMLEl
   const target = img ?? figure;
   const rect = target.getBoundingClientRect();
   const origin = wrapper.getBoundingClientRect();
+  const wUm = Number(figure.getAttribute("data-width-um")) || 150000;
+  const hUm = Number(figure.getAttribute("data-height-um")) || 90000;
+  const w = rect.width > 8 ? rect.width : umToPx(wUm);
+  const expectH = w * (hUm / wUm);
+  const h = rect.height >= Math.min(32, expectH * 0.4) ? rect.height : expectH;
   overlay.style.left = `${rect.left - origin.left}px`;
   overlay.style.top = `${rect.top - origin.top}px`;
-  overlay.style.width = `${rect.width}px`;
-  overlay.style.height = `${rect.height}px`;
+  overlay.style.width = `${w}px`;
+  overlay.style.height = `${h}px`;
 }
 
 export function hideImageMeta(s: EditorState): void {
@@ -132,8 +137,10 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
       if (img) {
         img.style.width = `${Math.round(umToPx(newWUm))}px`;
         img.style.height = "auto";
+        img.style.aspectRatio = `${newWUm} / ${newHUm}`;
       }
       figure.setAttribute("data-width-um", String(newWUm));
+      figure.setAttribute("data-height-um", String(newHUm));
       positionImgResize(figure);
       sync();
     };
