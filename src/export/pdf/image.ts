@@ -5,6 +5,9 @@
  * JPEG is passed through as DCTDecode data (no decode needed).
  */
 
+import { getJpegDimensions } from "../../assets/dimensions/index.js";
+import { sniffImage } from "../../assets/sniff/index.js";
+
 export interface DecodedImage {
   widthPx: number;
   heightPx: number;
@@ -64,7 +67,10 @@ export async function decodePngImage(bytes: Uint8Array, inflate?: InflateFn): Pr
   let height = 0;
   let bitDepth = 0;
   let colorType = 0;
+  let interlace = 0;
   const idat: Uint8Array[] = [];
+  let plte: Uint8Array | null = null;
+  let trns: Uint8Array | null = null;
   let pos = 8;
   while (pos + 8 <= bytes.length) {
     const len = view.getUint32(pos, false);
@@ -76,6 +82,11 @@ export async function decodePngImage(bytes: Uint8Array, inflate?: InflateFn): Pr
       height = view.getUint32(dataStart + 4, false);
       bitDepth = bytes[dataStart + 8]!;
       colorType = bytes[dataStart + 9]!;
+      interlace = bytes[dataStart + 12]!;
+    } else if (type === "PLTE") {
+      plte = bytes.slice(dataStart, dataEnd);
+    } else if (type === "tRNS") {
+      trns = bytes.slice(dataStart, dataEnd);
     } else if (type === "IDAT") {
       idat.push(bytes.slice(dataStart, dataEnd));
     } else if (type === "IEND") {
@@ -83,9 +94,11 @@ export async function decodePngImage(bytes: Uint8Array, inflate?: InflateFn): Pr
     }
     pos = dataEnd + 4; // + CRC
   }
-  if (!width || !height || bitDepth !== 8) return null;
-  // Only truecolor RGB(2) and RGBA(6) supported for v1
-  if (colorType !== 2 && colorType !== 6) return null;
+  if (!width || !height || interlace) return null;
+  const okTruecolor = (colorType === 2 || colorType === 6) && bitDepth === 8;
+  const okGray = (colorType === 0 || colorType === 4) && bitDepth === 8;
+  const okIndexed = colorType === 3 && (bitDepth === 4 || bitDepth === 8) && plte && plte.length >= 3;
+  if (!okTruecolor && !okGray && !okIndexed) return null;
 
   const infl = inflate ?? inflateCache ?? null;
   if (!infl) return null;
@@ -100,20 +113,23 @@ export async function decodePngImage(bytes: Uint8Array, inflate?: InflateFn): Pr
     return null;
   }
 
-  const channels = colorType === 6 ? 4 : 3;
-  const stride = width * channels;
+  const samples =
+    colorType === 2 ? 3 : colorType === 6 ? 4 : colorType === 4 ? 2 : 1;
+  const bitsPerPixel = samples * bitDepth;
+  const stride = Math.ceil((width * bitsPerPixel) / 8);
+  const filterBpp = Math.max(1, Math.floor(bitsPerPixel / 8));
   const rgb = new Uint8Array(width * height * 3);
   const prev = new Uint8Array(stride);
   let src = 0;
   for (let y = 0; y < height; y++) {
-    if (src >= raw.length) return null;
+    if (src + 1 + stride > raw.length) return null;
     const filter = raw[src]!;
     src++;
     const cur = raw.subarray(src, src + stride);
     for (let x = 0; x < stride; x++) {
-      const a = x >= channels ? cur[x - channels]! : 0;
+      const a = x >= filterBpp ? cur[x - filterBpp]! : 0;
       const b = prev[x]!;
-      const c = x >= channels ? prev[x - channels]! : 0;
+      const c = x >= filterBpp ? prev[x - filterBpp]! : 0;
       let v = cur[x]!;
       switch (filter) {
         case 0: break;
@@ -126,9 +142,40 @@ export async function decodePngImage(bytes: Uint8Array, inflate?: InflateFn): Pr
       cur[x] = v;
     }
     for (let x = 0; x < width; x++) {
-      rgb[(y * width + x) * 3] = cur[x * channels]!;
-      rgb[(y * width + x) * 3 + 1] = cur[x * channels + 1]!;
-      rgb[(y * width + x) * 3 + 2] = cur[x * channels + 2]!;
+      const o = (y * width + x) * 3;
+      if (colorType === 2 || colorType === 6) {
+        rgb[o] = cur[x * samples]!;
+        rgb[o + 1] = cur[x * samples + 1]!;
+        rgb[o + 2] = cur[x * samples + 2]!;
+        if (colorType === 6) {
+          const a = cur[x * samples + 3]! / 255;
+          rgb[o] = Math.round(rgb[o]! * a + 255 * (1 - a));
+          rgb[o + 1] = Math.round(rgb[o + 1]! * a + 255 * (1 - a));
+          rgb[o + 2] = Math.round(rgb[o + 2]! * a + 255 * (1 - a));
+        }
+      } else if (colorType === 0) {
+        const g = cur[x]!;
+        rgb[o] = g; rgb[o + 1] = g; rgb[o + 2] = g;
+      } else if (colorType === 4) {
+        const g = cur[x * 2]!;
+        const a = cur[x * 2 + 1]! / 255;
+        const v = Math.round(g * a + 255 * (1 - a));
+        rgb[o] = v; rgb[o + 1] = v; rgb[o + 2] = v;
+      } else {
+        const idx = bitDepth === 8
+          ? cur[x]!
+          : (x % 2 === 0 ? (cur[x >> 1]! >> 4) : (cur[x >> 1]! & 0x0f));
+        const pi = idx * 3;
+        if (!plte || pi + 2 >= plte.length) return null;
+        let r = plte[pi]!, gch = plte[pi + 1]!, bch = plte[pi + 2]!;
+        if (trns && idx < trns.length) {
+          const a = trns[idx]! / 255;
+          r = Math.round(r * a + 255 * (1 - a));
+          gch = Math.round(gch * a + 255 * (1 - a));
+          bch = Math.round(bch * a + 255 * (1 - a));
+        }
+        rgb[o] = r; rgb[o + 1] = gch; rgb[o + 2] = bch;
+      }
     }
     prev.set(cur);
     src += stride;
@@ -147,10 +194,13 @@ export function encodeRgbImageData(rgb: Uint8Array, width: number, height: numbe
  * Decode an image for PDF embedding. Tries PNG decode (sync via cache); JPEG passes through.
  */
 export async function decodeImageForPdf(data: Uint8Array, mediaType: string): Promise<DecodedImage | null> {
-  if (mediaType === "image/jpeg") {
-    return { widthPx: 0, heightPx: 0, jpeg: data };
+  const sniffed = sniffImage(data).mediaType;
+  const mt = sniffed ?? mediaType;
+  if (mt === "image/jpeg" || mt === "image/jpg" || mediaType === "image/jpg") {
+    const dim = getJpegDimensions(data);
+    return { widthPx: dim?.widthPx ?? 0, heightPx: dim?.heightPx ?? 0, jpeg: data };
   }
-  if (mediaType === "image/png") {
+  if (mt === "image/png") {
     const infl = await getInflate();
     return decodePngImage(data, infl ?? undefined);
   }

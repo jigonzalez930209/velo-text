@@ -29,27 +29,32 @@ export function pageContentStream(
       const rowId = parts[2];
       const ri = Number(parts[3]);
       const cw = Number(parts[4]);
+      const rowH = Number(parts[5]) || 28;
       void rowId;
       if (tableState === null || tableState.row !== ri) {
         tableState = { colW: [], row: ri, x: marginPt, y };
       }
-      const rowH = 28;
       s += `0.3 w 0.45 0.45 0.45 RG\n`;
       s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
-      const cellX = tableState.x + 4;
       const segs = line.segments;
-      let sx = cellX;
+      let textW = 0;
+      for (const seg of segs) {
+        textW += seg.kind === "text" ? helveticaWidthPt(seg.text, 9) : seg.kind === "math" ? seg.math.widthPt : 0;
+      }
+      const cellAlign = parts[6] === "center" || parts[6] === "right" || line.align === "center" || line.align === "right"
+        ? (parts[6] === "right" || line.align === "right" ? "right" : "center")
+        : "left";
+      let sx = tableState.x + 4;
+      if (cellAlign === "center") sx = tableState.x + Math.max(4, (cw - textW) / 2);
+      else if (cellAlign === "right") sx = tableState.x + Math.max(4, cw - 4 - textW);
       s += `BT /F1 9 Tf\n`;
       for (const seg of segs) {
         if (seg.kind === "text") {
           s += `1 0 0 1 ${sx} ${y - 10} Tm (${pdfEscape(seg.text)}) Tj\n`;
           sx += helveticaWidthPt(seg.text, 9);
         } else if (seg.kind === "math") {
-          for (const r of seg.math.runs) {
-            const fn = r.font === "Symbol" ? "F2" : "F1";
-            s += `1 0 0 1 ${(sx + r.xPt).toFixed(2)} ${(y - 10 + r.yPt).toFixed(2)} Tm /${fn} ${r.sizePt} Tf (${pdfLiteralString(r.text)}) Tj\n`;
-          }
-          sx += seg.math.widthPt;
+          s += mathOps(seg.math, sx, y - 10, "F3", "F2");
+          sx += seg.math.widthPt + 8;
         }
       }
       s += `ET\n`;
@@ -69,7 +74,11 @@ export function pageContentStream(
         s += `BT /F1 9 Tf 1 0 0 1 ${marginPt} ${y} Tm (${pdfEscape(`[missing image ${assetId}]`)}) Tj ET\n`;
         continue;
       }
-      const x = marginPt;
+      const x = line.align === "center"
+        ? (pageWidthPt - wPt) / 2
+        : line.align === "right"
+          ? pageWidthPt - marginPt - wPt
+          : marginPt;
       const yy = y - hPt;
       const name = `Im${assetId.replace(/[^A-Za-z0-9]/g, "_")}`;
       s += `q ${wPt.toFixed(2)} 0 0 ${hPt.toFixed(2)} ${x.toFixed(2)} ${yy.toFixed(2)} cm /${name} Do Q\n`;
@@ -80,7 +89,7 @@ export function pageContentStream(
       const mathSeg = line.segments.find((x): x is { kind: "math"; math: MathBox; sizePt: number } => x.kind === "math");
       if (mathSeg) {
         const x = (pageWidthPt - mathSeg.math.widthPt) / 2;
-        s += mathOps(mathSeg.math, x, y, "F1", "F2");
+        s += mathOps(mathSeg.math, x, y, "F3", "F2");
       }
       cursorX = marginPt;
       continue;
@@ -106,8 +115,8 @@ export function pageContentStream(
         cursorX += helveticaWidthPt(seg.text, seg.sizePt || sizePt);
         inText = true;
       } else if (seg.kind === "math") {
-        s += mathOps(seg.math, cursorX, y, "F1", "F2");
-        cursorX += seg.math.widthPt;
+        s += mathOps(seg.math, cursorX, y, "F3", "F2");
+        cursorX += seg.math.widthPt + 8;
         inText = true;
       }
     }
@@ -117,10 +126,17 @@ export function pageContentStream(
 }
 
 function mathOps(math: MathBox, x: number, y: number, f1: string, f2: string): string {
-  let s = "";
+  const padX = 4;
+  const padY = 2;
+  const boxX = x - padX;
+  const boxY = y - math.descentPt - padY;
+  const boxW = math.widthPt + padX * 2;
+  const boxH = math.ascentPt + math.descentPt + padY * 2;
+  let s = `0.4 w 0.97 0.97 0.98 rg 0.72 0.74 0.78 RG ${boxX.toFixed(2)} ${boxY.toFixed(2)} ${boxW.toFixed(2)} ${boxH.toFixed(2)} re B\n0 0 0 rg 0 0 0 RG\n`;
+  const ox = x;
   for (const r of math.runs) {
     const fn = r.font === "Symbol" ? f2 : f1;
-    s += `BT /${fn} ${r.sizePt.toFixed(2)} Tf 1 0 0 1 ${(x + r.xPt).toFixed(2)} ${(y + r.yPt).toFixed(2)} Tm ${pdfLiteralString(r.text)} Tj ET\n`;
+    s += `BT /${fn} ${r.sizePt.toFixed(2)} Tf 1 0 0 1 ${(ox + r.xPt).toFixed(2)} ${(y + r.yPt).toFixed(2)} Tm ${pdfLiteralString(r.text)} Tj ET\n`;
   }
   for (const rl of math.rules) {
     s += `0.6 w 0 0 0 RG 0 0 0 rg ${(x + rl.xPt).toFixed(2)} ${(y + rl.yPt - rl.heightPt / 2).toFixed(2)} ${rl.widthPt.toFixed(2)} ${rl.heightPt.toFixed(2)} re f S\n`;

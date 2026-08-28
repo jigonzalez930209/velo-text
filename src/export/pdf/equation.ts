@@ -196,6 +196,7 @@ export function parseMath(latex: string, baseSizePt = 11): MathBox {
           descent = Math.max(descent, innerBox.descentPt);
           continue;
         }
+        if (cmd === "\\left" || cmd === "\\right") continue;
         const mapped = SYMBOL_CMD[cmd];
         if (mapped !== undefined) {
           flushBase();

@@ -34,17 +34,19 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         cur = [];
         curW = 0;
       };
-      for (const s of segs) {
-        const w = s.kind === "text" ? helveticaWidthPt(s.text, s.sizePt) : s.kind === "math" ? s.math.widthPt : 0;
-        if (curW + w > maxWidth && cur.length) {
-          flushLine();
-          // Leading space dropped
-          if (s.kind === "text" && s.text.startsWith(" ")) { cur.push({ ...s, text: s.text.slice(1) }); curW = Math.max(0, w - helveticaWidthPt(" ", s.sizePt)); }
-          else { cur.push(s); curW = w; }
-          continue;
-        }
-        cur.push(s);
+      const push = (seg: Segment, w: number): void => {
+        if (curW + w > maxWidth && cur.length) flushLine();
+        cur.push(seg);
         curW += w;
+      };
+      for (const s of segs) {
+        if (s.kind === "text") {
+          for (const part of s.text.split(/(\s+)/)) {
+            if (!part) continue;
+            push({ kind: "text", text: part, sizePt: s.sizePt }, helveticaWidthPt(part, s.sizePt));
+          }
+        } else if (s.kind === "math") push(s, s.math.widthPt + 8);
+        else push(s, 0);
       }
       flushLine();
     };
@@ -65,8 +67,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
           }
         } else if (b.type === "table") {
           const tbl = b as { id: string; columns: Array<{ widthUm: number }>; rows: Array<{ id: string; header?: boolean; cells: Array<{ blocks: PortableDocument["root"]["children"] }> }> };
-          const totalUm = tbl.columns.reduce((n, c) => n + c.widthUm, 0);
-          const tableW = Math.min(maxWidth, 500);
+          const totalUm = tbl.columns.reduce((n, c) => n + c.widthUm, 0) || 1;
+          const tableW = maxWidth;
           const colW = tbl.columns.map((c) => (c.widthUm / totalUm) * tableW);
           const rowH = 30;
           const yStart = 0;
@@ -93,8 +95,9 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
               h = Math.max(h, cellH);
               x++;
             }
-            // grid
-            lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: "table-top" });
+            if (ri === 0) {
+              lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: "table-top" });
+            }
             x = 0;
             for (let ci = 0; ci < row.cells.length; ci++) {
               const cell = row.cells[ci]!;
@@ -103,18 +106,20 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
               for (const bl of cell.blocks) {
                 if (bl.type === "paragraph") segs2.push(...inlineToSegments(bl.children as never, 9));
               }
+              const cellAlign = row.header ? "center" : "left";
               lines.push({
                 segments: segs2.map((s) => ({ ...s, sizePt: s.kind === "math" ? s.sizePt : 9 })),
                 yPt: 0,
                 sizePt: 9,
-                align: "left",
-                style: `table-cell ${ci} ${row.id} ${ri} ${cw}`,
+                align: cellAlign,
+                style: `table-cell ${ci} ${row.id} ${ri} ${cw} ${h} ${cellAlign}`,
               });
               x++;
             }
             lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: `table-row-end ${h}` });
             void x;
           }
+          lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: "table-bottom" });
         } else if (b.type === "columns") {
           const cols = (b as { columns: Array<{ id: string; blocks: PortableDocument["root"]["children"]; widthPct?: number }> }).columns;
           const n = Math.max(2, cols.length);
@@ -141,10 +146,11 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
               yPt: 0,
               sizePt: 9,
               align: "left",
-              style: `table-cell ${ci} ${b.id} 0 ${colW[ci]}`,
+              style: `table-cell ${ci} ${b.id} 0 ${colW[ci]} ${h}`,
             });
           }
           lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: `table-row-end ${h}` });
+          lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: "table-bottom" });
         } else if (b.type === "equation-block") {
           const math = parseMath((b as { latex: string }).latex ?? "", 12);
           lines.push({ segments: [{ kind: "math", math, sizePt: 12 }], yPt: 0, sizePt: 12, align: "center", style: "equation-block" });
@@ -153,10 +159,11 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         } else if (b.type === "page-break") {
           lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 11, align: "left", style: "page-break" });
         } else if (b.type === "image") {
-          const img = b as { assetId: string; widthUm?: number; heightUm?: number };
+          const img = b as { assetId: string; widthUm?: number; heightUm?: number; align?: "left" | "center" | "right" };
+          const align = img.align === "center" || img.align === "right" ? img.align : "left";
           lines.push({
             segments: [{ kind: "text", text: "", sizePt: 0 }],
-            yPt: 0, sizePt: 11, align: "left", style: `image ${img.assetId} ${img.widthUm ?? 0} ${img.heightUm ?? 0}`,
+            yPt: 0, sizePt: 11, align, style: `image ${img.assetId} ${img.widthUm ?? 0} ${img.heightUm ?? 0}`,
           });
         }
       }
@@ -175,8 +182,18 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         y = pageHeightPt - marginPt;
         continue;
       }
-      if (line.style === "table-top" || line.style === "table-bottom") {
+      if (line.style === "table-top") {
         cur.push({ line, yPt: y });
+        continue;
+      }
+      if (line.style === "table-bottom") {
+        cur.push({ line, yPt: y });
+        y -= 8;
+        if (y < marginPt) {
+          pages.push({ lines: cur });
+          cur = [];
+          y = pageHeightPt - marginPt;
+        }
         continue;
       }
       if (line.style.startsWith("table-cell")) {
@@ -186,7 +203,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       if (line.style.startsWith("table-row-end")) {
         const rowH = Number(line.style.split(" ")[1]) || 30;
         cur.push({ line, yPt: y });
-        y -= rowH + 6;
+        y -= rowH;
         if (y < marginPt) {
           pages.push({ lines: cur });
           cur = [];
