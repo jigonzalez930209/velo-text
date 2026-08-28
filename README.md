@@ -1,6 +1,6 @@
 # portable-doc-editor
 
-Portable document editor with variables `{{name}}`, tables, images, LaTeX equations and deterministic export to **PDF, ODT and DOCX** — **zero runtime dependencies**, TypeScript strict.
+Portable document editor with variables `{{name}}`, tables, images, LaTeX equations and deterministic export to **PDF, ODT, and DOCX** — **zero runtime dependencies**, TypeScript strict. LibreOffice/Word CI and full visual parity across Office formats are still open.
 
 > Roadmap: `roadmap_editor_documental_portable.md` — implementation follows Phase 0–12 depth 3.
 
@@ -31,7 +31,7 @@ const { sink, getBuffer } = createBufferSink();
 await exportDocument({
   document: doc,
   data: { name: "World" },
-  format: "pdf", // | "odt" | "docx"
+  format: "pdf",
   sink,
   options: { deterministic: true, strict: false },
 });
@@ -61,11 +61,11 @@ See `examples/vanilla-web.html`, `examples/backend.mjs`, `examples/postgres.mjs`
 | Variables `{{path}}`, `\| format`, `?? fallback`, repeat rows | ✅ `src/template` |
 | LaTeX simple (`\frac`, `\sqrt`, `^/_`, greek) inline/block | ✅ `src/core/equation` |
 | SVG icons (28) with `currentColor` → recolorable via CSS | ✅ `src/assets/icons` |
-| Web editor: `createEditor`, cell typing/align, col/row resize, columns, IME, clipboard allowlist, a11y | ✅ `src/editor-web` |
+| Web editor: `createEditor`, cell typing/align, image align L/C/R, col/row resize, columns, IME, clipboard allowlist, a11y | ✅ `src/editor-web` |
 | Assets: sniff (PNG/JPEG/WebP/SVG), dimensions, SHA-256, store dedupe & GC | ✅ `src/assets` |
 | S3 presigned URLs SigV4, PG jsonb + revisions + optimistic concurrency | ✅ `src/adapters` |
 | Layout: units (µm/pt/twip/EMU), text line break, pagination widows/orphans | ✅ `src/export/layout` |
-| Export: PDF (xref), ODT (mimetype STORE first), DOCX (rels), ZIP STORE+DEFLATE optional | ✅ `src/export` |
+| Export: PDF / ODT / DOCX (`exportDocument`); PDF has xref, table grid, image align, PNG downscale | ✅ `src/export` |
 | Themes: `light-neutral`, `light-warm`, `dark-slate`, `dark-contrast` + CSS tokens | ✅ `themes/` |
 
 ## Scripts
@@ -75,13 +75,14 @@ pnpm run check:types      # tsc strict
 pnpm run check:zero-deps  # 0 runtime deps
 pnpm run check:circular   # no circular imports, core isolation
 pnpm run check:fixtures   # 33 fixtures validate
-pnpm run check:smoke      # PDF/ODT/DOCX deterministic
-pnpm run test             # 143 tests (unit + conformance)
+pnpm run check:smoke      # PDF/ODT/DOCX magic + deterministic clock
+pnpm run soak             # repeated export (SOAK_ITERS)
+pnpm run test             # unit + conformance + integration + security
+pnpm run test:security    # XSS / prototype / SVG / LaTeX corpus
+pnpm run test:visual      # HTML snapshots in tests/visual/snapshots
 pnpm run fuzz -- --iterations=5000
-pnpm run benchmark
-pnpm run api:report
 pnpm run build            # tsc → dist/
-pnpm playground:dev       # Vite playground (imports dist/)
+pnpm playground:dev       # Vite playground (resolves src/ via alias; no dist required)
 ```
 
 ## Zero dependencies
@@ -104,4 +105,4 @@ All colors/sizes via CSS variables (`--pde-*`), no hard-coded literals outside `
 
 ## License
 
-MIT — see `LICENSE` (add if publishing).
+MIT — `LICENSE`.
