@@ -291,3 +291,23 @@ test("pdf: custom columns have no cell borders", () => {
   assert(!/re S/.test(stream), "column layout must not stroke boxes");
   assert(stream.includes("Left") && stream.includes("Right"));
 });
+
+test("pdf: image stays on one page instead of being split", () => {
+  const g = createIdGenerator("keep");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
+  for (let i = 0; i < 48; i++) {
+    doc.root.children.push({
+      type: "paragraph",
+      id: g.next(),
+      children: [{ type: "text", id: g.next(), text: "Filler paragraph used to push content to the page edge." }],
+    });
+  }
+  doc.root.children.push({ type: "image", id: g.next(), assetId: "png", widthUm: 140000, heightUm: 110000 });
+  const pages = buildPdfPages(doc);
+  const hits = pages.flatMap((p, i) => p.lines.filter((l) => l.line.style.startsWith("image ")).map((l) => ({ i, y: l.yPt })));
+  assert.equal(hits.length, 1, "image must appear on exactly one page");
+  const page = pages[hits[0].i];
+  const img = page.lines.find((l) => l.line.style.startsWith("image "));
+  assert(img.yPt > page.marginPt, "image top stays inside the page");
+  assert(hits[0].i === pages.length - 1 || pages[hits[0].i + 1].lines.every((l) => !l.line.style.startsWith("image ")));
+});

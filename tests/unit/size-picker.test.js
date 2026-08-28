@@ -3,6 +3,7 @@
  */
 import { JSDOM } from "jsdom";
 import { clampTableSize, openSizePicker, openMosaicPicker } from "../../dist/editor-web/controller/size-picker.js";
+import { placeOverlay } from "../../dist/editor-web/controller/place-overlay.js";
 
 test("size-picker: clampTableSize enforces 4×10 max", () => {
   assert.deepEqual(clampTableSize(9, 99), { cols: 4, rows: 10 });
@@ -47,4 +48,33 @@ test("size-picker: mosaic insert uses per-row counts", () => {
   const insert = [...dom.window.document.querySelectorAll(".pde-size-picker-foot")].find((b) => b.textContent.includes("Insert mosaic"));
   insert.click();
   assert.deepEqual(mosaic, [3, 2, 4]);
+});
+
+test("placeOverlay: right-edge menus shift left so they stay on screen", () => {
+  const dom = new JSDOM(`<!DOCTYPE html><body></body>`, { pretendToBeVisual: true });
+  globalThis.document = dom.window.document;
+  Object.defineProperty(dom.window, "innerWidth", { value: 400, configurable: true });
+  Object.defineProperty(dom.window, "innerHeight", { value: 600, configurable: true });
+  const btn = dom.window.document.createElement("button");
+  const menu = dom.window.document.createElement("div");
+  menu.style.width = "220px";
+  menu.style.height = "160px";
+  dom.window.document.body.append(btn, menu);
+  btn.getBoundingClientRect = () => ({ left: 370, right: 396, top: 8, bottom: 36, width: 26, height: 28, x: 370, y: 8, toJSON() {} });
+  let measure = 0;
+  menu.getBoundingClientRect = () => {
+    measure += 1;
+    if (measure === 1) return { left: 8, right: 228, top: 8, bottom: 168, width: 220, height: 160, x: 8, y: 8, toJSON() {} };
+    const left = Number.parseFloat(menu.style.left) || 0;
+    return { left, right: left + 220, top: 40, bottom: 200, width: 220, height: 160, x: left, y: 40, toJSON() {} };
+  };
+  Object.defineProperty(menu, "scrollWidth", { value: 220 });
+  Object.defineProperty(menu, "offsetWidth", { value: 220 });
+  Object.defineProperty(menu, "scrollHeight", { value: 160 });
+  Object.defineProperty(menu, "offsetHeight", { value: 160 });
+  placeOverlay(btn, menu);
+  const left = Number.parseFloat(menu.style.left);
+  assert(left + 220 <= 400, `menu overflows: left=${left}`);
+  assert(left <= 370, "menu should align toward the left of a right-side icon");
+  assert(menu.parentElement === dom.window.document.body);
 });
