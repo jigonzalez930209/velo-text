@@ -11,6 +11,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 
 
 
+
+## [1.0.0-beta.5] - 2026-08-28
+
+### Added
+- 
+
 ## [1.0.0-beta.4] - 2026-08-28
 
 ### Added
@@ -89,3 +95,4 @@ First public **beta** on npm (`velo-text@beta`). Treat it as a trial API: layout
 [1.0.0-beta.2]: https://github.com/velo-text/velo-text/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.3]: https://github.com/velo-text/velo-text/releases/tag/v1.0.0-beta.3
 [1.0.0-beta.4]: https://github.com/velo-text/velo-text/releases/tag/v1.0.0-beta.4
+[1.0.0-beta.5]: https://github.com/velo-text/velo-text/releases/tag/v1.0.0-beta.5
