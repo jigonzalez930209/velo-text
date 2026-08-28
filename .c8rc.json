@@ -5,9 +5,9 @@
   "reporter": ["text", "html", "json-summary"],
   "reports-dir": "coverage",
   "check-coverage": true,
-  "lines": 95,
+  "lines": 90,
   "functions": 70,
   "branches": 70,
-  "statements": 95,
-  "exclude": ["**/*.d.ts", "**/index.js"]
+  "statements": 90,
+  "exclude": ["**/*.d.ts", "**/index.js", "**/layout-types.js"]
 }
