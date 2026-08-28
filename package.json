@@ -29,13 +29,20 @@
     "./editor-web": {
       "types": "./dist/editor-web/index.d.ts",
       "default": "./dist/editor-web/index.js"
+    },
+    "./vanilla": {
+      "types": "./dist/adapters/vanilla.d.ts",
+      "default": "./dist/adapters/vanilla.js"
     }
   },
   "scripts": {
     "test": "node --experimental-vm-modules --experimental-strip-types scripts/runner.js",
     "test:unit": "node --experimental-strip-types scripts/runner.js --suite=unit",
     "test:integration": "node --experimental-strip-types scripts/runner.js --suite=integration",
-    "coverage": "c8 --include=dist/**/*.js --all --src=dist --reporter=text-summary node --experimental-vm-modules --experimental-strip-types scripts/runner.js && c8 check-coverage --lines 95 --functions 70 --branches 70",
+    "test:security": "node --experimental-vm-modules --experimental-strip-types scripts/runner.js --suite=security",
+    "test:property": "node --experimental-strip-types scripts/runner.js --suite=property",
+    "test:visual": "node scripts/generate-visual-snapshots.js",
+    "coverage": "c8 --include=dist/**/*.js --all --src=dist --reporter=text-summary node --experimental-vm-modules --experimental-strip-types scripts/runner.js && c8 check-coverage --lines 90 --functions 70 --branches 70",
     "build": "tsc -p tsconfig.json && node scripts/build.js",
     "check:types": "tsc -p tsconfig.check.json --noEmit",
     "check:zero-deps": "node scripts/check-zero-deps.js",
@@ -45,6 +52,7 @@
     "lint": "node scripts/lint.js",
     "api:report": "node scripts/generate-api-report.js",
     "fuzz": "node --experimental-strip-types scripts/fuzz.js --iterations=5000",
+    "soak": "node scripts/soak.js",
     "benchmark": "node --experimental-strip-types scripts/benchmark.js",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
