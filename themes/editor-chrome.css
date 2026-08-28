@@ -63,11 +63,16 @@
 .pde-editor figure.pde-image-block img {
   display: inline-block;
   max-width: 100%;
-  width: auto;
   height: auto;
   vertical-align: top;
+  object-fit: contain;
   border-radius: var(--pde-radius-md);
   cursor: nwse-resize;
+}
+.pde-editor figure.pde-image-block img:not([src]) {
+  min-width: 120px;
+  max-height: 180px;
+  background: var(--pde-color-surface);
 }
 .pde-editor hr { border: none; border-top: 1px solid var(--pde-color-border); margin: 1em 0; }
 
