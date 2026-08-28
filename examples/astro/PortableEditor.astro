@@ -1,8 +1,16 @@
 ---
 /**
  * Astro island — client only. Do not hydrate the AST on the server.
- * Use renderDocumentToHtml in a server component for static HTML.
+ * Static HTML: import { renderDocumentToHtml } from "velo-text" in a server component.
  */
 import PortableEditor from "../react/PortableEditor.jsx";
 ---
-<PortableEditor client:load document={Astro.props.document} theme="light-neutral" />
+<div data-pde-theme="light-neutral">
+  <PortableEditor
+    client:load
+    document={Astro.props.document}
+    theme={Astro.props.theme ?? "light-neutral"}
+    editable={Astro.props.editable ?? true}
+    onChange={Astro.props.onChange}
+  />
+</div>

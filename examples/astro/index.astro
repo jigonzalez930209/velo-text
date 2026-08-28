@@ -1,0 +1,30 @@
+---
+import { createDocument, createIdGenerator, renderDocumentToHtml } from "velo-text";
+import PortableEditor from "./PortableEditor.astro";
+
+const g = createIdGenerator("astro");
+const document = createDocument({ idGenerator: g, clock: { nowIso: () => new Date().toISOString() } });
+document.root.children.push({
+  type: "paragraph",
+  id: g.next(),
+  children: [
+    { type: "text", id: g.next(), text: "Hello " },
+    { type: "variable", id: g.next(), path: "name", source: "{{name}}", valueType: "string" },
+  ],
+});
+const staticHtml = renderDocumentToHtml(document);
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Astro + velo-text</title>
+    <link rel="stylesheet" href="../../themes/base.css" />
+    <link rel="stylesheet" href="../../themes/components.css" />
+  </head>
+  <body data-pde-theme="light-neutral">
+    <h1>Static HTML (SSR)</h1>
+    <div class="pde-editor" set:html={staticHtml}></div>
+    <h1>Editor island (client:load)</h1>
+    <PortableEditor document={document} theme="light-neutral" />
+  </body>
+</html>
