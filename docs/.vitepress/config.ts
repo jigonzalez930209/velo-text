@@ -42,6 +42,7 @@ export default defineConfig({
             { text: "PostgreSQL", link: "/guide/postgres" },
             { text: "Security", link: "/guide/security" },
             { text: "Performance", link: "/guide/performance" },
+            { text: "Publish to npm", link: "/guide/publish" },
           ],
         },
       ],
