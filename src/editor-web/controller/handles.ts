@@ -3,7 +3,7 @@ import { normalizeDocument } from "../../core/normalize/normalize.js";
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import type { bindCommands } from "./commands.js";
-import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH, moveBlockToHost } from "./nesting.js";
+import { siblingBlockEl, findParentList, layoutDepthOf, MAX_LAYOUT_DEPTH, moveBlockToHost, dropHostFromPoint } from "./nesting.js";
 import { wrapperRel } from "./table-resize.js";
 
 const MENU_ITEMS: Array<{ label: string; icon: IconName; type: InsertBlockType }> = [
@@ -118,11 +118,10 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
         if (ev.clientY > r.top + r.height / 2) target = i;
       }
       toIndex = target;
-      hostEl = (s.ownerDoc.elementFromPoint?.(ev.clientX, ev.clientY) as HTMLElement | null)
-        ?.closest?.("td, th, .pde-column") as HTMLElement | null;
-      if (hostEl && (!s.container.contains(hostEl) || blockEl.contains(hostEl))) hostEl = null;
+      hostEl = dropHostFromPoint(s, ev.clientX, ev.clientY, blockEl);
       for (const el of s.container.querySelectorAll(".pde-drop-host")) el.classList.remove("pde-drop-host");
       hostEl?.classList.add("pde-drop-host");
+      hostEl?.closest("table, .pde-columns")?.classList.add("pde-drop-host");
       for (const el of els) el.classList.remove("pde-drop-above", "pde-drop-below");
       const dest = els[toIndex];
       if (dest && toIndex !== fromIndex) {

@@ -151,6 +151,18 @@ export function applyWidths(node: ColumnsNode, pcts: number[], idGen: { next: ()
   pcts.forEach((p, i) => { node.columns[i]!.widthPct = p; });
 }
 
+export function dropHostFromPoint(s: EditorState, x: number, y: number, skip?: HTMLElement | null): HTMLElement | null {
+  let hit: HTMLElement | null = null;
+  for (const node of s.container.querySelectorAll("td, th, .pde-column")) {
+    const el = node as HTMLElement;
+    if (skip && (skip === el || skip.contains(el))) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 && r.height <= 0) continue;
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) hit = el;
+  }
+  return hit;
+}
+
 export function locFromHostEl(s: EditorState, el: HTMLElement | null): ReturnType<typeof locateInsert> | null {
   const host = el?.closest?.("td, th, .pde-column") as HTMLElement | null;
   if (!host || !s.container.contains(host)) return null;
