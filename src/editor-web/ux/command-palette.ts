@@ -66,6 +66,11 @@ export function attachCommandPalette(s: EditorState, items: () => PaletteItem[])
     input.focus();
   }
 
+  function isPaletteHotkey(e: KeyboardEvent): boolean {
+    if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.altKey) return false;
+    return e.key === "p" || e.key === "P";
+  }
+
   const onKey = (e: KeyboardEvent): void => {
     if (e.repeat) return;
     if (e.key === "Escape" && panel) {
@@ -75,9 +80,9 @@ export function attachCommandPalette(s: EditorState, items: () => PaletteItem[])
     }
     const target = e.target as HTMLElement;
     if (target.closest?.("input, textarea, select")) {
-      if (!((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey))) return;
+      if (!isPaletteHotkey(e)) return;
     }
-    if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
+    if (isPaletteHotkey(e)) {
       e.preventDefault();
       open();
       return;

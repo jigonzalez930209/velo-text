@@ -1,3 +1,4 @@
+import { getIconSvg, type IconName } from "../../assets/icons/index.js";
 import type { bindCommands } from "../controller/commands.js";
 import type { EditorState } from "../controller/types.js";
 
@@ -20,27 +21,32 @@ export function attachSelectionBubble(s: EditorState, cmds: ReturnType<typeof bi
     bubble.className = "pde-sel-bubble";
     bubble.setAttribute("role", "toolbar");
     bubble.setAttribute("aria-label", "Selection formatting");
-    const actions: Array<[string, () => void]> = [
-      ["B", () => cmds.toggleMark("bold")],
-      ["I", () => cmds.toggleMark("italic")],
-      ["U", () => cmds.toggleMark("underline")],
-      ["Link", () => {
+    const actions: Array<[IconName, string, () => void]> = [
+      ["bold", "Bold", () => cmds.toggleMark("bold")],
+      ["italic", "Italic", () => cmds.toggleMark("italic")],
+      ["underline", "Underline", () => cmds.toggleMark("underline")],
+      ["alignLeft", "Align left", () => cmds.setAlign("left")],
+      ["alignCenter", "Align center", () => cmds.setAlign("center")],
+      ["alignRight", "Align right", () => cmds.setAlign("right")],
+      ["alignJustify", "Justify", () => cmds.setAlign("justify")],
+      ["link", "Link", () => {
         const href = s.ownerDoc.defaultView?.prompt?.("Link (https://, mailto:, #)", "https://") ?? "";
         if (href) cmds.insertLink(href);
       }],
-      ["Clear", () => cmds.clearFormat()],
+      ["eraser", "Clear formatting", () => cmds.clearFormat()],
     ];
-    for (const [label, run] of actions) {
+    for (const [icon, label, run] of actions) {
       const b = s.ownerDoc.createElement("button");
       b.type = "button";
-      b.textContent = label;
+      b.innerHTML = getIconSvg(icon, { size: 16 });
       b.setAttribute("aria-label", label);
+      b.title = label;
       b.onmousedown = (ev) => ev.preventDefault();
       b.onclick = () => { run(); hide(); };
       bubble.appendChild(b);
     }
     bubble.style.left = `${Math.max(8, r.left - w.left)}px`;
-    bubble.style.top = `${Math.max(0, r.top - w.top - 36)}px`;
+    bubble.style.top = `${Math.max(0, r.top - w.top - 40)}px`;
     s.wrapper.appendChild(bubble);
   }
 

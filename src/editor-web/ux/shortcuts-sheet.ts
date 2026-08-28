@@ -1,7 +1,7 @@
 import type { EditorState } from "../controller/types.js";
 
 const ROWS = [
-  ["Mod+K", "Command palette"],
+  ["Mod+Shift+P", "Command palette"],
   ["/", "Slash menu (empty paragraph)"],
   ["Mod+F / Mod+H", "Find / replace"],
   ["Mod+B / I / U", "Bold / italic / underline"],
