@@ -1,0 +1,212 @@
+.vt-brand-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vt-brand-bg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+html:not(.dark) .vt-brand-bg {
+  opacity: 0.7;
+}
+
+html.dark .vt-brand-bg {
+  opacity: 0.38;
+}
+
+.vt-orb-a {
+  animation: vt-drift 22s ease-in-out infinite;
+}
+
+.vt-orb-b {
+  animation: vt-drift 28s ease-in-out infinite reverse;
+}
+
+.vt-orb-c {
+  animation: vt-drift 18s ease-in-out infinite 2s;
+}
+
+.vt-grid {
+  animation: vt-drift 26s ease-in-out infinite;
+  transform-origin: 190px 230px;
+}
+
+.vt-page-a {
+  animation: vt-float 16s ease-in-out infinite;
+  transform-origin: 595px 530px;
+}
+
+.vt-page-b {
+  animation: vt-float 20s ease-in-out infinite 1.5s;
+  transform-origin: 1150px 473px;
+}
+
+.vt-chip-a {
+  animation: vt-chip 12s ease-in-out infinite;
+}
+
+.vt-chip-b {
+  animation: vt-chip 14s ease-in-out infinite 1s;
+}
+
+.vt-export-path {
+  stroke-dashoffset: 0;
+  animation: vt-dash 18s linear infinite;
+}
+
+@keyframes vt-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(18px, -24px);
+  }
+}
+
+@keyframes vt-float {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate(8px, -16px) rotate(3deg);
+  }
+}
+
+@keyframes vt-chip {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(0, -14px);
+    opacity: 1;
+  }
+}
+
+@keyframes vt-dash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-brand-bg * {
+    animation: none !important;
+  }
+}
+
+.VPHero .heading {
+  display: flex;
+  flex-direction: column;
+}
+
+.VPHero .name,
+.VPHero .text {
+  width: fit-content;
+  max-width: 392px;
+  letter-spacing: -0.4px;
+  line-height: 40px;
+  font-size: 32px;
+  font-weight: 700;
+  white-space: pre-wrap;
+}
+
+.VPHero .name {
+  color: var(--vp-home-hero-name-color);
+}
+
+.VPHero .clip {
+  background: var(--vp-home-hero-name-background);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--vp-home-hero-name-color);
+}
+
+.VPHero .tagline {
+  padding-top: 8px;
+  max-width: 392px;
+  line-height: 28px;
+  font-size: 18px;
+  font-weight: 500;
+  white-space: pre-wrap;
+  color: var(--vp-c-text-2);
+}
+
+@media (min-width: 640px) {
+  .VPHero .name,
+  .VPHero .text {
+    max-width: 576px;
+    line-height: 56px;
+    font-size: 48px;
+  }
+
+  .VPHero .tagline {
+    padding-top: 12px;
+    max-width: 576px;
+    line-height: 32px;
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHero .name,
+  .VPHero .text {
+    line-height: 64px;
+    font-size: 56px;
+  }
+
+  .VPHero .tagline {
+    line-height: 36px;
+    font-size: 24px;
+  }
+}
+
+.VPHero .vt-hero-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.VPHero .vt-hero-name .name {
+  line-height: 1.15;
+}
+
+.VPHero .vt-hero-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  flex: none;
+  box-shadow: 0 10px 28px color-mix(in srgb, #3659e3 40%, transparent);
+}
+
+@media (min-width: 960px) {
+  .VPHero .vt-hero-mark {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
+}
+
+.VPNavBarTitle .logo {
+  height: 28px;
+  width: 28px;
+  border-radius: 7px;
+}
+
+.VPContent,
+.VPNav,
+.VPFooter,
+.VPLocalNav,
+.VPSidebar {
+  position: relative;
+  z-index: 1;
+}
