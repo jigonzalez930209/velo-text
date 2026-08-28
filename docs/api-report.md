@@ -1,4 +1,4 @@
-# Public API Report — portable-doc-editor v0.1.0
+# Public API Report — velo-text v0.1.0
 Generated: 2026-08-27T15:14:02.669Z
 
 ## Exports from `src/public-api`

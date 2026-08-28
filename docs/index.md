@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: portable-doc-editor
+  name: velo-text
   text: Zero-deps document platform
   tagline: TypeScript strict · Variables &#123;&#123;name&#125;&#125; · Tables · Images · LaTeX · PDF
   actions:
@@ -32,15 +32,15 @@ features:
 ## Quick start <Badge type="tip" text="pnpm only" />
 
 ```bash
-pnpm add portable-doc-editor
+pnpm add velo-text
 pnpm install
 pnpm run build
 pnpm run test # unit + conformance + integration + security
 ```
 
 ```ts
-import { createDocument, createIdGenerator, exportDocument } from "portable-doc-editor";
-import { createBufferSink } from "portable-doc-editor/dist/adapters/backend/index.js";
+import { createDocument, createIdGenerator, exportDocument } from "velo-text";
+import { createBufferSink } from "velo-text/backend";
 
 const doc = createDocument({ idGenerator: createIdGenerator("doc") });
 doc.root.children.push({
