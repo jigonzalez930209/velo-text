@@ -1,25 +1,30 @@
 # Export
 
-Call `exportDocument({ document, data, format, sink, assets, options })` with `format: "pdf" | "odt" | "docx"`. Pass in-memory `assets` (id → `{ mediaType, data }`) so images embed.
+**PDF is the product path.** Preview in the playground and a Vercel/Express handler must call the same function: `exportPdf({ document, data, assets, options })`. `exportDocument({ format: "pdf", sink })` is a thin wrapper around `exportPdf`.
 
-Playground, `examples/vanilla-web.html`, `examples/backend.mjs`, and `POST /documents/:id/export?format=` (`examples/http-api.mjs`) all expose the three formats. Package checks: `validatePdf`, `validateOdt`, `validateDocx`. Opening in LibreOffice/Word is still a manual/host check (not CI).
+```ts
+import { exportPdf } from "portable-doc-editor";
 
-## Common pipeline
+// Express / Vercel (Node runtime, no DOM)
+const { bytes, diagnostics, pages } = await exportPdf({
+  document,
+  data,
+  assets, // id → { mediaType, data: Uint8Array }
+  options: { strict: false, missingVariable: "keep" },
+});
+// res.setHeader("content-type", "application/pdf"); res.send(Buffer.from(bytes));
 ```
-PortableDocument → validate+migrate → resolve variables → resolve assets → normalize → buildLayout → adapt → package → validate output
+
+Do not reimplement layout, fonts, or images in the host. Diagnostics list translation gaps (unmapped LaTeX, skipped cell/column blocks, missing images, ignored text marks).
+
+`exportDocument` still accepts `odt` / `docx` for existing hosts; new work stays on PDF.
+
+## Pipeline (PDF)
+```
+PortableDocument → validate → resolve variables → collectPdfDiagnostics → PdfWriter (buildPdfPages + images + assemble)
 ```
 
-## PDF
-- Objects: Catalog, Pages, streams, xref, trailer, deterministic numbering
-- Fonts: Type1 Helvetica + Symbol (LaTeX subset); TTF embed is not in v1
-- **Tables:** each row is a contiguous grid (cell height matches layout; no extra gap between rows)
-- **Images:**
-  - Placement follows `ImageBlockNode.align` (`left` / `center` / `right`)
-  - Size from `widthUm` / `heightUm`
-  - PNG pixels larger than the on-page size are **area-averaged down** at 96 dpi of those µm before embedding (`src/export/images/`)
-  - JPEG is passed through (no decoder); SVG/WebP are not rasterized in PDF v1
-- Missing assets render as `[missing image …]`
-- `validatePdf` checks header/xref/EOF
+Page size and margins come from `document.page` (same MediaBox as layout). Fonts: Helvetica + Symbol. Images: PNG downscale / JPEG passthrough. Missing assets: `[missing image …]`.
 
 ## ODT / DOCX
 
