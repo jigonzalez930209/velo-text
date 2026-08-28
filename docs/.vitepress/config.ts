@@ -5,14 +5,15 @@ import { fileURLToPath } from "node:url";
 const docsDir = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(docsDir, "../..");
 const src = path.join(repo, "src");
+const base = process.env.DOCS_BASE || "/";
 
 export default defineConfig({
   title: "velo-text",
   description: "velo-text — zero_deps document editor, TypeScript strict, PDF",
   lang: "en-US",
-  base: "/",
+  base,
   head: [
-    ["link", { rel: "icon", href: "/favicon.svg" }],
+    ["link", { rel: "icon", href: `${base}favicon.svg`.replace("//", "/") }],
     ["meta", { name: "theme-color", content: "#3659e3" }],
   ],
   themeConfig: {

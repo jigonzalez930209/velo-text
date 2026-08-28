@@ -38,6 +38,12 @@ git push origin v1.0.0-beta.3
 
 Watch it: **Actions → Publish npm**.
 
+## Docs on GitHub Pages
+
+CI (`verify`) builds VitePress with `DOCS_BASE=/velo-text/` and uploads the static site. On push to `main`/`master`, the `deploy-docs` job publishes it to GitHub Pages.
+
+One-time: repo **Settings → Pages → Source: GitHub Actions**. Site URL: `https://<owner>.github.io/velo-text/`.
+
 The git tag must equal `package.json` `version` (`v` + version).
 
 ## 3. Manual run (no new tag)
