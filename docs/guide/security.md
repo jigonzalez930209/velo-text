@@ -8,6 +8,6 @@ See `docs/threat-model.md` for full matrix (XSS, XXE, Zip bombs, SSRF, prototype
 - XML/PDF: escaped, unknown props ignored unless policy
 - ZIP: sanitized entry names, no `../`
 
-Fuzz harness `scripts/fuzz.js` (LCG, reproducible seeds, corpus `tests/security/`).
+Fuzz harness `scripts/fuzz.js` (LCG, reproducible seeds).
 
-Audit: `pnpm run check:zero-deps`, `pnpm run lint` (no `window` in core), `pnpm run test:security`.
+Audit: `pnpm run check:zero-deps`, `pnpm run lint` (no `window` in `src/core/**/*.ts`), `pnpm run test:security`.

@@ -2,10 +2,10 @@
 
 ## Five layers
 1. **Core** — pure, no `window`/`document`/`fs`. Receives capabilities via ports: `BinarySink`, `AssetResolver`, `Clock`, `IdGenerator`.
-2. **Editor Web** — `contenteditable` host, toolbar, selection, clipboard, DnD, themes.
+2. **Editor Web** — `contenteditable` host, toolbar, overlays, sanitized paste, shortcut pipeline, themes.
 3. **Template engine** — scalar vars, paths, formatted values, row repeat.
-4. **Exporters** — PDF, DOCX, ODT implemented inside the project (`XmlWriter`, `ZipWriter`, `PdfWriter`...).
-5. **Adapters** — PG `jsonb`, S3-compatible storage, browser/backend, fs.
+4. **Exporters** — `exportDocument` for PDF, ODT, and DOCX (Office visual parity vs PDF is still partial).
+5. **Adapters** — ports only (PG contract + SQL, S3 SigV4). Host apps supply the real client.
 
 ```ts
 // Ports (src/core/model/types.ts)
@@ -16,13 +16,16 @@ export interface IdGenerator { next(): string; }
 ```
 
 ## Canonical & immutable
-Every transaction starts from a valid snapshot and produces another. No direct mutations are exposed. Undo/redo via inverse ops.
+Every transaction in `src/core/operations` starts from a valid snapshot. The web host undo stack is `History` with document snapshots (not inverse ops).
 
-## Ops before DOM
-DOM reflects state. `beforeinput` → intent → operation → AST → normalize → reconcile → restore selection → emit `change`.
+## Adapters
+`postgres-contract` and `s3-compatible` are **ports**: in-memory repo + SQL (`migrations/001_init.sql`) and SigV4 helpers. They are not a `pg` driver or an S3 SDK. Host apps inject a real client.
+
+## Ops and DOM
+DOM is the live typing surface. Shortcuts and paste are intercepted; other input syncs AST via `domToAst`. `History` stores snapshots for undo. Full intent→operation for every keystroke is not wired (would need caret mapping first).
 
 ## Capabilities
-Each module declares needed capabilities (e.g. DOCX exporter needs `AssetResolver, ZipWriter, XmlWriter, Clock`), making it testable and free of hidden deps.
+Each module declares needed capabilities (e.g. PDF writer needs `BinarySink`, `Clock`, optional asset bytes), making it testable and free of hidden deps.
 
 ## Security by default
 - No pasted HTML execution, no `javascript:` URLs, no prototype pollution, magic-signature image check, XML/PDF escaping.

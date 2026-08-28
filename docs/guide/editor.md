@@ -7,14 +7,7 @@
 - Variables/equations are `contenteditable=false`, keyboard navigable, `role="math"` or `role="button"`.
 
 ## Input pipeline
-```
-beforeinput / keydown / paste / drop
-  → normalize event → intent → operation → validate → transaction → normalize AST → reconcile → restore selection → emit change
-```
-- `beforeinput` is primary; `keydown` is fallback (documented).
-- Shortcuts configurable via `defaultShortcuts` (`Mod+b`, etc.) — see `src/editor-web/input/index.ts`.
-- IME: `compositionstart`/`compositionend` defer reconciliation.
-- Mobile & autocorrect handled via same pipeline.
+Typing stays in the browser (`contenteditable`). `createEditor` attaches `attachInputPipeline` with `nativeTyping: true` so insert/delete/enter are not `preventDefault`'d. Shortcuts (`Mod+b`, undo/redo) still go through `onIntent`. Paste is intercepted: `handlePaste` allowlists HTML, then `insertHTML`/`insertText`. Undo uses `History` (snapshot + typing coalesce). AST sync is `input` → `domToAst` → `normalizeDocument`.
 
 ## Host (`createEditor`)
 `src/editor-web/controller/index.ts` mounts a `contenteditable` host inside `.pde-editor-wrapper`. Overlays (block handles, table chrome, image resize) live in a sibling `.pde-ui-layer` so they do not steal typing.
@@ -43,7 +36,13 @@ editor.commands.insertVariable("customer.name");
 editor.commands.insertEquation("\\frac{a}{b}");
 editor.commands.insertImage(assetId);
 ```
-Marks use `execCommand` when available and then `syncFromDom`. Alignment writes `text-align` on the **innermost paragraph** (including paragraphs inside table cells), then parses it back into `ParagraphNode.align`.
+Marks use `execCommand` when available and then `syncFromDom`. Alignment writes `text-align` on the **innermost paragraph** (including paragraphs inside table cells), then parses it back into `ParagraphNode.align`. If an image is selected (resize overlay visible), the same toolbar buttons set `ImageBlockNode.align` (`left` / `center` / `right`; justify is ignored).
+
+## Images
+- Insert via `insertImage(assetId, widthUm?, heightUm?)` or the playground file picker (`resolveAssetUrl` for blob URLs).
+- Click the figure to show the **resize overlay** on the `<img>` (not the full-width figure). Drag keeps aspect ratio and writes `widthUm` / `heightUm`.
+- Align with the paragraph toolbar after selecting the image. The figure is `display:block; width:100%` so `text-align` positions the bitmap.
+- Nested: an image may live in a table cell or column slot (max nesting depth 3 for `table`/`columns`).
 
 ## Tables
 - Click a table to show **column handles** (vertical, drag width → `columns[].widthUm`) and **row handles** (horizontal, drag height → `rows[].heightUm`).
@@ -69,4 +68,13 @@ Insert **table**, **image**, or **nested columns** into the focused cell or slot
 - High contrast in 4 themes, `checkContrast` WCAG AA
 - Alt text required (decorative allowed empty), trap-free navigation for atomic nodes
 
-See `src/editor-web/controller` (commands, handles, table-ui, table-resize, image-resize), `view`, `input`, `clipboard`, `tables`, `images`, `accessibility`.
+See `src/editor-web/controller` and `src/editor-web/ux` (command palette, selection bubble, find, image drop, page preview).
+
+## Usability
+- `Ctrl/Cmd+K` or `/` in an empty paragraph: command palette (H2, table 3×2, `{{name}}`, undo…).
+- Selection bubble: bold/italic/underline/link/clear (not table/column chrome).
+- `Ctrl/Cmd+F` / `H`: find and replace in text nodes (skips variables and LaTeX).
+- Drop a PNG/JPEG/WebP/SVG onto the editor (`onImageFile` on the host).
+- `?` shortcut sheet. Outline: `getOutline()` / `focusBlock(id)`. Page preview: `setPagePreview(true)` (does not change the AST).
+- IME: composition is respected (`_pdeComposing`); do not sync AST mid-composition.
+

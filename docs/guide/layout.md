@@ -9,7 +9,7 @@ Internal: micrometers (int). Conversions with specified rounding:
 `getFontMetrics` approximates avg char width/line height from `fontSizePt`. `breakLines` is greedy, respects spaces/tabs/`\n`, hard breaks, fallback inside long words, deterministic.
 
 ## Blocks & tables
-Margins collapsed per own rules, `keep-with-next` for headings, row split diagnostics, header repeat. Images flagged if `w/h > usable`. `columns` measure nested paragraphs/images per slot and emit one box with the max height.
+Margins collapsed per own rules, `keep-with-next` for headings, row split diagnostics, header repeat. Images flagged if `w/h > usable`. `columns` measure nested paragraphs/images per slot and emit one box with the max height. PDF drawing (contiguous table rows, image `align`) lives in `src/export/pdf/`, not in this pagination layer.
 
 ## Pagination
 `paginateDocument(doc, {widows:2, orphans:2})` does vertical flow, forced breaks, widows/orphans, image constraints. Deterministic: same input + fixed IDs/clock → same `hash` and `pages[].boxes`.

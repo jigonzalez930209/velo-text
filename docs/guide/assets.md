@@ -20,4 +20,7 @@ Presigned URLs (SigV4) restrict key, method, expiry, checksum — `createPresign
 ## Store
 `src/assets/store/index.ts` — `AssetStore` with `createIntent` (dedupe), `confirm`, `addReference`/`removeReference` transactional, `gc` deferred deletion when unreferenced, keyset pagination.
 
+## Export size
+PDF embedding downscales **PNG** RGB to the largest on-page size (`widthUm`/`heightUm` at 96 dpi). JPEG bytes are not recompressed. See [Export](/guide/export).
+
 See `src/assets/sniff|dimensions|hashing|svg|icons|store` and `src/adapters/s3-compatible`.

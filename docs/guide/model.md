@@ -19,7 +19,7 @@ interface PortableDocument {
 - Colors as `#RRGGBBAA`, IDs opaque & unique, dates UTC.
 
 ## Nodes
-- **Block**: `paragraph` (optional `align`: left/center/right/justify), `heading` (1-6), `quote`, `list` (ordered/unordered), `table`, `columns`, `image`, `page-break`, `horizontal-rule`, `equation-block`.
+- **Block**: `paragraph` (optional `align`: left/center/right/justify), `heading` (1-6), `quote`, `list` (ordered/unordered), `table`, `columns`, `image` (optional `align`: left/center/right, `widthUm`/`heightUm`), `page-break`, `horizontal-rule`, `equation-block`.
 - **Inline**: `text` (+`marks`), `variable` (atomic), `link`, `inline-image`, `hard-break`, `equation` (inline).
 
 Variable example:
@@ -43,6 +43,20 @@ interface ColumnsNode { type: "columns"; id: NodeId; columns: ColumnSlot[]; gapU
 interface ColumnSlot { id: NodeId; blocks: BlockNode[]; widthPct?: number }
 ```
 Factory: `createColumns(idGen, count)`.
+
+## Images
+```ts
+interface ImageBlockNode {
+  type: "image";
+  id: NodeId;
+  assetId: AssetId;
+  alt?: string;
+  widthUm?: number;
+  heightUm?: number;
+  align?: "left" | "center" | "right";
+}
+```
+Display size is µm. PDF export downscales **PNG** pixels when that size is smaller than the source (see [Export](/guide/export)).
 
 ## Assets
 ```ts

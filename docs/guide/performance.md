@@ -8,7 +8,7 @@ Budgets in `docs/perf-budgets.md`:
 - Export 100 pages <5 s with progress & cancel
 - Memory no growth after open/close cycles
 
-Run `pnpm run benchmark` → `tests/perf/baselines.json`, CI fails if >20% regression.
+Run `pnpm run benchmark` → `tests/perf/baselines.json`. Macro budgets in `docs/perf-budgets.md` are targets until the harness records them.
 
 Layout and export are deterministic with injected `Clock`/`IdGenerator` for tests.
 
