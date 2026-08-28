@@ -133,6 +133,8 @@ export interface InputPipelineOptions {
   shortcuts?: ShortcutMap;
   onIntent: (intent: InputIntent) => void;
   isComposing?: () => boolean;
+  /** When true, leave insert/delete/enter to the browser; only intercept shortcuts. */
+  nativeTyping?: boolean;
 }
 
 export function attachInputPipeline(container: HTMLElement, opts: InputPipelineOptions): () => void {
@@ -141,10 +143,10 @@ export function attachInputPipeline(container: HTMLElement, opts: InputPipelineO
   const handleBeforeInput = (e: InputEvent) => {
     if (opts.isComposing?.()) return;
     const intent = beforeInputToIntent(e);
-    if (intent) {
-      e.preventDefault();
-      opts.onIntent(intent);
-    }
+    if (!intent) return;
+    if (opts.nativeTyping) return;
+    e.preventDefault();
+    opts.onIntent(intent);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,9 +156,9 @@ export function attachInputPipeline(container: HTMLElement, opts: InputPipelineO
       opts.onIntent(intent);
       return;
     }
+    if (opts.nativeTyping) return;
     // Fallback for Enter/Backspace when beforeinput is not fired (some mobile browsers)
     if (e.key === "Enter" && !e.shiftKey) {
-      // Let beforeinput handle it if supported; otherwise fallback
       if (typeof (e as unknown as { inputType?: string }).inputType === "undefined") {
         e.preventDefault();
         opts.onIntent({ type: "insertParagraph" });
@@ -169,7 +171,7 @@ export function attachInputPipeline(container: HTMLElement, opts: InputPipelineO
   };
   const handleCompositionEnd = (e: CompositionEvent) => {
     (container as unknown as { _pdeComposing?: boolean })._pdeComposing = false;
-    if (e.data) opts.onIntent({ type: "insertText", text: e.data });
+    if (!opts.nativeTyping && e.data) opts.onIntent({ type: "insertText", text: e.data });
   };
 
   container.addEventListener("beforeinput", handleBeforeInput as EventListener);
