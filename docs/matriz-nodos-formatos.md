@@ -1,30 +1,33 @@
 # Matriz nodo × formato — Fase 0.1.1
 
+v1 product columns are **Web + PDF + ODT + DOCX**. Office visual fidelity vs PDF is still weaker for tables, columns, and some images.
+
 | Nodo / feature | Web (editor) | PDF | ODT | DOCX | Notas |
 |---|---|---|---|---|---|
 | paragraph | ✅ | ✅ | ✅ text:p | ✅ w:p | alineación, indent |
 | heading h1-h6 | ✅ | ✅ size | ✅ text:h | ✅ w:pStyle Heading{n} | outline level |
 | quote | ✅ | ✅ italic | ✅ Quotation | ✅ w:pStyle Quote | — |
 | list ordered/unordered | ✅ | ✅ •/1. | ✅ text:list | ✅ w:numPr | nested futuro |
-| table (span, header) | ✅ edit cells, align, col/row resize | ✅ grid + cell text, row Y advance | ✅ table:table | ✅ w:tbl | repeat via materialize; `widthUm` / `heightUm` |
-| columns | ✅ `.pde-columns` | ✅ side-by-side boxes | ✅ table-like | ✅ w:tbl | `createColumns` |
-| image block PNG/JPEG | ✅ | ✅ directo | ✅ draw:image | ✅ wp:inline | WebP→PNG fallback |
-| image block WebP | ✅ | ⚠️ variant | ✅ preserva | ✅ +fallback PNG | ver 8.3 |
-| image block SVG | ✅ sanitized | ⚠️ subset | ✅ preserva | ✅ +fallback PNG | 5.1.3 |
-| inline-image | ✅ | ⚠️ inline | ⚠️ frame | ⚠️ inline | — |
-| variable &#123;&#123;path&#125;&#125; | ✅ atomic | ✅ materialized | ✅ materialized | ✅ materialized | node tipado |
-| variable | format currency/date | ✅ Intl | ✅ text | ✅ text | locale/timezone explícitos |
+| table (span, header) | ✅ edit cells, align, col/row resize | ✅ grid continuo, Y por fila | ⚠️ table:table | ⚠️ w:tbl | v1 PDF sin hueco entre filas |
+| columns | ✅ `.pde-columns` | ✅ celdas lado a lado | ⚠️ table-like | ⚠️ w:tbl | `createColumns` |
+| image block PNG | ✅ resize, align L/C/R | ✅ XObject + **downscale** si el tamaño en página es menor que el original | ⚠️ draw:image | ⚠️ wp:inline | 96 dpi de µm |
+| image block JPEG | ✅ | ✅ DCT passthrough (sin downscale) | ⚠️ | ⚠️ | no hay decoder JPEG |
+| image block WebP | ✅ | ⚠️ no raster | ⚠️ | ⚠️ +placeholder PNG | v1.5 producto |
+| image block SVG | ✅ sanitized | ⚠️ no raster | ⚠️ | ⚠️ +placeholder PNG | 5.1.3 |
+| inline-image | ✅ | ⚠️ | ⚠️ | ⚠️ | — |
+| variable `{{path}}` | ✅ atomic | ✅ materialized | ✅ | ✅ | node tipado |
+| variable \| format | ✅ Intl | ✅ text | ✅ | ✅ | locale explícito |
 | variable fallback ?? | ✅ | ✅ | ✅ | ✅ | — |
 | variable en celda | ✅ | ✅ | ✅ | ✅ | — |
-| repeat rows &#123;&#123;item.x&#125;&#125; | ✅ plantilla | ✅ clonado | ✅ clonado | ✅ clonado | límite 1000 |
-| page-break | ✅ | ✅ | ✅ text:page-break | ✅ w:br page | — |
+| repeat rows | ✅ plantilla | ✅ clonado | ✅ | ✅ | límite 1000 |
+| page-break | ✅ | ✅ | ✅ | ✅ w:br page | — |
 | horizontal-rule | ✅ | ✅ | ✅ | ✅ w:pBdr | — |
-| marks bold/italic/underline/strike/code | ✅ | ⚠️ Helvetica base | ✅ text:span | ✅ w:rPr | color/fondo |
-| color/background | ✅ token CSS | ⚠️ pending | ✅ | ✅ w:color | — |
-| link | ✅ | ✅ annot? | ✅ text:a | ✅ w:hyperlink | block javascript: |
-| hard-break | ✅ | ✅ | ✅ line-break | ✅ w:br | — |
-| equation inline `equation` | ✅ atomic, `latexToHtml` frac/sqrt | ✅ `$latex$` text | ✅ text:span Equation | ✅ w:r italic `$latex$` | simple subset, atomic |
-| equation block `equation-block` | ✅ centered display | ✅ centered `$latex$` | ✅ text:p Equation | ✅ w:p centered italic | block LaTeX, no OMML v1 |
-| toolbar icons SVG | ✅ inline 16px currentColor | — | — | — | all in `src/assets/icons/index.ts:12`, color via `currentColor`/`--pde-icon-color` |
+| marks bold/italic/underline/strike/code | ✅ | ⚠️ Helvetica | ✅ | ✅ w:rPr | color/fondo en editor |
+| color/background | ✅ | ⚠️ pending PDF | ⚠️ | ⚠️ | — |
+| link | ✅ | ⚠️ | ✅ text:a | ✅ w:hyperlink | block `javascript:` |
+| hard-break | ✅ | ✅ | ✅ | ✅ w:br | — |
+| equation inline | ✅ `latexToHtml` | ✅ Helvetica+Symbol | ⚠️ `$latex$` | ⚠️ italic `$latex$` | subset, no OMML |
+| equation block | ✅ display | ✅ centered | ⚠️ | ⚠️ | — |
+| toolbar icons SVG | ✅ currentColor | — | — | — | `src/assets/icons` |
 
-✅ = soportado en Hito A | ⚠️ = fallback/limitado | ❌ = fuera de alcance v1 (ver 2.2)
+✅ = v1 producto (Web/PDF) o base interna usable · ⚠️ = limitado / no producto · ❌ = fuera de v1 (§2.2)

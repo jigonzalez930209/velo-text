@@ -1,14 +1,17 @@
 # Release Checklist — Phase 12.2.3 (Release Candidate)
 
+v1 product export is **PDF, ODT, and DOCX** via `exportDocument`. LibreOffice/Word round-trip is still not a CI gate (see roadmap §2.4).
+
 - [ ] `pnpm run check:types` passes (strict)
 - [ ] `pnpm run check:zero-deps` passes
 - [ ] `pnpm run lint` passes (core isolation)
 - [ ] `pnpm run build` produces deterministic `dist/` (hash stable with fixed clock)
-- [ ] `pnpm run test` all 44+ tests pass, including fixtures 33/33 and smoke export
-- [ ] `scripts/validate-fixtures.ts` passes for all schema versions (v1 currently, keep fixtures for v0 if existed)
-- [ ] `scripts/smoke-export.ts` produces PDF/ODT/DOCX with correct magic bytes and deterministic output
-- [ ] Open and re-save in LibreOffice, Microsoft Word, and PDF viewer (manual)
-- [ ] No "Word found unreadable content" warning (blocks release if appears)
+- [ ] `pnpm run test` unit + conformance + integration + `test:security`
+- [ ] `pnpm run test:visual` and `tests/visual/snapshots` committed
+- [ ] `scripts/validate-fixtures.ts` passes for all schema versions
+- [ ] `scripts/smoke-export.ts` produces valid **PDF/ODT/DOCX** (magic bytes, deterministic with fixed clock)
+- [ ] Open the playground PDF in a viewer: tables are contiguous; images align; PNG downscale when resized down
+- [ ] Playground ODT/DOCX download; HTTP `?format=odt|docx`
 - [ ] Visual snapshots for toolbar, document, tables, variables, images, equations (see `tests/visual`)
 - [ ] Security corpus and fuzzing (`scripts/fuzz.js --seed=42 --iterations=10000`) passes without crash
 - [ ] Performance budgets checked (`docs/perf-budgets.md`)
@@ -16,6 +19,10 @@
 - [ ] `migrations/` applied on staging PG and downgrade tested if needed
 - [ ] `CHANGELOG.md` updated, version bumped per semver
 - [ ] Tag `vX.Y.Z` and GitHub release with `dist/` tarball
+
+## Remaining Office checks
+- [ ] Open and re-save in LibreOffice and Microsoft Word
+- [ ] No "Word found unreadable content"
 
 ## Sign-off
 - [ ] Two screen readers tested (VoiceOver, NVDA) for toolbar and atomic nodes

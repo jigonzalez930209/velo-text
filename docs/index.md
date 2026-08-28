@@ -3,7 +3,7 @@ layout: home
 hero:
   name: portable-doc-editor
   text: Zero-deps document platform
-  tagline: TypeScript strict · Variables &#123;&#123;name&#125;&#125; · Tables · Images · LaTeX · PDF/ODT/DOCX
+  tagline: TypeScript strict · Variables &#123;&#123;name&#125;&#125; · Tables · Images · LaTeX · PDF
   actions:
     - theme: brand
       text: Get Started
@@ -22,7 +22,7 @@ features:
   - title: Template engine
     details: Typed VariableNode &#123;&#123;path | format ?? "fallback"&#125;&#125;, safe resolver, currency/date formatters, repeat-row alias with limit.
   - title: Deterministic export
-    details: PDF (xref/trailer), ODT (mimetype STORE first), DOCX (rels/Content_Types) via internal XmlWriter/ZipWriter, 33 golden fixtures.
+    details: PDF xref/trailer, contiguous tables, image align + PNG downscale. ODT/DOCX via the same exportDocument API.
   - title: Assets & Storage
     details: Magic-signature sniff, dimensions, SHA-256 dedupe, S3 SigV4 presigned URLs, PG jsonb + revisions.
   - title: Layout & Theming
@@ -35,7 +35,7 @@ features:
 pnpm add portable-doc-editor
 pnpm install
 pnpm run build
-pnpm run test # 143 tests
+pnpm run test # unit + conformance + integration + security
 ```
 
 ```ts
@@ -61,7 +61,7 @@ PortableDocument (AST JSON) — source of truth
   ├─ Editor Web (view reconciler, input pipeline, tables, clipboard, a11y)
   ├─ Assets (sniff, dimensions, hashing, store, S3)
   ├─ Layout (units, text, pagination)
-  ├─ Export (pdf, odt, docx, xml, zip, validate)
+  ├─ Export (pdf, odt, docx)
   ├─ Theme (tokens, 4 presets)
   └─ Adapters (browser, backend, PG, S3)
 ```

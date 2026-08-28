@@ -24,6 +24,6 @@
 | ReDoS in LaTeX | Length limit 2000, no backtracking regex | `src/core/equation/index.ts:12` |
 
 ## Verification
-- `pnpm run test` includes corpus of malicious fixtures (see `tests/security/`)
+- `pnpm run test:security` — corpus in `tests/security/`
 - Fuzz harness `scripts/fuzz.js` with reproducible seeds
-- `pnpm run lint` ensures zero `window`/`document` in core
+- `pnpm run lint` ensures zero `window`/`document` in `src/core` TypeScript
