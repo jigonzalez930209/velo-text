@@ -1,5 +1,5 @@
 {
-  "name": "portable-doc-editor",
+  "name": "velo-text",
   "version": "0.1.0",
   "description": "Editor documental portable con variables, imágenes y exportación PDF/ODT/DOCX — cero dependencias runtime",
   "type": "module",
@@ -33,6 +33,10 @@
     "./vanilla": {
       "types": "./dist/adapters/vanilla.d.ts",
       "default": "./dist/adapters/vanilla.js"
+    },
+    "./backend": {
+      "types": "./dist/adapters/backend/index.d.ts",
+      "default": "./dist/adapters/backend/index.js"
     }
   },
   "scripts": {
@@ -56,8 +60,8 @@
     "benchmark": "node --experimental-strip-types scripts/benchmark.js",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "playground:dev": "pnpm --filter playground dev",
-    "playground:build": "pnpm --filter playground build",
+    "playground:dev": "vitepress dev docs",
+    "playground:build": "vitepress build docs",
     "dev": "node --experimental-strip-types scripts/dev-server.js"
   },
   "devDependencies": {

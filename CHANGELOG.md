@@ -5,9 +5,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ## [Unreleased]
 
 ### Added
+- Playground lives in VitePress (`docs:dev` → `/playground/`); framework adapter samples for Vanilla, React, Vue, Svelte, Angular, Astro
 - `History` drives editor undo; paste goes through `handlePaste`; shortcuts via `attachInputPipeline` (`nativeTyping`)
 - `tests/security/`, `tests/integration/`, `LICENSE`, visual HTML snapshots gated in CI
-- Playground Vite alias to `src/` (no `dist/` required for `playground:dev`)
+- Docs Vite alias to `src/` (playground and docs resolve the library without `dist/`)
 - Table **row height** drag (`heightUm`) and a table actions button beside the table (does not cover cells)
 - Image **align** (`left`/`center`/`right`) on `ImageBlockNode`; toolbar `setAlign` targets a selected figure
 - PDF: contiguous table rows; PNG **area-average downscale** when display size is smaller than source pixels
@@ -48,4 +49,4 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ### Security
 - HTML paste allowlist, `javascript:` blocked, SVG sanitization, Zip bomb limits, S3 scoped keys, tenant isolation
 
-[0.1.0]: https://github.com/velo-text/portable-doc-editor/releases/tag/v0.1.0
+[0.1.0]: https://github.com/velo-text/velo-text/releases/tag/v0.1.0
