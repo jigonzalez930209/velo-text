@@ -87,10 +87,15 @@ export function attachImageResize(s: EditorState): { hideImgResize: () => void }
   }
 
   s.addBoth("click", ((e: MouseEvent) => {
-    const t = e.target as HTMLElement;
-    if (t.closest?.(".pde-img-meta, .pde-image-resize")) return;
-    const figure = t.closest?.("figure[data-node-type='image']") as HTMLElement | null;
-    if (!figure || !s.container.contains(figure)) { hideImgResize(); return; }
+    const n = e.target as Node | null;
+    const t = (n && n.nodeType === 1 ? n : n?.parentElement) as HTMLElement | null;
+    if (t?.closest?.(".pde-img-meta, .pde-image-resize")) return;
+    const figure = t?.closest?.("figure[data-node-type='image']") as HTMLElement | null;
+    if (!figure || !s.container.contains(figure)) {
+      hideImgResize();
+      hideImageMeta(s);
+      return;
+    }
     e.stopPropagation();
     hideImgResize();
     imgResizeEl = s.ownerDoc.createElement("div");
