@@ -30,6 +30,8 @@ export { ZipWriter } from "../export/zip/zipWriter.js";
 export { PdfWriter } from "../export/pdf/writer.js";
 export { OdtWriter } from "../export/odt/writer.js";
 export { DocxWriter } from "../export/docx/writer.js";
+export { exportPdf } from "../export/pdf/export-pdf.js";
+export { collectPdfDiagnostics } from "../export/pdf/diagnostics.js";
 export { exportDocument } from "../export/index.js";
 export { sniffImage, isAllowedMediaType } from "../assets/sniff/index.js";
 export { getDimensions } from "../assets/dimensions/index.js";
@@ -61,6 +63,7 @@ export {
 
 export type { ThemeName, ThemeTokens } from "../theme/index.js";
 export type { ExportFormat, ExportRequest, ExportResult } from "../export/index.js";
+export type { ExportPdfResult, PdfDiag } from "../export/pdf/export-pdf.js";
 export type { IconName, IconOptions } from "../assets/icons/index.js";
 export type { PluginDef } from "../core/plugin/index.js";
 export type { Editor, EditorOptions } from "../editor-web/controller/types.js";
