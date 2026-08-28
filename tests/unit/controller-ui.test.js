@@ -199,6 +199,7 @@ test("controller-ui: image resize updates widthUm", () => {
   figure.dispatchEvent(ev(dom.window, "click", { target: figure }));
   const overlay = root.querySelector(".pde-image-resize");
   assert(overlay, "resize overlay present");
+  assert(Number.parseFloat(overlay.style.height) > 8, "resize frame is not a line");
   const handle = overlay.querySelector("[data-img-handle]");
   assert(handle, "resize handle present");
   handle.dispatchEvent(ev(dom.window, "pointerdown", { target: handle, clientX: 100, clientY: 0 }));
