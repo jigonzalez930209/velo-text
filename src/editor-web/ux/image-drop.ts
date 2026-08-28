@@ -12,6 +12,7 @@ export function attachImageDrop(
 ): { destroy: () => void } {
   let hint: HTMLElement | null = null;
   let msg: HTMLElement | null = null;
+  let movingId = "";
 
   function hideMeta(): void { hideImageMeta(s); }
   function clearHost(): void {
@@ -69,34 +70,48 @@ export function attachImageDrop(
   const onDragStart = (e: DragEvent): void => {
     const fig = (e.target as HTMLElement).closest?.("figure[data-node-type='image']") as HTMLElement | null;
     if (!fig || !s.container.contains(fig)) return;
-    e.dataTransfer?.setData(BLOCK_MIME, fig.getAttribute("data-node-id") ?? "");
-    if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+    movingId = fig.getAttribute("data-node-id") ?? "";
+    e.dataTransfer?.setData(BLOCK_MIME, movingId);
+    e.dataTransfer?.setData("text/plain", movingId);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setDragImage(fig, 16, 16); } catch { /* jsdom */ }
+    }
   };
   const onDragOver = (e: DragEvent): void => {
     const types = [...(e.dataTransfer?.types ?? [])];
     const host = hostFrom(e);
-    if (types.includes("Files") || types.includes(BLOCK_MIME) || host) e.preventDefault();
+    const moving = Boolean(movingId) || types.includes(BLOCK_MIME) || types.includes("text/plain");
+    if (types.includes("Files") || moving || host) {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = moving ? "move" : "copy";
+    }
     if (types.includes("Files")) showHint(true);
     clearHost();
     host?.classList.add("pde-drop-host");
     host?.closest("table, .pde-columns")?.classList.add("pde-drop-host");
   };
   const onDragLeave = (): void => { showHint(false); };
+  const onDragEnd = (): void => { movingId = ""; showHint(false); clearHost(); };
   const onDrop = (e: DragEvent): void => {
     e.preventDefault();
     showHint(false);
     const at = hostFrom(e);
     clearHost();
-    const blockId = e.dataTransfer?.getData(BLOCK_MIME);
+    const blockId = movingId || e.dataTransfer?.getData(BLOCK_MIME) || e.dataTransfer?.getData("text/plain") || "";
+    movingId = "";
     if (blockId && at && moveBlockToHost(s, blockId, at)) return;
     const file = e.dataTransfer?.files?.[0];
     if (file) void ingest(file, at);
   };
 
-  s.container.addEventListener("dragstart", onDragStart);
-  s.container.addEventListener("dragover", onDragOver);
-  s.container.addEventListener("dragleave", onDragLeave);
-  s.container.addEventListener("drop", onDrop);
+  for (const el of [s.container, s.wrapper]) {
+    el.addEventListener("dragstart", onDragStart);
+    el.addEventListener("dragover", onDragOver);
+    el.addEventListener("dragleave", onDragLeave);
+    el.addEventListener("drop", onDrop);
+  }
+  s.container.addEventListener("dragend", onDragEnd);
 
   const onDocDown = (e: Event): void => {
     const n = e.target as Node | null;
@@ -143,10 +158,13 @@ export function attachImageDrop(
       clearHost();
       s.ownerDoc.removeEventListener("pointerdown", onDocDown, true);
       s.ownerDoc.removeEventListener("keydown", onKey);
-      s.container.removeEventListener("dragstart", onDragStart);
-      s.container.removeEventListener("dragover", onDragOver);
-      s.container.removeEventListener("dragleave", onDragLeave);
-      s.container.removeEventListener("drop", onDrop);
+      for (const el of [s.container, s.wrapper]) {
+        el.removeEventListener("dragstart", onDragStart);
+        el.removeEventListener("dragover", onDragOver);
+        el.removeEventListener("dragleave", onDragLeave);
+        el.removeEventListener("drop", onDrop);
+      }
+      s.container.removeEventListener("dragend", onDragEnd);
     },
   };
 }

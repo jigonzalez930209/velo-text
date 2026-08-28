@@ -68,7 +68,7 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
       const figStyle = align && align !== "left" ? ` style="text-align:${align}"` : "";
       const cap = block.title ? `<figcaption>${escapeAttr(block.title)}</figcaption>` : "";
       const src = assetSrc(block.assetId, resolve);
-      return `<figure draggable="true" data-node-id="${id}" data-node-type="image" data-asset-id="${block.assetId}" data-width-um="${wUm}" data-height-um="${hUm}" data-alt="${escapeAttr(block.alt ?? "")}"${block.title ? ` data-title="${escapeAttr(block.title)}"` : ""} class="pde-image-block"${figStyle}><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" draggable="true" style="width:${wPx}px;height:auto;aspect-ratio:${wUm}/${hUm}"${src} />${cap}</figure>`;
+      return `<figure contenteditable="false" draggable="true" data-node-id="${id}" data-node-type="image" data-asset-id="${block.assetId}" data-width-um="${wUm}" data-height-um="${hUm}" data-alt="${escapeAttr(block.alt ?? "")}"${block.title ? ` data-title="${escapeAttr(block.title)}"` : ""} class="pde-image-block"${figStyle}><img data-asset-id="${block.assetId}" alt="${escapeAttr(block.alt ?? "")}" draggable="true" style="width:${wPx}px;height:auto;aspect-ratio:${wUm}/${hUm}"${src} />${cap}</figure>`;
     }
     case "columns": {
       const cols = block.columns
