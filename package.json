@@ -13,8 +13,13 @@
   "sideEffects": [
     "**/*.css"
   ],
+  "bin": {
+    "velo-text": "./bin/velo-text.js"
+  },
   "files": [
     "dist",
+    "bin",
+    "skill",
     "themes",
     "schemas",
     "LICENSE",
@@ -36,6 +41,8 @@
   "homepage": "https://github.com/velo-text/velo-text#readme",
   "keywords": [
     "editor",
+    "npx",
+    "skill",
     "document",
     "pdf",
     "docx",

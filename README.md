@@ -18,6 +18,17 @@ pnpm add velo-text@1.0.0-beta.8
 
 Do not run `pnpm add velo-text` expecting a stable `latest` until 1.0.0 is published.
 
+### Agent skill (any project)
+
+Copies Cursor / Claude Code skill files into the current repo so an agent can mount `mountVanillaEditor` and export PDF/ODT/DOCX:
+
+```bash
+npx velo-text@beta skill
+pnpx velo-text@beta skill
+```
+
+Writes `.cursor/skills/velo-text/` and `.agents/skills/velo-text/`. Then add the library (`pnpm add velo-text@beta`) in the host app.
+
 CSS for the web editor:
 
 ```ts

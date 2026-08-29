@@ -5,7 +5,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ## [Unreleased]
 
 ### Added
-- (none yet)
+- CLI `npx velo-text@beta skill` / `pnpx velo-text@beta skill` installs the agent skill into `.cursor/skills` and `.agents/skills`
 
 
 
