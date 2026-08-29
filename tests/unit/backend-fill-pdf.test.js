@@ -1,7 +1,7 @@
 /**
  * Backend fill: frontend {{tags}} → PDF (Express / Vercel / Vite).
  */
-import { createDocument, createIdGenerator, createParagraph, createText, createVariable } from "../../dist/public-api/index.js";
+import { createDocument, createIdGenerator, createParagraph, createText, createVariable, exportPdf, PDF_FILL_OPTIONS, previewPdf } from "../../dist/public-api/index.js";
 import { handlePdfExportJson, expressPdfHandler, vercelPdfHandler, vitePdfPlugin } from "../../dist/adapters/backend/index.js";
 
 function sampleDoc() {
@@ -42,6 +42,21 @@ test("backend fill: handlePdfExportJson substitutes frontend tags", async () => 
   assert(text.includes("Ada"), "filled name");
   assert(text.includes("42"), "filled total");
   assert(!text.includes("{{name}}"));
+});
+
+test("previewPdf, exportPdf, and HTTP API produce identical bytes", async () => {
+  const clock = { nowIso: () => "2026-08-28T12:00:00.000Z" };
+  const document = sampleDoc();
+  const data = { name: "Ada", total: 42 };
+  const a = await exportPdf({ document, data, options: PDF_FILL_OPTIONS, clock });
+  const b = await previewPdf({ document, data, clock });
+  const http = await handlePdfExportJson({ document, data }, { clock });
+  assert(http.status === 200, String(http.error));
+  assert(a.byteLength === b.byteLength);
+  assert(a.byteLength === http.bytes.length);
+  for (let i = 0; i < a.bytes.length; i++) {
+    assert(a.bytes[i] === b.bytes[i] && a.bytes[i] === http.bytes[i], "byte " + i);
+  }
 });
 
 test("backend fill: missing body is 400", async () => {
