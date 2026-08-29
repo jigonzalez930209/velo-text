@@ -1,11 +1,13 @@
-import { buildLayout } from "../../export/layout/index.js";
-import { umToPx } from "../../export/layout/units.js";
+import { buildPdfPages } from "../../export/pdf/layout-pages.js";
+import { pdfPageMetrics } from "../../export/pdf/page-metrics.js";
 import type { EditorState } from "../controller/types.js";
 
 const PAGE_GAP_PX = 24;
+/** CSS px per PDF point (96 dpi screen, 72 pt/in). Same MediaBox as PdfWriter. */
+const PT_TO_PX = 96 / 72;
 
 export function applyPagePreview(s: EditorState, on: boolean): string[] {
-  const page = s.getDoc().page;
+  const doc = s.getDoc();
   s.wrapper.classList.toggle("pde-page-preview", on);
   if (!on) {
     s.wrapper.style.removeProperty("--pde-page-w");
@@ -19,19 +21,20 @@ export function applyPagePreview(s: EditorState, on: boolean): string[] {
     clearKeepTogether(s.container);
     return [];
   }
-  const pageH = Math.round(umToPx(page.heightUm));
-  const mTop = Math.round(umToPx(page.marginUm.top));
-  const mBot = Math.round(umToPx(page.marginUm.bottom));
-  s.wrapper.style.setProperty("--pde-page-w", `${Math.round(umToPx(page.widthUm))}px`);
+  const m = pdfPageMetrics(doc);
+  const pageH = Math.round(m.heightPt * PT_TO_PX);
+  const mTop = Math.round(m.marginTopPt * PT_TO_PX);
+  const mBot = Math.round(m.marginBottomPt * PT_TO_PX);
+  s.wrapper.style.setProperty("--pde-page-w", `${Math.round(m.widthPt * PT_TO_PX)}px`);
   s.wrapper.style.setProperty("--pde-page-h", `${pageH}px`);
   s.wrapper.style.setProperty("--pde-page-gap", `${PAGE_GAP_PX}px`);
   s.wrapper.style.setProperty("--pde-m-t", `${mTop}px`);
-  s.wrapper.style.setProperty("--pde-m-r", `${Math.round(umToPx(page.marginUm.right))}px`);
+  s.wrapper.style.setProperty("--pde-m-r", `${Math.round(m.marginRightPt * PT_TO_PX)}px`);
   s.wrapper.style.setProperty("--pde-m-b", `${mBot}px`);
-  s.wrapper.style.setProperty("--pde-m-l", `${Math.round(umToPx(page.marginUm.left))}px`);
+  s.wrapper.style.setProperty("--pde-m-l", `${Math.round(m.marginLeftPt * PT_TO_PX)}px`);
   keepBlocksOnPage(s.container, pageH, mTop, mBot, PAGE_GAP_PX);
-  const layout = buildLayout(s.getDoc());
-  const texts = layout.diagnostics.map((d) => d.message);
+  const pdfPages = buildPdfPages(doc);
+  const texts = [`PDF pages: ${pdfPages.length} (bytes from exportPdf / previewPdf)`];
   s.wrapper.querySelector(".pde-page-diag")?.remove();
   if (texts.length) {
     const el = s.ownerDoc.createElement("div");
