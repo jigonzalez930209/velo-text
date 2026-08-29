@@ -73,6 +73,10 @@
       "types": "./dist/adapters/backend/index.d.ts",
       "default": "./dist/adapters/backend/index.js"
     },
+    "./api-report": {
+      "types": "./dist/api-report/index.d.ts",
+      "default": "./dist/api-report/index.js"
+    },
     "./themes/*": "./themes/*"
   },
   "scripts": {
