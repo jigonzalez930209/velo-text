@@ -11,6 +11,12 @@ import { collectPdfDiagnostics, type PdfDiag } from "./diagnostics.js";
 export type { PdfDiag };
 export { collectPdfDiagnostics };
 
+/** Front preview iframe and HTTP API must pass these into `exportPdf` / `previewPdf`. */
+export const PDF_FILL_OPTIONS = {
+  strict: false,
+  missingVariable: "keep" as const,
+};
+
 export interface ExportPdfRequest {
   document: PortableDocument;
   data?: Record<string, unknown>;
@@ -65,6 +71,14 @@ export async function exportPdf(req: ExportPdfRequest): Promise<ExportPdfResult>
     ...pdfDiags,
   ];
   return { bytes, diagnostics, pages: written.pages, byteLength: bytes.length };
+}
+
+/** Alias for hosts: same function as the API. Do not reimplement PDF layout in the UI. */
+export function previewPdf(req: ExportPdfRequest): Promise<ExportPdfResult> {
+  return exportPdf({
+    ...req,
+    options: { ...PDF_FILL_OPTIONS, ...req.options },
+  });
 }
 
 function join(chunks: Uint8Array[]): Uint8Array {
