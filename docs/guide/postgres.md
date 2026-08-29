@@ -1,5 +1,7 @@
 # PostgreSQL
 
+The package ships a **contract**: SQL + an in-memory repository. It does **not** depend on `pg`. Your app opens the client and maps rows onto `DocumentRepository`.
+
 ## Hybrid model
 Relational columns for identity/permissions/revisions + `jsonb` for AST. `jsonb` gives operators/indexes; app validates invariants.
 

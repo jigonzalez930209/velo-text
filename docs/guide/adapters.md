@@ -1,6 +1,18 @@
 # Framework adapters
 
-The editor DOM is always `contenteditable` from `createEditor` / `mountVanillaEditor`. Do **not** reimplement the reconciler in React/Vue VDOM. Framework adapters are **host code**: they live in `examples/` and depend on the framework + this library. The core package has **zero** React/Vue/etc. dependencies.
+The editor DOM is always `contenteditable` from `createEditor` / `mountVanillaEditor`. Do **not** reimplement the reconciler in React/Vue VDOM. Adapters are **host samples** in `examples/`: they depend on the framework + this library. The published package has **zero** React/Vue/etc. dependencies.
+
+Contract (every host):
+
+```ts
+type EditorHandle = {
+  getDocument(): PortableDocument;
+  setDocument(doc: PortableDocument): void;
+  setTheme(theme: ThemeName): void;
+  commands: Editor["commands"];
+  destroy(): void;
+};
+```
 
 ```ts
 import { mountVanillaEditor } from "velo-text";

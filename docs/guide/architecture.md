@@ -1,38 +1,77 @@
 # Architecture
 
-## Five layers
-1. **Core** — pure, no `window`/`document`/`fs`. Receives capabilities via ports: `BinarySink`, `AssetResolver`, `Clock`, `IdGenerator`.
-2. **Editor Web** — `contenteditable` host, toolbar, overlays, sanitized paste, shortcut pipeline, themes.
-3. **Template engine** — scalar vars, paths, formatted values, row repeat.
-4. **Exporters** — `exportDocument` for PDF, ODT, and DOCX (Office visual parity vs PDF is still partial).
-5. **Adapters** — ports only (PG contract + SQL, S3 SigV4). Host apps supply the real client.
+velo-text is five layers. The **document is JSON**. HTML is a view. PDF/ODT/DOCX are derived.
 
-```ts
-// Ports (src/core/model/types.ts)
-export interface BinarySink { write(chunk: Uint8Array): Promise<void>|void; close(): Promise<void>|void; }
-export interface AssetResolver { resolve(assetId: string, variant?: string): Promise<ResolvedAsset>; }
-export interface Clock { nowIso(): string; }
-export interface IdGenerator { next(): string; }
+```
+PortableDocument (AST)
+  ├─ Core        model, ops, history, schema, normalize
+  ├─ Template    parser, resolver, formatters, repeat rows
+  ├─ Editor web  view, input, tables, clipboard, UX chrome
+  ├─ Assets      sniff, dimensions, hash, store, S3 port
+  ├─ Layout      µm, line break, pagination
+  ├─ Export      pdf, odt, docx
+  ├─ Theme       CSS tokens, 4 presets
+  ├─ Adapters    browser, backend, PG contract, S3 SigV4
+  └─ api-report  optional slot map (no editor, no writers)
 ```
 
-## Canonical & immutable
-Every transaction in `src/core/operations` starts from a valid snapshot. The web host undo stack is `History` with document snapshots (not inverse ops).
+## Layers
 
-## Adapters
-`postgres-contract` and `s3-compatible` are **ports**: in-memory repo + SQL (`migrations/001_init.sql`) and SigV4 helpers. They are not a `pg` driver or an S3 SDK. Host apps inject a real client.
+1. **Core** — no `window`, `document`, or `fs`. Capabilities arrive as ports.
+2. **Editor web** — `contenteditable` host, toolbar, overlays, sanitized paste, shortcuts, themes.
+3. **Template engine** — scalar vars, paths, formatted values, row repeat.
+4. **Exporters** — `exportDocument({ format: "pdf" | "odt" | "docx" })`. PDF layout is ahead of Office visual parity.
+5. **Adapters** — ports only. Hosts inject `pg`, S3, or blobs.
 
-## Ops and DOM
-DOM is the live typing surface. Shortcuts and paste are intercepted; other input syncs AST via `domToAst`. `History` stores snapshots for undo. Full intent→operation for every keystroke is not wired (would need caret mapping first).
+```ts
+export interface BinarySink {
+  write(chunk: Uint8Array): Promise<void> | void;
+  close(): Promise<void> | void;
+}
+export interface AssetResolver {
+  resolve(assetId: string, variant?: string): Promise<ResolvedAsset>;
+}
+export interface Clock {
+  nowIso(): string;
+}
+export interface IdGenerator {
+  next(): string;
+}
+```
 
-## Capabilities
-Each module declares needed capabilities (e.g. PDF writer needs `BinarySink`, `Clock`, optional asset bytes), making it testable and free of hidden deps.
+Same export logic with a `Blob` in the browser, a buffer in tests, or a stream on Node.
 
-## Security by default
-- No pasted HTML execution, no `javascript:` URLs, no prototype pollution, magic-signature image check, XML/PDF escaping.
-- Isolated core (`pnpm run lint` fails if `window`/`document` appears in `src/core`).
+## Canonical and immutable
 
-## Source file size
-Each **source** file (`src/**/*.ts`, `themes/*.css`, `tests/unit/*.js`, `schemas/portable-doc-v1.json`) stays at **≤ 250 lines**. Large JSON fixtures (`tests/fixtures/22-large.json`, `23-big-table.json`) are data, not split.
+Transactions in `src/core/operations` start from a valid snapshot. Editor undo uses `History`: each entry stores a **document snapshot** plus ops/inverses, with typing coalesced.
 
-## Repo structure
-See `src/` — `core/model|operations|selection|history|normalize|schema|events`, `template/parser|resolver`, `editor-web/controller|view|input|clipboard|toolbar|tables|images|accessibility`, `export/layout|pdf|odt|docx|xml|zip`, `assets/sniff|dimensions|svg|hashing|icons|store`, `adapters/browser|backend|postgres-contract|s3-compatible`, `theme`, `public-api`.
+## DOM vs AST
+
+The DOM is the typing surface. Shortcuts and paste are intercepted; other input syncs via `domToAst` → `normalizeDocument`. There is no intent→operation for every key (that needs a full caret map first).
+
+## Invariants
+
+| Rule | Check |
+| --- | --- |
+| No DOM/fs in core | `pnpm run lint` |
+| No runtime npm deps | `pnpm run check:zero-deps` |
+| Source file ≤ 250 lines | `src/**/*.ts`, `themes/*.css`, unit tests, JSON schema |
+| Security defaults | paste allowlist, no `javascript:`, magic-byte images, escaped XML/PDF |
+
+Large fixtures (`tests/fixtures/22-*.json`) are data, not split.
+
+## Where code lives
+
+| Path | Role |
+| --- | --- |
+| `src/core/` | model, operations, selection, history, normalize, schema, events, equation, plugin |
+| `src/template/` | parser, resolver, formatters |
+| `src/editor-web/` | controller, view, input, clipboard, toolbar, tables, images, accessibility, ux |
+| `src/export/` | layout, pdf, odt, docx, xml, zip, images |
+| `src/assets/` | sniff, dimensions, svg, hashing, icons, store |
+| `src/adapters/` | browser, backend, postgres-contract, s3-compatible |
+| `src/theme/` | presets |
+| `src/public-api/` | npm barrel (editor + export — prefer subpaths in apps) |
+| `src/api-report/` | optional slot map for backend fill (`velo-text/api-report`) |
+
+Continue with the [data model](/guide/model) or [editor](/guide/editor).

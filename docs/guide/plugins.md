@@ -40,4 +40,4 @@ See `src/core/equation/index.ts` (validate, `latexToHtml`), `src/core/model/type
 - No HTML interpretation for variables, no `javascript:` URLs, asset checks.
 - Plugin code runs in same isolate — external plugins are audited via `docs/threat-model.md`.
 
-See `src/core/plugin/*` (new) and `src/public-api/index.ts`.
+See `src/core/plugin/index.ts` and `src/public-api/index.ts`.

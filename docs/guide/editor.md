@@ -71,10 +71,22 @@ Insert **table**, **image**, or **nested columns** into the focused cell or slot
 See `src/editor-web/controller` and `src/editor-web/ux` (command palette, selection bubble, find, image drop, page preview).
 
 ## Usability
-- `Ctrl/Cmd+Shift+P` or `/` in an empty paragraph: command palette (H2, table 3×2, `{{name}}`, undo…).
-- Selection bubble: bold/italic/underline/link/clear (not table/column chrome).
-- `Ctrl/Cmd+F` / `H`: find and replace in text nodes (skips variables and LaTeX).
-- Drop a PNG/JPEG/WebP/SVG onto the editor (`onImageFile` on the host).
-- `?` shortcut sheet. Outline: `getOutline()` / `focusBlock(id)`. Page preview: `setPagePreview(true)` (does not change the AST).
-- IME: composition is respected (`_pdeComposing`); do not sync AST mid-composition.
+
+The playground and `createEditor` host share this chrome. None of it lives in core.
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl/Cmd+Shift+P` | Command palette |
+| `/` in empty paragraph | Same catalogue, anchored to caret |
+| `Ctrl/Cmd+F` / `H` | Find / replace (text nodes; skips variables and raw LaTeX) |
+| `?` | Shortcut sheet |
+| `Mod+b` / `i` / `u` | Marks (also selection bubble) |
+| `Tab` / `Shift+Tab` | Next/previous table cell |
+
+- Selection bubble: bold/italic/underline/link/clear. Table and column chrome stay on the block.
+- Click `{{path}}` to edit path / format / fallback. Links: `https:`, `mailto:`, `#` only.
+- Drop PNG/JPEG/WebP/SVG onto the editor (`onImageFile` on the host).
+- Outline: `getOutline()` / `focusBlock(id)`. Page chrome: `setPagePreview(true)` uses the same `pdfPageMetrics` / `buildPdfPages` as the writer (paper size + page count). **PDF bytes** always come from `previewPdf` / `exportPdf` — same function as the HTTP API.
+- Preview panel materializes with the same resolver as export.
+- IME: `_pdeComposing` — do not sync AST mid-composition.
 

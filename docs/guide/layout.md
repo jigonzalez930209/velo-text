@@ -17,4 +17,6 @@ Margins collapsed per own rules, `keep-with-next` for headings, row split diagno
 ## Diagnostics
 `image-too-large`, `row-too-tall`, `missing-glyph`, `unknown-block`.
 
+Pagination feeds [export](/guide/export). Page preview in the editor uses the same `document.page` box and does not mutate the AST.
+
 See `src/export/layout/*`.

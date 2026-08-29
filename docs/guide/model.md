@@ -71,9 +71,11 @@ interface AssetRef {
 URLs are not stored — only `storageKey` + `sha256`. Signed URLs are ephemeral.
 
 ## Selection & History
-Selection is ephemeral (`RangeSelection { anchor, focus: Point { nodeId, offset, affinity } }`), not persisted. History stores inverse ops grouped by intent, with coalescing and checkpoints.
+Selection is ephemeral (`RangeSelection { anchor, focus: Point { nodeId, offset, affinity } }`), not persisted. `History` stores a **document snapshot** plus `ops` / `inverses` per intent, with typing coalesced and a stack limit.
 
 ## Validation
 `validateDocument(doc, {strict})` returns `{valid, errors: {path, code, severity}[]}` with JSON Pointer. Migrations are sequential `v1→v2`.
 
 See `src/core/model/types.ts` (re-exports `primitives`, `inline`, `block`, `document`), `factories.ts`, `src/core/schema/validator.ts`, `canonical.ts`, `src/core/normalize/normalize.ts`.
+
+Node coverage per format: [Node × format matrix](/matriz-nodos-formatos).

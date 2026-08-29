@@ -1,31 +1,77 @@
 # Introduction
 
-## Status
-**1.0.0-beta.5** — first public npm trial (`pnpm add velo-text@beta`). Not a frozen 1.0 API. See [Publish to npm](/guide/publish) for install and how to store the npm token.
+**velo-text** is a portable document library: one JSON AST, one editor, one export API for **PDF, ODT, and DOCX**. Runtime `dependencies` is `{}`.
 
-## Goal
-`velo-text` is a self-contained, zero-runtime-dependency document platform that edits rich text, inserts variables `&#123;&#123;name&#125;&#125;`, handles tables (including cell alignment and column/row resize), column layouts, images and LaTeX, and exports the same document to **PDF, ODT, and DOCX** from browser or backend. LibreOffice/Word CI and full Office visual parity remain open.
+Current trial: **`1.0.0-beta.5`** — `pnpm add velo-text@beta`. The API is not frozen. Install and token steps: [Publish to npm](/guide/publish). What is done vs next: [Roadmap](/guide/roadmap).
+
+## What it is
+
+- A **canonical document** (`PortableDocument`) — never HTML, Word, or PDF as source of truth.
+- A **pure core** (no `window` / `document` / `fs`) plus a `contenteditable` host.
+- Typed **variables** (`{{name}}`, paths, formatters, repeat rows).
+- Tables, columns, images (PNG/JPEG/WebP/SVG), simple LaTeX.
+- The **same** `exportDocument` call in the browser or on Node.
+
+## What it is not (yet)
+
+Real-time collaboration, import of arbitrary Word/LibreOffice files, OfficeMath, embedded TTF in PDF, or pixel-perfect Word layout. PostgreSQL and S3 are **ports** (SQL + SigV4), not bundled drivers. See [Roadmap](/guide/roadmap).
 
 ## Zero-dependency contract
-`package.json:dependencies === {}` — verified by `pnpm run check:zero-deps` and CI. Only standard JS, Web APIs and code inside the repo. Dev tools (`typescript`, `vitepress`, `c8`) are devDeps only.
 
-## Source of truth
-Never HTML/DOCX/ODT/PDF. The canonical document is a versioned JSON AST (`PortableDocument`). HTML is an editable view; PDF, ODT, and DOCX are derived outputs.
+`package.json:dependencies === {}` — `pnpm run check:zero-deps` in CI. Dev tools (`typescript`, `vitepress`, `c8`) are `devDependencies` only.
 
-## Packages
-- `pnpm@11.24.0` only (`packageManager` field). CI uses `pnpm/action-setup`.
+## How to read these docs
 
-## Getting started
+| If you want… | Go to |
+| --- | --- |
+| Install and first export | This page, then [Export](/guide/export) |
+| Mental model | [Architecture](/guide/architecture) → [Data model](/guide/model) |
+| Mount the editor | [Editor](/guide/editor) → [Adapters](/guide/adapters) |
+| Fill `{{vars}}` | [Template engine](/guide/template) · [Backend slots](/guide/api-report) |
+| Host persistence | [PostgreSQL](/guide/postgres) · [Assets & S3](/guide/assets) |
+| Function list | [API overview](/api/overview) |
+| Try it | [Playground](/playground/) |
+
+## Install
+
 ```bash
-pnpm add velo-text@beta   # consumers
-pnpm install              # this repo
-pnpm run build            # tsc → dist/
-pnpm run check:types      # strict
-pnpm run test             # unit + conformance + integration + security
-pnpm run docs:dev         # vitepress (playground at /playground/)
+pnpm add velo-text@beta
 ```
 
-## Hitos
-- **Hito A**: AST v1, paragraph, `&#123;&#123;name&#125;&#125;`, PNG/JPEG, JSON save, PDF export
-- **Hito B**: Tables, 4 themes, S3, PG revisions, image export, a11y
-- **Hito C**: Repeat rows, layout, fuzz/benchmarks, docs; product PDF/ODT/DOCX (`exportDocument`)
+Node `>= 18`. This repo uses **pnpm `11.24.0`** only (`packageManager`).
+
+```bash
+pnpm install
+pnpm run build          # tsc → dist/
+pnpm run check:types
+pnpm run test
+pnpm run docs:dev       # VitePress + playground at /playground/
+```
+
+## Minimal export
+
+```ts
+import { createDocument, createIdGenerator, exportDocument } from "velo-text";
+import { createBufferSink } from "velo-text/backend";
+
+const doc = createDocument({ idGenerator: createIdGenerator("doc") });
+doc.root.children.push({
+  type: "paragraph",
+  id: "p1",
+  children: [
+    { type: "text", id: "t1", text: "Hello " },
+    { type: "variable", id: "v1", path: "name", source: "{{name}}", valueType: "string" },
+  ],
+});
+
+const { sink, getBuffer } = createBufferSink();
+await exportDocument({
+  document: doc,
+  data: { name: "Ada" },
+  format: "pdf",
+  sink,
+  options: { deterministic: true },
+});
+```
+
+Mounting a visual editor: [Editor](/guide/editor). CSS: `velo-text/themes/base.css` and `velo-text/themes/components.css`.
