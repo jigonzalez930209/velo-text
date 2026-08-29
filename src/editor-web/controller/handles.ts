@@ -82,7 +82,7 @@ export function attachBlockHandles(s: EditorState, cmds: ReturnType<typeof bindC
   const onHoverMove = (e: PointerEvent): void => {
     if (s.destroyed || dragging) return;
     const t = e.target as HTMLElement;
-    if (t.closest?.(".pde-block-handle, .pde-block-menu, .pde-table-menu")) return;
+    if (t.closest?.(".pde-block-handle, .pde-block-menu, .pde-table-menu, .pde-table-bar, .pde-columns-bar")) return;
     const blockEl = handleHost(t.closest?.(BLOCK_SEL) as HTMLElement | null);
     if (blockEl) positionHandle(blockEl);
   };
