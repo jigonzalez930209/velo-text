@@ -1,6 +1,17 @@
-# API Overview
+# API overview
 
-Minimal surface (`src/public-api/index.ts`):
+The npm surface is `src/public-api/index.ts`. Full generated list: [API report](/api-report).
+
+| You need | Guide | API page |
+| --- | --- | --- |
+| Create / validate a document | [Data model](/guide/model) | [Core — model](/api/core-model), [schema](/api/core-schema), [ops](/api/core-operations) |
+| Fill `{{vars}}` | [Template](/guide/template) | [Template](/api/template) |
+| Backend slot map | [Backend slots](/guide/api-report) | `velo-text/api-report` |
+| Mount the editor | [Editor](/guide/editor) | [Editor web](/api/editor) |
+| Export | [Export](/guide/export) | [Export](/api/export), [layout](/api/layout) |
+| Assets | [Assets](/guide/assets) | [Assets](/api/assets) |
+| Theme | [Themes](/guide/themes) | [Theme](/api/theme) |
+| Hosts | [Adapters](/guide/adapters) | [Adapters](/api/adapters), [public](/api/public) |
 
 ```ts
 export {
@@ -12,14 +23,12 @@ export {
   parseVariableSource, tokenizeVariablesInText, safeResolve, formatValue, renderTemplate, inspectVariables,
   XmlWriter, crc32, ZipWriter, PdfWriter, exportDocument,
   sniffImage, getDimensions, sanitizeSvg, getIconSvg, validateLatex,
-  themes, themeCss, renderDocumentToHtml, registerCommand
-}
+  themes, themeCss, renderDocumentToHtml, registerCommand,
+};
 ```
 
-Ports: `BinarySink`, `AssetResolver`, `Clock`, `IdGenerator` — inject `Blob` (browser), streams (backend) or buffers (tests).
+Ports: `BinarySink`, `AssetResolver`, `Clock`, `IdGenerator`.
 
-Hosts call `exportDocument` with `format: "pdf" | "odt" | "docx"`. `OdtWriter` / `DocxWriter` are also re-exported. See [Export](/guide/export).
+`exportDocument({ format: "pdf" | "odt" | "docx" })`. `OdtWriter` / `DocxWriter` are re-exported.
 
-Extensions via `registerNodeType`, `registerFormatter`, `registerCommand`, `registerPlugin`.
-
-See subpages for each module and `docs/api-report.md`.
+Extensions: `registerNodeType`, `registerFormatter`, `registerCommand`, `registerPlugin`.

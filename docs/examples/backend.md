@@ -1,6 +1,6 @@
 # Fill tags on the backend → PDF
 
-The editor stores `{{name}}` as a `VariableNode`. The backend does **not** parse the HTML. It receives the AST plus a `data` map and `exportPdf` / `handlePdfExportJson` substitutes every tag.
+The editor stores `{{name}}` as a `VariableNode`. The backend does **not** parse HTML. Discover inject points with [`reportSlots`](/guide/api-report) (`velo-text/api-report`), then send AST + `data` + assets.
 
 ```json
 {
