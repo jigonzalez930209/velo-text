@@ -29,7 +29,9 @@ export function parseBlockEl(el: HTMLElement, idGen: IdGenerator): BlockNode | n
       }
       if (!blocks.length) blocks.push({ type: "paragraph", id: `${colId}_p`, children: [{ type: "text", id: `${colId}_t0`, text: "" }] });
       const widthPct = Number(colEl.getAttribute("data-width-pct")) || undefined;
-      cols.push({ id: colId, blocks, ...(widthPct ? { widthPct } : {}) });
+      const vaRaw = colEl.getAttribute("data-valign") || "";
+      const vAlign = vaRaw === "middle" || vaRaw === "bottom" ? vaRaw as "middle" | "bottom" : undefined;
+      cols.push({ id: colId, blocks, ...(widthPct ? { widthPct } : {}), ...(vAlign ? { vAlign } : {}) });
     }
     return { type: "columns", id, columns: cols };
   }
@@ -172,8 +174,10 @@ function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
       flushText();
       if (!blocks.length) blocks.push({ type: "paragraph", id: `${tdId}_p`, children: [] });
       const bg = (tdEl.style.backgroundColor || tdEl.style.background || "").trim();
-      const cellStyle = bg ? { background: bg } : undefined;
-      cells.push({ id: tdId, colSpan, rowSpan, blocks, ...(cellStyle ? { style: cellStyle } : {}) });
+      const vaAttr = tdEl.getAttribute("data-valign") || tdEl.style.verticalAlign;
+      const vAlign = vaAttr === "top" || vaAttr === "bottom" ? vaAttr as "top" | "bottom" : undefined;
+      const cellStyle = { ...(bg ? { background: bg } : {}), ...(vAlign ? { vAlign } : {}) };
+      cells.push({ id: tdId, colSpan, rowSpan, blocks, ...(Object.keys(cellStyle).length ? { style: cellStyle } : {}) });
     }
     const hUm = Number(trEl.getAttribute("data-height-um")) || undefined;
     const header = trEl.getAttribute("data-header") === "true" || trEl.parentElement?.tagName.toUpperCase() === "THEAD" || tdElIsTh;

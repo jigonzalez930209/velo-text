@@ -55,10 +55,11 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
               const tag = row.header ? "th" : "td";
               const inner = cell.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
               const bg = typeof cell.style?.background === "string" ? `background:${cell.style.background}` : "";
-              const va = "vertical-align:middle";
-              const st = [bg, va].filter(Boolean).join(";");
-              const styleAttr = st ? ` style="${st}"` : ` style="${va}"`;
-              return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}"${styleAttr}>${inner}</${tag}>`;
+              const vaRaw = typeof cell.style?.vAlign === "string" ? cell.style.vAlign : "middle";
+              const va = vaRaw === "top" || vaRaw === "bottom" ? vaRaw : "middle";
+              const st = [bg, `vertical-align:${va}`].filter(Boolean).join(";");
+              const styleAttr = ` style="${st}"`;
+              return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}" data-valign="${va}"${styleAttr}>${inner}</${tag}>`;
             })
             .join("");
           return `<tr data-node-id="${row.id}"${hPx}${hdr}>${cells}</tr>`;
@@ -81,7 +82,8 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
         .map((col, i) => {
           const pct = col.widthPct ?? Math.round(100 / Math.max(1, block.columns.length));
           const inner = col.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
-          return `<div class="pde-column" data-node-id="${col.id}" data-col-index="${i}" data-width-pct="${pct}" style="flex:0 0 ${pct}%;width:${pct}%;max-width:${pct}%">${inner}</div>`;
+          const va = col.vAlign === "middle" || col.vAlign === "bottom" ? col.vAlign : "top";
+          return `<div class="pde-column" data-node-id="${col.id}" data-col-index="${i}" data-width-pct="${pct}" data-valign="${va}" style="flex:0 0 ${pct}%;width:${pct}%;max-width:${pct}%">${inner}</div>`;
         })
         .join("");
       const gapPx = Math.round(((block.gapUm ?? 4000) / 25400) * 96);
