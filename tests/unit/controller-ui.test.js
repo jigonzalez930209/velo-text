@@ -150,16 +150,20 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   const table = el.querySelector('table[data-node-type="table"]');
   assert(table, "table rendered");
   // Click table -> menu
-  table.dispatchEvent(ev(dom.window, "click", { target: table }));
-  const gear = root.querySelector(".pde-table-btn");
-  assert(gear, "table button present");
-  gear.click();
-  const menu = root.querySelector(".pde-table-menu");
-  assert(menu, "table menu present");
-  const btn = Array.from(menu.querySelectorAll("button")).find((b) => b.textContent.includes("Insert row below"));
+  const firstCell = table.querySelector("td, th");
+  firstCell.dispatchEvent(ev(dom.window, "click", { target: firstCell }));
+  const bar = root.querySelector(".pde-table-bar");
+  assert(bar, "table bar present");
+  assert(firstCell.classList.contains("pde-cell-active"), "active cell marked");
+  const btn = bar.querySelector('button[aria-label="Insert row below"]');
+  assert(btn, "insert row on bar");
   btn.click();
   const d1 = editor.getDocument();
   assert(d1.root.children[0].rows.length === 2, "row inserted");
+  const newText = d1.root.children[0].rows[1].cells[0].blocks[0].children[0]?.text ?? "";
+  assert(newText === "", "inserted row is empty");
+  const oldText = d1.root.children[0].rows[0].cells[0].blocks[0].children[0]?.text;
+  assert(oldText === "a", "source row kept");
   // re-click table to re-show column handles after re-render
   const table2 = el.querySelector('table[data-node-type="table"]');
   table2.dispatchEvent(ev(dom.window, "click", { target: table2 }));
@@ -177,11 +181,75 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   const d2 = editor.getDocument();
   assert(d2.root.children[0].columns[0].widthUm > 40000, "column width increased");
   const table3 = el.querySelector('table[data-node-type="table"]');
-  table3.dispatchEvent(ev(dom.window, "click", { target: table3 }));
-  root.querySelector(".pde-table-btn").click();
-  const merge = Array.from(root.querySelectorAll(".pde-table-menu button")).find((b) => b.textContent.includes("Merge cell right"));
+  const cell3 = table3.querySelector("td, th");
+  cell3.dispatchEvent(ev(dom.window, "click", { target: cell3 }));
+  const merge = root.querySelector('.pde-table-bar button[aria-label="Merge cell right"]');
   merge.click();
   assert(editor.getDocument().root.children[0].rows[0].cells[0].colSpan === 2);
+  editor.destroy();
+  teardown();
+});
+
+test("controller-ui: cell alignment top and text center", () => {
+  const { el, root } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("al");
+  doc.root.children.push({
+    type: "table", id: "tbal",
+    columns: [{ id: g.next(), widthUm: 40000 }],
+    rows: [{
+      id: g.next(),
+      cells: [{
+        id: g.next(), colSpan: 1, rowSpan: 1,
+        blocks: [{ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "x" }] }],
+      }],
+    }],
+  });
+  const editor = createEditor(el, { document: doc });
+  const cell = el.querySelector("td, th");
+  cell.dispatchEvent(ev(globalThis.window, "click", { target: cell }));
+  root.querySelector('.pde-table-bar button[aria-label="Cell alignment"]').click();
+  const top = Array.from(root.querySelectorAll(".pde-table-menu button")).find((b) => b.getAttribute("aria-label") === "Align top");
+  assert(top.getAttribute("aria-pressed") !== "true", "middle default not top");
+  top.click();
+  const cell2 = el.querySelector("td, th");
+  cell2.dispatchEvent(ev(globalThis.window, "click", { target: cell2 }));
+  root.querySelector('.pde-table-bar button[aria-label="Cell alignment"]').click();
+  const ctr = Array.from(root.querySelectorAll(".pde-table-menu button")).find((b) => b.getAttribute("aria-label") === "Text center");
+  ctr.click();
+  const t = editor.getDocument().root.children[0];
+  assert(t.rows[0].cells[0].style.vAlign === "top");
+  assert(t.rows[0].cells[0].blocks[0].align === "center");
+  editor.destroy();
+  teardown();
+});
+
+test("controller-ui: drag across header selects columns", () => {
+  const { dom, el } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("sel");
+  const cell = (text) => ({
+    id: g.next(), colSpan: 1, rowSpan: 1,
+    blocks: [{ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text }] }],
+  });
+  doc.root.children.push({
+    type: "table", id: "tbls",
+    columns: [{ id: g.next(), widthUm: 40000 }, { id: g.next(), widthUm: 40000 }],
+    rows: [
+      { id: g.next(), header: true, cells: [cell("h1"), cell("h2")] },
+      { id: g.next(), cells: [cell("a"), cell("b")] },
+    ],
+  });
+  const editor = createEditor(el, { document: doc });
+  const table = el.querySelector("table.pde-table");
+  const h1 = table.querySelector("th, td");
+  const h2 = table.querySelectorAll("tr")[0].children[1];
+  h1.dispatchEvent(ev(dom.window, "click", { target: h1 }));
+  h1.dispatchEvent(ev(dom.window, "pointerdown", { target: h1 }));
+  h2.dispatchEvent(ev(dom.window, "pointermove", { target: h2 }));
+  assert(table.querySelectorAll(".pde-cell-sel").length === 4, "header drag selects both columns");
+  assert(h1.classList.contains("pde-cell-active") || h2.classList.contains("pde-cell-active"));
+  editor.destroy();
   teardown();
 });
 

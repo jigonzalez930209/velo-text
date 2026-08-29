@@ -122,7 +122,7 @@ test("ux: outline focus and page preview", () => {
   teardown();
 });
 
-test("ux: selection bubble in table cell", () => {
+test("ux: no selection bubble inside table cell", () => {
   const { el, dom } = setup();
   const g = createIdGenerator("b");
   const doc = docWith(g, (d) => {
@@ -140,11 +140,51 @@ test("ux: selection bubble in table cell", () => {
   sel.addRange(range);
   el.dispatchEvent(new dom.window.MouseEvent("mouseup", { bubbles: true }));
   dom.window.document.dispatchEvent(new dom.window.Event("selectionchange"));
+  assert(!el.parentElement.querySelector(".pde-sel-bubble"), "no text bubble inside table");
+  editor.destroy();
+  teardown();
+});
+
+test("ux: no selection bubble inside custom layout", () => {
+  const { el, dom } = setup();
+  const g = createIdGenerator("bc");
+  const doc = docWith(g, (d) => {
+    const cols = createColumns(g, 2);
+    const p = cols.columns[0].blocks[0];
+    if (p.type === "paragraph" && p.children[0].type === "text") p.children[0].text = "Slot";
+    d.root.children.push(cols);
+  });
+  const editor = createEditor(el, { document: doc });
+  const p = el.querySelector(".pde-column p");
+  const range = dom.window.document.createRange();
+  range.selectNodeContents(p);
+  const sel = dom.window.document.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  el.dispatchEvent(new dom.window.MouseEvent("mouseup", { bubbles: true }));
+  dom.window.document.dispatchEvent(new dom.window.Event("selectionchange"));
+  assert(!el.parentElement.querySelector(".pde-sel-bubble"), "no text bubble inside layout");
+  editor.destroy();
+  teardown();
+});
+
+test("ux: selection bubble on paragraph outside table", () => {
+  const { el, dom } = setup();
+  const g = createIdGenerator("bp");
+  const doc = docWith(g, (d) => {
+    d.root.children.push(createParagraph(g, [createText(g, "Hello world")]));
+  });
+  const editor = createEditor(el, { document: doc });
+  const p = el.querySelector("p");
+  const range = dom.window.document.createRange();
+  range.selectNodeContents(p);
+  const sel = dom.window.document.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  el.dispatchEvent(new dom.window.MouseEvent("mouseup", { bubbles: true }));
+  dom.window.document.dispatchEvent(new dom.window.Event("selectionchange"));
   const bubble = el.parentElement.querySelector(".pde-sel-bubble");
   assert(bubble, "bubble near selection");
-  assert(!bubble.textContent.includes("Columns"));
-  bubble.querySelector("button").click();
-  assert(el.parentElement.querySelector(".pde-column-gutters") == null);
   editor.destroy();
   teardown();
 });

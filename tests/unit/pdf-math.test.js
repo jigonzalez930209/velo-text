@@ -279,7 +279,7 @@ test("pdf: missing image placeholder does not crash", async () => {
   assert(total > 200);
 });
 
-test("pdf: custom columns have no cell borders", () => {
+test("pdf: custom columns stroke dashed slot boxes", () => {
   const g = createIdGenerator("cols");
   const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
   const cols = createColumns(g, 2);
@@ -288,7 +288,7 @@ test("pdf: custom columns have no cell borders", () => {
   doc.root.children.push(cols);
   const pages = buildPdfPages(doc);
   const { stream } = pageContentStream(pages[0], doc, new Map());
-  assert(!/re S/.test(stream), "column layout must not stroke boxes");
+  assert(/\[2.5 2\] 0 d/.test(stream), "dashed slot outline");
   assert(stream.includes("Left") && stream.includes("Right"));
 });
 
