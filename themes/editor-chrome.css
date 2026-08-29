@@ -68,6 +68,10 @@
   user-select: text;
   -webkit-user-select: text;
 }
+.pde-editor table.pde-table td[data-valign="top"],
+.pde-editor table.pde-table th[data-valign="top"] { vertical-align: top; }
+.pde-editor table.pde-table td[data-valign="bottom"],
+.pde-editor table.pde-table th[data-valign="bottom"] { vertical-align: bottom; }
 .pde-editor table.pde-table--compact td,
 .pde-editor table.pde-table--compact th { padding: 2px 6px; }
 .pde-editor table.pde-table--large td,
@@ -82,24 +86,24 @@
 }
 .pde-editor table.pde-table--banded-rows tbody tr:nth-child(even) td,
 .pde-editor table.pde-table--banded-rows tbody tr:nth-child(even) th {
-  background: #f4f7ff;
+  background: color-mix(in srgb, var(--pde-color-primary) 10%, var(--pde-color-bg));
 }
 .pde-editor table.pde-table--banded-cols td:nth-child(even),
 .pde-editor table.pde-table--banded-cols th:nth-child(even) {
-  background: #f7f8fa;
+  background: color-mix(in srgb, var(--pde-color-surface) 80%, var(--pde-color-bg));
 }
 .pde-editor table.pde-table--first-col td:first-child,
 .pde-editor table.pde-table--first-col th:first-child,
 .pde-editor table.pde-table--list-header td:first-child {
-  background: #eef2ff;
+  background: var(--pde-color-variable-bg);
   font-weight: 600;
 }
 .pde-editor table.pde-table--last-col td:last-child,
 .pde-editor table.pde-table--last-col th:last-child {
-  background: #eef2ff;
+  background: var(--pde-color-variable-bg);
 }
 .pde-editor table.pde-table--total-row tr:last-child td {
-  background: #e8efff;
+  background: color-mix(in srgb, var(--pde-color-primary) 14%, var(--pde-color-bg));
   font-weight: 600;
 }
 .pde-editor table.pde-table--grid th,
@@ -107,13 +111,21 @@
 .pde-editor table.pde-table--accent th,
 .pde-editor table.pde-table--list th,
 .pde-editor table.pde-table--list-header th {
-  background: #3659e3;
-  color: #fff;
-  border-color: #2d4bc4;
+  background: var(--pde-color-primary);
+  color: var(--pde-color-primary-contrast);
+  border-color: var(--pde-color-primary);
 }
 .pde-editor table.pde-table--accent td:first-child {
-  background: #eef2ff;
+  background: var(--pde-color-variable-bg);
   font-weight: 600;
+}
+.pde-editor td.pde-cell-sel,
+.pde-editor th.pde-cell-sel {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pde-color-primary) 55%, transparent);
+}
+.pde-editor td.pde-cell-active,
+.pde-editor th.pde-cell-active {
+  box-shadow: inset 0 0 0 2px var(--pde-color-primary);
 }
 .pde-editor figure.pde-image-block {
   display: block;
