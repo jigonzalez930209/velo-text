@@ -1,7 +1,8 @@
 import { helveticaWidthPt, MATH_CHIP_PAD_X, mathVisualExtents, pdfLiteralString, type MathBox } from "./equation.js";
-import { pdfEscape, type PdfLine, type PdfPage } from "./pdf-model.js";
+import { pdfEscape, type PdfLine, type PdfPage, type TextSegment } from "./pdf-model.js";
 import type { PortableDocument } from "../../core/model/types.js";
 import { pdfImageDisplayPt } from "./layout-pages.js";
+import { hexToPdfRgb, paintTextRun } from "./paint.js";
 
 export function pageContentStream(
   page: PdfPage,
@@ -35,7 +36,7 @@ export function pageContentStream(
         tableState = { colW: [], row: ri, x: marginPt, y };
       }
       const fill = isTable ? parts[7] : undefined;
-      const rgb = fill && fill !== "-" ? hexFill(fill) : null;
+      const rgb = fill && fill !== "-" ? (hexToPdfRgb("#" + fill.replace("#", "")) ?? "0.95 0.95 0.97") : null;
       const whiteFg = parts.includes("white");
       if (rgb) {
         s += `${rgb} rg ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re f\n0 0 0 rg\n`;
@@ -43,40 +44,44 @@ export function pageContentStream(
       if (isTable) {
         s += `0.3 w 0.45 0.45 0.45 RG\n`;
         s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
+      } else {
+        s += `0.35 w [2.5 2] 0 d 0.72 0.75 0.8 RG ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n[] 0 d\n0 0 0 RG\n`;
       }
       const rows = splitCellRows(line.segments);
       const fontSize = isTable ? 9 : 11;
       const advances = rows.map((rowSegs) => cellRowAdvance(rowSegs, isTable ? 12 : 14));
       const blockH = advances.reduce((n, a) => n + a, 0) || (isTable ? 12 : 14);
-      let ty = y - (rowH - blockH) / 2 - (isTable ? 8 : 12);
+      const pad = isTable ? 8 : 12;
+      const vAlign = parts.includes("va-bottom") ? "bottom" : parts.includes("va-middle") ? "middle" : "top";
+      let ty = y - (rowH - blockH) / 2 - pad;
+      if (vAlign === "top") ty = y - pad;
+      else if (vAlign === "bottom") ty = y - rowH + blockH - 4;
       const cellAlign = (isTable && (parts[6] === "center" || parts[6] === "right"))
         ? parts[6]
         : (line.align === "center" || line.align === "right" ? line.align : "left");
-      if (whiteFg) s += `1 1 1 rg\n`;
       let rowI = 0;
       for (const rowSegs of rows) {
         let textW = 0;
         for (const seg of rowSegs) {
-          textW += seg.kind === "text" ? helveticaWidthPt(seg.text, fontSize) : seg.kind === "math" ? seg.math.widthPt + 8 : 0;
+          textW += seg.kind === "text" ? helveticaWidthPt(seg.text, seg.sizePt || fontSize) : seg.kind === "math" ? seg.math.widthPt + 8 : 0;
         }
         let sx = tableState.x + 4;
         if (cellAlign === "center") sx = tableState.x + Math.max(4, (cw - textW) / 2);
         else if (cellAlign === "right") sx = tableState.x + Math.max(4, cw - 4 - textW);
-        s += `BT /F1 ${fontSize} Tf\n`;
         for (const seg of rowSegs) {
           if (seg.kind === "text") {
-            s += `1 0 0 1 ${sx.toFixed(2)} ${ty.toFixed(2)} Tm (${pdfEscape(seg.text)}) Tj\n`;
-            sx += helveticaWidthPt(seg.text, fontSize);
+            const painted = paintTextRun(seg.text, sx, ty, paintOpts(seg, fontSize, whiteFg));
+            s += painted.ops;
+            sx += painted.width;
           } else if (seg.kind === "math") {
-            s += `ET\n` + mathOps(seg.math, sx + 4, ty, "F3", "F2") + `BT /F1 ${fontSize} Tf\n`;
+            s += mathOps(seg.math, sx + 4, ty, "F3", "F2");
             sx += seg.math.widthPt + 8;
           }
         }
-        s += `ET\n`;
         ty -= advances[rowI++] ?? 14;
       }
-      if (whiteFg) s += `0 0 0 rg\n`;
-      const imgId = isTable ? (parts[8] && parts[8] !== "-" ? parts[8] : undefined) : (parts[7] && parts[7] !== "-" ? parts[7] : undefined);
+      const imgTok = isTable ? parts[8] : parts[7];
+      const imgId = imgTok && imgTok !== "-" && !imgTok.startsWith("va-") ? imgTok : undefined;
       const objNum = imgId ? imageObjects.get(imgId) : undefined;
       if (objNum && imgId) {
         const wUm = Number(isTable ? parts[9] : parts[8]) || 150000;
@@ -136,13 +141,14 @@ export function pageContentStream(
     }
     cursorX = x;
     const firstText = segs.find((seg) => seg.kind === "text" && seg.text.length > 0);
-    const sizePt = line.sizePt || (firstText ? 11 : 11);
+    const sizePt = line.sizePt || (firstText && firstText.kind === "text" ? firstText.sizePt : 11);
     let inText = false;
     for (const seg of segs) {
       if (seg.kind === "text" && seg.text.length === 0) continue;
       if (seg.kind === "text") {
-        s += `BT /F1 ${sizePt} Tf 1 0 0 1 ${cursorX.toFixed(2)} ${y} Tm (${pdfEscape(seg.text)}) Tj ET\n`;
-        cursorX += helveticaWidthPt(seg.text, seg.sizePt || sizePt);
+        const painted = paintTextRun(seg.text, cursorX, y, paintOpts(seg, sizePt, false));
+        s += painted.ops;
+        cursorX += painted.width;
         inText = true;
       } else if (seg.kind === "math") {
         s += mathOps(seg.math, cursorX + 4, y, "F3", "F2");
@@ -155,12 +161,15 @@ export function pageContentStream(
   return { stream: s };
 }
 
-function hexFill(hex: string): string {
-  const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-  const n = Number.parseInt(full, 16);
-  if (!Number.isFinite(n)) return "0.95 0.95 0.97";
-  return `${((n >> 16) & 255) / 255} ${((n >> 8) & 255) / 255} ${(n & 255) / 255}`;
+function paintOpts(seg: TextSegment, fallbackSize: number, whiteFg: boolean) {
+  return {
+    sizePt: seg.sizePt || fallbackSize,
+    face: seg.face,
+    color: whiteFg ? "#ffffff" : seg.color,
+    background: seg.background,
+    underline: seg.underline,
+    strike: seg.strike,
+  };
 }
 
 function splitCellRows(segs: PdfLine["segments"]): PdfLine["segments"][] {
@@ -178,7 +187,7 @@ function cellRowAdvance(rowSegs: PdfLine["segments"], fallback: number): number 
     if (seg.kind === "math") {
       const e = mathVisualExtents(seg.math);
       h = Math.max(h, e.abovePt + e.belowPt);
-    }
+    } else if (seg.kind === "text") h = Math.max(h, seg.sizePt + 3);
   }
   return h;
 }
