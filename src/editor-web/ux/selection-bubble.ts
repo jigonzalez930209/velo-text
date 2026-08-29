@@ -13,6 +13,9 @@ export function attachSelectionBubble(s: EditorState, cmds: ReturnType<typeof bi
     if (!sel || sel.isCollapsed || !sel.rangeCount) { hide(); return; }
     const range = sel.getRangeAt(0);
     if (!s.container.contains(range.commonAncestorContainer)) { hide(); return; }
+    const host = range.commonAncestorContainer;
+    const el = host.nodeType === 1 ? host as Element : host.parentElement;
+    if (el?.closest("table.pde-table, .pde-columns")) { hide(); return; }
     hide();
     const r = typeof range.getBoundingClientRect === "function"
       ? range.getBoundingClientRect()
