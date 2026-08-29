@@ -29,8 +29,8 @@ Ordered so each slice is testable without expanding the AST. **No new runtime np
 3. **PDF / Office parity** — tables, image align/size, columns, and equations in ODT/DOCX closer to the PDF boxes. SVG/WebP PNG fallback for old Word — our encoder, no extra suite.
 4. **PDF fonts** — Standard-14 Helvetica/Symbol only. Optional **embedded TTF** behind a host-supplied font **bytes** port (license stays with the host; we do not ship font files).
 5. **Real PG / S3 in CI** — optional job with `pg` and a fake S3 **in the workflow**, not in `dependencies`.
-6. **Color / fontSize in PDF** — already in the AST and playground; PDF still mostly Helvetica black.
-7. **Perceptual goldens** — HTML snapshots exist; raster diffs for PDF pages are still open (CI tool, not a client dep).
+6. **Color / fontSize in PDF** — `[x]` AST marks (`color`, `fontSizePt`, bold/italic) map to `/rg` and Standard-14 faces in the same `exportPdf` path.
+7. **Perceptual goldens** — `[x]` HTML snapshots plus CI raster diffs (`pdftoppm` / poppler-utils, not an npm dep): `pnpm run test:pdf-pages`.
 
 ## Later (explicitly out of 1.0)
 

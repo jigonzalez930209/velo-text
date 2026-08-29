@@ -32,7 +32,9 @@ Editor **page chrome** (`setPagePreview`) uses `pdfPageMetrics` / `buildPdfPages
 PortableDocument → validate → renderTemplate → PdfWriter (buildPdfPages + images + assemble)
 ```
 
-Page size and margins: `document.page` (same MediaBox). Fonts: Helvetica + Symbol. Images: PNG downscale / JPEG passthrough.
+Page size and margins: `document.page` (same MediaBox). Fonts: Standard-14 Helvetica family + Symbol. Text marks `color`, `fontSizePt`, bold/italic, underline/strike, and highlight (`background`) are painted in the content stream. Custom `fontFamily` is still ignored until host-supplied TTF (roadmap). Images: PNG downscale / JPEG passthrough.
+
+CI compares a raster of page 1 (`pdftoppm`, `pnpm run test:pdf-pages`) against `tests/visual/pdf-pages/`. That tool is not a client dependency.
 
 ## ODT / DOCX
 

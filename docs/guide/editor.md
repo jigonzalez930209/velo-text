@@ -45,13 +45,14 @@ Marks use `execCommand` when available and then `syncFromDom`. Alignment writes 
 - Nested: an image may live in a table cell or column slot (max nesting depth 3 for `table`/`columns`).
 
 ## Tables
-- Click a table to show **column handles** (vertical, drag width → `columns[].widthUm`) and **row handles** (horizontal, drag height → `rows[].heightUm`).
-- A small **table button** to the right of the table opens insert/delete row/column and delete table. The menu sits **beside** the table so cells stay editable.
-- Cell text is a nested `paragraph` (and optional other blocks). Type normally; alignment from the toolbar applies to the cell paragraph, not the outer `<table>`.
+- Click a table to show **column/row resize handles** and a **table bar** (same idea as the text selection bubble), **3px above** the table top edge and always **below** the sticky formatting toolbar.
+- The bar shows the **active cell** (`R2C1`) and insert/delete row or column, merge/split, density, look, presets, shade, and delete table. Drag across cells to select a rectangle; drag along the header row to select **columns**, or along the first column to select **rows**.
+- Cell text is a nested `paragraph`. The table bar **Cell alignment** menu sets horizontal (left/center/right) and **vertical** (top/middle/bottom) on the selected cells. Custom layout uses the **same bar** (3px above, below the sticky toolbar) and the same **Cell alignment** menu on the focused column slot.
+- Table look (header, bands, accent) uses **theme tokens**, so dark and light presets stay readable.
 - `Tab` / `Shift+Tab` via `handleTableTab` (wraps, creates a row at the end). Spans: `setCellSpan`. Structural ops: `insertRowAfter`, `deleteRow`, `insertColumnAfter`, `deleteColumn`.
 
 ## Columns
-Block type `columns` (`createColumns(idGen, count | pcts)`). Click the layout to open the **column menu** (button to the right): presets such as 50/50, 25/50/25, 50/25/25, 25/25/50, 33×3, 25×4, 30/70, 70/30, etc. Applying a preset is additive — existing slot content is kept; extra slots are merged into the last column.
+Block type `columns` (`createColumns(idGen, count | pcts)`). Click a column slot to show a **layout bar** like the table bar (slot `C1`, Cell alignment, width presets, insert, delete). Drag across slots to select several. Vertical default is **middle**, same as table cells. Width presets stay additive.
 
 Insert **table**, **image**, or **nested columns** into the focused cell or slot (toolbar or `+` handle). Combinations (table in a column, image in a cell, columns in a cell, …) are allowed up to **depth 3** of nested `table`/`columns`.
 
