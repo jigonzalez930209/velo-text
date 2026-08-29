@@ -7,6 +7,93 @@ const repo = path.resolve(docsDir, "../..");
 const src = path.join(repo, "src");
 const base = process.env.DOCS_BASE || "/";
 
+const guideSidebar = [
+  {
+    text: "Start",
+    items: [
+      { text: "Introduction", link: "/guide/introduction" },
+      { text: "Architecture", link: "/guide/architecture" },
+      { text: "Roadmap", link: "/guide/roadmap" },
+    ],
+  },
+  {
+    text: "Document",
+    items: [
+      { text: "Data model", link: "/guide/model" },
+      { text: "Template engine", link: "/guide/template" },
+      { text: "Assets & S3", link: "/guide/assets" },
+      { text: "Backend slots (api-report)", link: "/guide/api-report" },
+    ],
+  },
+  {
+    text: "Editor",
+    items: [
+      { text: "Editor", link: "/guide/editor" },
+      { text: "Framework adapters", link: "/guide/adapters" },
+      { text: "Themes", link: "/guide/themes" },
+      { text: "Plugins", link: "/guide/plugins" },
+    ],
+  },
+  {
+    text: "Layout & export",
+    items: [
+      { text: "Layout", link: "/guide/layout" },
+      { text: "Export (PDF / ODT / DOCX)", link: "/guide/export" },
+    ],
+  },
+  {
+    text: "Host & ship",
+    items: [
+      { text: "PostgreSQL", link: "/guide/postgres" },
+      { text: "Security", link: "/guide/security" },
+      { text: "Performance", link: "/guide/performance" },
+      { text: "Publish to npm", link: "/guide/publish" },
+    ],
+  },
+  {
+    text: "Reference",
+    items: [
+      { text: "Node × format", link: "/matriz-nodos-formatos" },
+      { text: "Threat model", link: "/threat-model" },
+      { text: "Perf budgets", link: "/perf-budgets" },
+      { text: "Release checklist", link: "/release-checklist" },
+    ],
+  },
+];
+
+const apiSidebar = [
+  {
+    text: "API",
+    items: [
+      { text: "Overview", link: "/api/overview" },
+      { text: "Public surface", link: "/api/public" },
+      { text: "API report", link: "/api-report" },
+    ],
+  },
+  {
+    text: "Core",
+    items: [
+      { text: "Model", link: "/api/core-model" },
+      { text: "Schema & canonical", link: "/api/core-schema" },
+      { text: "Operations & history", link: "/api/core-operations" },
+      { text: "Plugins", link: "/api/plugins" },
+    ],
+  },
+  {
+    text: "Product",
+    items: [
+      { text: "Template", link: "/api/template" },
+      { text: "Equation", link: "/api/equation" },
+      { text: "Editor web", link: "/api/editor" },
+      { text: "Assets", link: "/api/assets" },
+      { text: "Export", link: "/api/export" },
+      { text: "Layout", link: "/api/layout" },
+      { text: "Theme", link: "/api/theme" },
+      { text: "Adapters", link: "/api/adapters" },
+    ],
+  },
+];
+
 export default defineConfig({
   title: "velo-text",
   description:
@@ -25,31 +112,15 @@ export default defineConfig({
       { text: "API", link: "/api/overview" },
       { text: "Playground", link: "/playground/" },
       { text: "Examples", link: "/examples/" },
+      { text: "Roadmap", link: "/guide/roadmap" },
       { text: "Changelog", link: "/changelog" },
     ],
     sidebar: {
-      "/guide/": [
-        {
-          text: "Guide",
-          items: [
-            { text: "Introduction", link: "/guide/introduction" },
-            { text: "Architecture", link: "/guide/architecture" },
-            { text: "Data Model", link: "/guide/model" },
-            { text: "Editor", link: "/guide/editor" },
-            { text: "Adapters", link: "/guide/adapters" },
-            { text: "Template Engine", link: "/guide/template" },
-            { text: "Assets & S3", link: "/guide/assets" },
-            { text: "Layout", link: "/guide/layout" },
-            { text: "Export (PDF)", link: "/guide/export" },
-            { text: "Themes", link: "/guide/themes" },
-            { text: "Plugins", link: "/guide/plugins" },
-            { text: "PostgreSQL", link: "/guide/postgres" },
-            { text: "Security", link: "/guide/security" },
-            { text: "Performance", link: "/guide/performance" },
-            { text: "Publish to npm", link: "/guide/publish" },
-          ],
-        },
-      ],
+      "/guide/": guideSidebar,
+      "/matriz-nodos-formatos": guideSidebar,
+      "/threat-model": guideSidebar,
+      "/perf-budgets": guideSidebar,
+      "/release-checklist": guideSidebar,
       "/examples/": [
         {
           text: "Framework adapters",
@@ -61,31 +132,12 @@ export default defineConfig({
             { text: "Svelte", link: "/examples/svelte" },
             { text: "Angular", link: "/examples/angular" },
             { text: "Astro", link: "/examples/astro" },
-            { text: "Backend PDF (Vite / Express / Vercel)", link: "/examples/backend" },
+            { text: "Backend export", link: "/examples/backend" },
           ],
         },
       ],
-      "/api/": [
-        {
-          text: "API",
-          items: [
-            { text: "Overview", link: "/api/overview" },
-            { text: "Core — Model", link: "/api/core-model" },
-            { text: "Core — Schema & Canonical", link: "/api/core-schema" },
-            { text: "Core — Operations & History", link: "/api/core-operations" },
-            { text: "Template — Parser & Resolver", link: "/api/template" },
-            { text: "Equation", link: "/api/equation" },
-            { text: "Editor Web", link: "/api/editor" },
-            { text: "Assets (Sniff, Dimensions, Hash, SVG, Icons, Store)", link: "/api/assets" },
-            { text: "Export — Writers & Validate", link: "/api/export" },
-            { text: "Layout", link: "/api/layout" },
-            { text: "Theme", link: "/api/theme" },
-            { text: "Adapters (PG & S3)", link: "/api/adapters" },
-            { text: "Public API", link: "/api/public" },
-            { text: "Plugins", link: "/api/plugins" },
-          ],
-        },
-      ],
+      "/api/": apiSidebar,
+      "/api-report": apiSidebar,
     },
     socialLinks: [{ icon: "github", link: "https://github.com/velo-text/velo-text" }],
     footer: {
@@ -101,6 +153,7 @@ export default defineConfig({
     },
     resolve: {
       alias: [
+        { find: "velo-text/api-report", replacement: path.join(src, "api-report/index.ts") },
         { find: "velo-text/backend", replacement: path.join(src, "adapters/backend/index.ts") },
         { find: "velo-text/adapters/browser", replacement: path.join(src, "adapters/browser/index.ts") },
         { find: "velo-text/editor-web", replacement: path.join(src, "editor-web/index.ts") },

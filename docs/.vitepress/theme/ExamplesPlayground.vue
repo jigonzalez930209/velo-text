@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref } from "vue";
-import { createDocument, createIdGenerator, createParagraph, createText, createVariable, mountVanillaEditor, exportDocument } from "velo-text";
+import { createDocument, createIdGenerator, createParagraph, createText, createVariable, mountVanillaEditor, previewPdf } from "velo-text";
 import type { Editor } from "velo-text";
 import reactAdapter from "../../../examples/react/PortableEditor.jsx?raw";
 import reactApp from "../../../examples/react/App.jsx?raw";
@@ -66,16 +66,12 @@ onBeforeUnmount(() => editor?.destroy());
 
 async function doPdf() {
   if (!editor) return;
-  const chunks: Uint8Array[] = [];
-  await exportDocument({
+  const pdf = await previewPdf({
     document: editor.getDocument(),
     data: { name: "Ada Lovelace", total: 1280 },
-    format: "pdf",
-    sink: { write(c) { chunks.push(c); }, close() {} },
-    options: { strict: false },
   });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(chunks as BlobPart[], { type: "application/pdf" }));
+  a.href = URL.createObjectURL(new Blob([pdf.bytes as unknown as BlobPart], { type: "application/pdf" }));
   a.download = "velo-text-example.pdf";
   a.click();
   status.value = "PDF with tags filled";

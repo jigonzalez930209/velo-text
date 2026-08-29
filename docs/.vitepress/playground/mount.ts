@@ -3,7 +3,7 @@
  */
 import {
   createEditor,
-  exportPdf,
+  previewPdf,
   sniffImage,
   getDimensions,
   type PortableDocument,
@@ -159,11 +159,10 @@ export function mountPlayground(root: HTMLElement): () => void {
   };
 
   el("btn-export-pdf").onclick = async () => {
-    const pdf = await exportPdf({
+    const pdf = await previewPdf({
       document: editor.getDocument(),
       data: panels.parseData(),
       assets: collectPdfAssets(),
-      options: { strict: false, missingVariable: "keep" },
     });
     const url = URL.createObjectURL(new Blob([pdf.bytes as unknown as BlobPart], { type: "application/pdf" }));
     const a = document.createElement("a");

@@ -1,7 +1,7 @@
 import {
   createInMemoryRepository,
   inspectVariables,
-  exportPdf,
+  previewPdf,
   type Editor,
   type PortableDocument,
 } from "velo-text";
@@ -49,11 +49,10 @@ export function wirePanels(root: HTMLElement, editor: Editor, els: {
     window.clearTimeout(pdfTimer);
     pdfTimer = window.setTimeout(() => {
       void (async () => {
-        const pdf = await exportPdf({
+        const pdf = await previewPdf({
           document: live,
           data,
           assets: els.getPdfAssets?.() ?? {},
-          options: { strict: false, missingVariable: "keep" },
         });
         if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         pdfUrl = URL.createObjectURL(new Blob([pdf.bytes as unknown as BlobPart], { type: "application/pdf" }));
