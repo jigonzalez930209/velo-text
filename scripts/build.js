@@ -14,6 +14,7 @@ const entrypoints = [
   "src/template/index.js",
   "src/export/index.js",
   "src/editor-web/index.js",
+  "src/api-report/index.js",
 ];
 for (const ep of entrypoints) {
   const full = path.join(root, ep);

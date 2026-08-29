@@ -13,6 +13,7 @@ const ENTRYPOINTS = [
   "src/template/index.ts",
   "src/export/index.ts",
   "src/editor-web/index.ts",
+  "src/api-report/index.ts",
 ];
 
 function collectFiles(dir) {
