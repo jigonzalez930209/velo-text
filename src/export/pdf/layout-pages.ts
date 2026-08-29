@@ -2,7 +2,8 @@ import type { PortableDocument } from "../../core/model/types.js";
 import { parseMath, helveticaWidthPt } from "./equation.js";
 import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
-import { emitColumns, emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
+import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
+import { emitColumns } from "./layout-columns.js";
 
 /** Fit an image into the page content box without overflowing. */
 export function pdfImageDisplayPt(
@@ -43,7 +44,10 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     let cur: Segment[] = [];
     let curW = 0;
     const flushLine = () => {
-      if (cur.length) lines.push({ segments: cur, yPt: 0, sizePt: baseSize, align: align as never, style });
+      if (cur.length) {
+        const sizePt = Math.max(baseSize, ...cur.map((s) => s.kind === "text" ? s.sizePt : 0));
+        lines.push({ segments: cur, yPt: 0, sizePt, align: align as never, style });
+      }
       cur = [];
       curW = 0;
     };
@@ -56,7 +60,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       if (s.kind === "text") {
         for (const part of s.text.split(/(\s+)/)) {
           if (!part) continue;
-          push({ kind: "text", text: part, sizePt: s.sizePt }, helveticaWidthPt(part, s.sizePt));
+          push({ ...s, text: part }, helveticaWidthPt(part, s.sizePt));
         }
       } else if (s.kind === "math") push(s, s.math.widthPt + 8);
       else push(s, 0);
