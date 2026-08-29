@@ -2,7 +2,7 @@
 
 **velo-text** is a portable document library: one JSON AST, one editor, one export API for **PDF, ODT, and DOCX**. Runtime `dependencies` is `{}`.
 
-Current trial: **`1.0.0-beta.7`** — `pnpm add velo-text@beta`. The API is not frozen. Install and token steps: [Publish to npm](/guide/publish). What is done vs next: [Roadmap](/guide/roadmap).
+Current trial: **`1.0.0-beta.8`** — `pnpm add velo-text@beta`. The API is not frozen. Install and token steps: [Publish to npm](/guide/publish). What is done vs next: [Roadmap](/guide/roadmap).
 
 ## What it is
 

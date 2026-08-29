@@ -2,7 +2,7 @@
 
 Releases go out **only from GitHub CI**. Do not publish from your laptop.
 
-Current version: **`1.0.0-beta.7`** (npm dist-tag `beta`).
+Current version: **`1.0.0-beta.8`** (npm dist-tag `beta`).
 
 ```bash
 pnpm add velo-text@beta
@@ -22,12 +22,12 @@ Nothing else. No `.npmrc` in the repo.
 On `main`, bump version then push the matching tag (that starts **Publish npm**):
 
 ```bash
-pnpm version:set 1.0.0-beta.7
+pnpm version:set 1.0.0-beta.8
 # edit CHANGELOG.md if needed
-git add -A && git commit -m "release: 1.0.0-beta.7"
-git tag v1.0.0-beta.7
+git add -A && git commit -m "release: 1.0.0-beta.8"
+git tag v1.0.0-beta.8
 git push origin HEAD
-git push origin v1.0.0-beta.7
+git push origin v1.0.0-beta.8
 ```
 
 `scripts/set-version.sh` writes `package.json` and the current-version docs. The git tag must equal `package.json` `version` (`v` + version).
@@ -53,5 +53,5 @@ The git tag must equal `package.json` `version` (`v` + version).
 ## After it is green
 
 - Install: `pnpm add velo-text@beta`
-- Next beta: bump to `1.0.0-beta.7`, commit, tag `v1.0.0-beta.7`, push the tag.
+- Next beta: bump to `1.0.0-beta.8`, commit, tag `v1.0.0-beta.8`, push the tag.
 - Stable 1.0: set version `1.0.0` (no `-beta`), tag `v1.0.0` → CI publishes `latest`.

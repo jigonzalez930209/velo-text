@@ -1,6 +1,6 @@
 # velo-text
 
-**1.0.0-beta.7** — public beta. APIs and export layout can still change. Install with the `beta` tag, not as if it were a stable 1.0.
+**1.0.0-beta.8** — public beta. APIs and export layout can still change. Install with the `beta` tag, not as if it were a stable 1.0.
 
 Portable document editor with variables `{{name}}`, tables, images, LaTeX equations and deterministic export to **PDF, ODT, and DOCX** — **zero runtime dependencies**, TypeScript strict. LibreOffice/Word CI and full visual parity across Office formats are still open.
 
@@ -13,7 +13,7 @@ Requires **Node >= 18**. Use **pnpm**.
 ```bash
 pnpm add velo-text@beta
 # exact prerelease
-pnpm add velo-text@1.0.0-beta.7
+pnpm add velo-text@1.0.0-beta.8
 ```
 
 Do not run `pnpm add velo-text` expecting a stable `latest` until 1.0.0 is published.
@@ -27,7 +27,7 @@ import "velo-text/themes/components.css";
 
 ## Publish / GitHub Actions
 
-Do **not** put an npm token in the repo. Create GitHub secret **`NPM_TOKEN`**, then push tag `v1.0.0-beta.7`. CI publishes to npm (`beta`) and opens a GitHub Release. Details: [docs/guide/publish.md](docs/guide/publish.md).
+Do **not** put an npm token in the repo. Create GitHub secret **`NPM_TOKEN`**, then push tag `v1.0.0-beta.8`. CI publishes to npm (`beta`) and opens a GitHub Release. Details: [docs/guide/publish.md](docs/guide/publish.md).
 
 ## Quick start
 
@@ -96,10 +96,10 @@ pnpm run test:visual      # HTML snapshots in tests/visual/snapshots
 pnpm run fuzz -- --iterations=5000
 pnpm run build            # tsc → dist/
 pnpm docs:dev             # VitePress docs + playground at /playground/
-pnpm version:set 1.0.0-beta.7   # bump version (then tag v1.0.0-beta.7 and push)
+pnpm version:set 1.0.0-beta.8   # bump version (then tag v1.0.0-beta.8 and push)
 ```
 
-Publish is **GitHub Actions only** (push tag `v1.0.0-beta.7` after setting secret `NPM_TOKEN`).
+Publish is **GitHub Actions only** (push tag `v1.0.0-beta.8` after setting secret `NPM_TOKEN`).
 
 ## Zero dependencies
 
