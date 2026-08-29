@@ -3,7 +3,7 @@ layout: home
 hero:
   name: velo-text
   text: Zero-deps document platform
-  tagline: Beta 1.0.0-beta.6 · TypeScript strict · Variables &#123;&#123;name&#125;&#125; · PDF
+  tagline: Beta 1.0.0-beta.7 · TypeScript strict · Variables &#123;&#123;name&#125;&#125; · PDF
   actions:
     - theme: brand
       text: Get Started
@@ -32,7 +32,7 @@ features:
     details: Micrometer units, line breaking, pagination widows/orphans, 4 themes with CSS tokens, equation rendering.
 ---
 
-## Quick start <Badge type="warning" text="1.0.0-beta.6" />
+## Quick start <Badge type="warning" text="1.0.0-beta.7" />
 
 This is a **beta**. APIs can still change. Install the prerelease tag:
 
