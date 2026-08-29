@@ -2,8 +2,8 @@
  * Fill frontend {{tags}} on the backend and return a PDF.
  * Shared by Express, Vercel, and the Vite dev middleware.
  */
-import type { PortableDocument } from "../../core/model/types.js";
-import { exportPdf } from "../../export/pdf/export-pdf.js";
+import type { PortableDocument, Clock, IdGenerator } from "../../core/model/types.js";
+import { exportPdf, PDF_FILL_OPTIONS } from "../../export/pdf/export-pdf.js";
 
 export interface PdfExportJson {
   document: PortableDocument;
@@ -26,7 +26,10 @@ function asBytes(data: string | number[]): Uint8Array {
   return out;
 }
 
-export async function handlePdfExportJson(input: unknown): Promise<PdfHttpResult> {
+export async function handlePdfExportJson(
+  input: unknown,
+  runtime?: { clock?: Clock; idGenerator?: IdGenerator },
+): Promise<PdfHttpResult> {
   if (!input || typeof input !== "object") {
     return { status: 400, headers: { "content-type": "application/json" }, error: "JSON body required" };
   }
@@ -43,7 +46,9 @@ export async function handlePdfExportJson(input: unknown): Promise<PdfHttpResult
       document: body.document,
       data: body.data ?? {},
       assets,
-      options: { strict: false, missingVariable: "keep" },
+      options: PDF_FILL_OPTIONS,
+      clock: runtime?.clock,
+      idGenerator: runtime?.idGenerator,
     });
     return {
       status: 200,
