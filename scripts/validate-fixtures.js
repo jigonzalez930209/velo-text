@@ -1,13 +1,9 @@
 #!/usr/bin/env node
-/**
- * Validate all fixtures against validator, canonical hash and idempotence — Phase 2 & 13
- * Deterministic with fixed clock/ids.
- */
 import fs from "node:fs";
 import path from "node:path";
-import { validateDocument } from "../src/core/schema/validator.ts";
-import { canonicalStringify, contentHashHex } from "../src/core/schema/canonical.ts";
-import { normalizeDocument, isIdempotent } from "../src/core/normalize/normalize.ts";
+import { validateDocument } from "../dist/core/schema/validator.js";
+import { canonicalStringify, contentHashHex } from "../dist/core/schema/canonical.js";
+import { normalizeDocument, isIdempotent } from "../dist/core/normalize/normalize.js";
 
 const dir = "tests/fixtures";
 const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
@@ -28,7 +24,6 @@ for (const f of files) {
   }
   const hash = contentHashHex(doc);
   const canon = canonicalStringify(doc);
-  // Determinism check: second hash must match
   const hash2 = contentHashHex(JSON.parse(canon));
   if (hash !== hash2) {
     console.error(`FAIL ${f}: hash not deterministic`);

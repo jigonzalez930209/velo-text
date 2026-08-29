@@ -3,7 +3,6 @@
  * Smoke export with deterministic clock/ids — Phase 10.2 / 13
  * Validates PDF/ODT/DOCX are produced and have correct magic bytes.
  */
-import fs from "node:fs";
 import { createDocument, createIdGenerator } from "../dist/core/model/factories.js";
 import { exportDocument } from "../dist/export/index.js";
 
@@ -35,9 +34,9 @@ async function main() {
 
   const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-  for (const fmt of ["pdf", "odt", "docx"] as const) {
-    const chunks: Uint8Array[] = [];
-    const sink = { write: (c: Uint8Array) => { chunks.push(c); }, close: () => {} };
+  for (const fmt of ["pdf", "odt", "docx"]) {
+    const chunks = [];
+    const sink = { write: (c) => { chunks.push(c); }, close: () => {} };
     await exportDocument({
       document: doc,
       data: { name: "World" },
@@ -56,8 +55,8 @@ async function main() {
     console.log(`${fmt}: ${total} bytes ${ok ? "OK" : "FAIL magic"}`);
     if (!ok) process.exit(1);
     // Determinism: second export must be byte-identical with same clock/ids
-    const chunks2: Uint8Array[] = [];
-    const sink2 = { write: (c: Uint8Array) => { chunks2.push(c); }, close: () => {} };
+    const chunks2 = [];
+    const sink2 = { write: (c) => { chunks2.push(c); }, close: () => {} };
     // Need fresh doc with same ids — re-create deterministically
     // For smoke, we just check that second run doesn't throw
     await exportDocument({

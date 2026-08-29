@@ -78,7 +78,7 @@ See `examples/` (vanilla, React, Vue, Svelte, Angular, Astro), backend PDF sampl
 | Assets: sniff (PNG/JPEG/WebP/SVG), dimensions, SHA-256, store dedupe & GC | ✅ `src/assets` |
 | S3 presigned URLs SigV4, PG jsonb + revisions + optimistic concurrency | ✅ `src/adapters` |
 | Layout: units (µm/pt/twip/EMU), text line break, pagination widows/orphans | ✅ `src/export/layout` |
-| Export: PDF / ODT / DOCX (`exportDocument`); PDF keep-together for images/rows | ✅ `src/export` |
+| Export: PDF / ODT / DOCX (`exportDocument`); PDF keep-together for images/rows (PDF: Standard-14 fonts only, no custom TTF yet) | ✅ `src/export` |
 | Themes: `light-neutral`, `light-warm`, `dark-slate`, `dark-contrast` + CSS tokens | ✅ `themes/` |
 
 ## Scripts
@@ -116,6 +116,12 @@ All colors/sizes via CSS variables (`--pde-*`). Override any token:
 ```css
 .pde-root { --pde-color-primary: #ff0000; --pde-icon-color: currentColor; }
 ```
+
+## Known Limitations
+
+- **PDF fonts:** Only Standard-14 families (Helvetica, Times, Courier, Symbol). Custom `fontFamily` falls back to Helvetica in PDF. ODT/DOCX correctly reference the font.
+- **Office interop:** ODT/DOCX validated structurally (XML/ZIP) and via LibreOffice headless in CI. Full visual parity with PDF is not yet guaranteed.
+- **PostgreSQL / S3:** Adapters provide typed contracts with in-memory implementations. Real PG driver and S3 SDK are not bundled (zero-deps policy). See `docker-compose.test.yml` for local integration testing.
 
 ## License
 

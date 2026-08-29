@@ -31,7 +31,7 @@ jobs:
       - run: pnpm run test:unit
       - run: pnpm run test:integration
       - run: pnpm run test:security
-      - run: node --experimental-strip-types scripts/smoke-export.ts
+      - run: node scripts/smoke-export.js
 
   publish:
     needs: verify

@@ -52,8 +52,43 @@ await exportDocument({
 });
 console.log(`export 100 pages PDF: ${(performance.now() - start).toFixed(1)} ms`);
 
-// Save baselines
+// Check baselines
 import fs from "node:fs";
-fs.mkdirSync("tests/perf", { recursive: true });
-fs.writeFileSync("tests/perf/baselines.json", JSON.stringify({ generatedAt: new Date().toISOString(), results }, null, 2));
-console.log("Wrote tests/perf/baselines.json");
+let prevBaselines = null;
+try {
+  prevBaselines = JSON.parse(fs.readFileSync("tests/perf/baselines.json", "utf8"));
+} catch (e) {
+  // no baseline
+}
+
+let hasRegression = false;
+const maxRegression = 3; // default
+const isUpdate = process.argv.includes("--update");
+
+const maxRegArg = process.argv.find(a => a.startsWith("--max-regression="));
+const maxRegValue = maxRegArg ? parseFloat(maxRegArg.split("=")[1]) : maxRegression;
+
+if (prevBaselines) {
+  for (const res of results) {
+    const prev = prevBaselines.results.find((r) => r.name === res.name);
+    if (prev) {
+      const ratio = res.perOp / prev.perOp;
+      console.log(`Compare ${res.name}: ${prev.perOp.toFixed(3)} -> ${res.perOp.toFixed(3)} (${ratio.toFixed(2)}x)`);
+      if (ratio > maxRegValue) {
+        console.error(`REGRESSION: ${res.name} slowed down by ${ratio.toFixed(2)}x`);
+        hasRegression = true;
+      }
+    }
+  }
+}
+
+if (hasRegression && !isUpdate) {
+  console.error(`Regression detected (max allowed ${maxRegValue}x). Exiting 1.`);
+  process.exit(1);
+}
+
+if (isUpdate || !prevBaselines || !hasRegression) {
+  fs.mkdirSync("tests/perf", { recursive: true });
+  fs.writeFileSync("tests/perf/baselines.json", JSON.stringify({ generatedAt: new Date().toISOString(), results }, null, 2));
+  console.log("Wrote tests/perf/baselines.json");
+}

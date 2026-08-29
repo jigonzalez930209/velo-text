@@ -46,9 +46,9 @@ jobs:
       - name: Coverage (≥90% lines overall and per lib part)
         run: pnpm run coverage && pnpm run coverage:check
       - name: Fixtures validation (33 files)
-        run: node --experimental-strip-types scripts/validate-fixtures.ts
+        run: node scripts/validate-fixtures.js
       - name: Export smoke (PDF/ODT/DOCX deterministic)
-        run: node --experimental-strip-types scripts/smoke-export.ts
+        run: node scripts/smoke-export.js
       - name: Build VitePress docs (includes playground)
         env:
           DOCS_BASE: /velo-text/
@@ -57,6 +57,10 @@ jobs:
         run: pnpm run test:visual && git diff --exit-code -- tests/visual/snapshots
       - name: Install poppler (PDF page rasters)
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Install LibreOffice (ODT/DOCX interop)
+        run: sudo apt-get install -y libreoffice-writer-nogui
+      - name: LibreOffice interop check (ODT/DOCX → PDF)
+        run: node scripts/check-libreoffice.js
       - name: PDF perceptual goldens
         run: pnpm run test:pdf-pages && git diff --exit-code -- tests/visual/pdf-pages
       - name: Upload GitHub Pages artifact
