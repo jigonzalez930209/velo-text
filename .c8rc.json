@@ -9,5 +9,5 @@
   "functions": 70,
   "branches": 70,
   "statements": 90,
-  "exclude": ["**/*.d.ts", "**/index.js", "**/layout-types.js"]
+  "exclude": ["**/*.d.ts", "**/index.js", "**/layout-types.js", "**/types.js"]
 }
