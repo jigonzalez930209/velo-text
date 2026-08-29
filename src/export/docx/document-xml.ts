@@ -78,6 +78,8 @@ function writeBlock(w: XmlWriter, block: Record<string, unknown>, doc: PortableD
             w.open("w:tcPr");
             if ((cell.colSpan as number) > 1) w.selfClose("w:gridSpan", { "w:val": String(cell.colSpan) });
             if ((cell.rowSpan as number) > 1) w.selfClose("w:vMerge", { "w:val": "restart" });
+            const va = (cell.style as { vAlign?: string } | undefined)?.vAlign;
+            w.selfClose("w:vAlign", { "w:val": va === "top" ? "top" : va === "bottom" ? "bottom" : "center" });
             w.close();
             for (const b of (cell.blocks as Array<Record<string, unknown>>) ?? []) writeBlock(w, b, doc);
             // ensure cell has at least one paragraph
@@ -98,7 +100,10 @@ function writeBlock(w: XmlWriter, block: Record<string, unknown>, doc: PortableD
         w.open("w:tr");
         for (const col of (block.columns as Array<Record<string, unknown>>) ?? []) {
           w.open("w:tc");
-          w.open("w:tcPr").close();
+          const cva = (col.vAlign as string | undefined);
+          w.open("w:tcPr");
+          w.selfClose("w:vAlign", { "w:val": cva === "bottom" ? "bottom" : cva === "middle" ? "center" : "top" });
+          w.close();
           for (const b of (col.blocks as Array<Record<string, unknown>>) ?? []) writeBlock(w, b, doc);
           if (!col.blocks || (col.blocks as unknown[]).length === 0) w.open("w:p").close();
           w.close();
