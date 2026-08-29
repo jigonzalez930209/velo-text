@@ -56,6 +56,10 @@ jobs:
         run: pnpm run docs:build
       - name: Visual HTML snapshots
         run: pnpm run test:visual && git diff --exit-code -- tests/visual/snapshots
+      - name: Install poppler (PDF page rasters)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: PDF perceptual goldens
+        run: pnpm run test:pdf-pages && git diff --exit-code -- tests/visual/pdf-pages
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: actions/upload-pages-artifact@v5
