@@ -10,7 +10,9 @@ import { renderTemplate, type RenderOptions } from "../template/resolver/resolve
 import { validateDocument } from "../core/schema/validator.js";
 import { OdtWriter } from "./odt/writer.js";
 import { DocxWriter } from "./docx/writer.js";
-import { exportPdf } from "./pdf/export-pdf.js";
+import { exportPdf, previewPdf, PDF_FILL_OPTIONS } from "./pdf/export-pdf.js";
+export type { ExportPdfResult, PdfDiag } from "./pdf/export-pdf.js";
+export { exportPdf, previewPdf, PDF_FILL_OPTIONS };
 
 export type ExportFormat = "pdf" | "odt" | "docx";
 

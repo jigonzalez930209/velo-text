@@ -30,7 +30,7 @@ export { ZipWriter } from "../export/zip/zipWriter.js";
 export { PdfWriter } from "../export/pdf/writer.js";
 export { OdtWriter } from "../export/odt/writer.js";
 export { DocxWriter } from "../export/docx/writer.js";
-export { exportPdf } from "../export/pdf/export-pdf.js";
+export { exportPdf, previewPdf, PDF_FILL_OPTIONS } from "../export/pdf/export-pdf.js";
 export { collectPdfDiagnostics } from "../export/pdf/diagnostics.js";
 export { exportDocument } from "../export/index.js";
 export { sniffImage, isAllowedMediaType } from "../assets/sniff/index.js";
