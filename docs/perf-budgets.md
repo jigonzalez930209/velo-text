@@ -1,6 +1,6 @@
-# Performance Budgets — Phase 12.2.1
+# Performance budgets
 
-Measured on local Node (see `tests/perf/baselines.json`). Macro budgets below are **targets**, not CI gates until the benchmark harness records them.
+Local Node numbers live in `tests/perf/baselines.json`. Rows marked **target** are not CI gates yet.
 
 | Operation | Budget | Baseline in repo | Notes |
 |---|---|---|---|

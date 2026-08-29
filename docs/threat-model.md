@@ -1,4 +1,6 @@
-# Threat Model — Phase 12.1.2
+# Threat model
+
+Attackers, assets, and mitigations for paste, SVG, ZIP, S3, and variable paths. Verification: `pnpm run test:security`.
 
 ## Assets
 - PortableDocument JSON (user content)

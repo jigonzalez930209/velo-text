@@ -1,4 +1,7 @@
-# Public API Report — velo-text v0.1.0
+# Public API report
+
+Generated from `src/public-api`. Treat this as a catalog; the [overview](/api/overview) is the map.
+
 Generated: 2026-08-27T15:14:02.669Z
 
 ## Exports from `src/public-api`

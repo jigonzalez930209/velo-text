@@ -1,6 +1,6 @@
-# Release Checklist — Phase 12.2.3 (Release Candidate)
+# Release checklist
 
-v1 product export is **PDF, ODT, and DOCX** via `exportDocument`. LibreOffice/Word round-trip is still not a CI gate (see roadmap §2.4).
+v1 product export is **PDF, ODT, and DOCX** via `exportDocument`. LibreOffice/Word round-trip is still not a CI gate ([Roadmap](/guide/roadmap)).
 
 - [ ] `pnpm run check:types` passes (strict)
 - [ ] `pnpm run check:zero-deps` passes

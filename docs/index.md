@@ -70,4 +70,4 @@ PortableDocument (AST JSON) — source of truth
   └─ Adapters (browser, backend, PG, S3)
 ```
 
-Explore the [Guide](/guide/introduction) and [API](/api/overview). Try the [Playground](/playground/).
+Explore the [Guide](/guide/introduction), [Roadmap](/guide/roadmap), and [API](/api/overview). Try the [Playground](/playground/).

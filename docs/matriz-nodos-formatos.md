@@ -1,6 +1,6 @@
-# Matriz nodo × formato — Fase 0.1.1
+# Node × format matrix
 
-v1 product columns are **Web + PDF + ODT + DOCX**. Office visual fidelity vs PDF is still weaker for tables, columns, and some images.
+Product columns: **Web + PDF + ODT + DOCX**. Office visual fidelity vs PDF is weaker for tables, columns, and some images. This table is the source of truth for “what ships”.
 
 | Nodo / feature | Web (editor) | PDF | ODT | DOCX | Notas |
 |---|---|---|---|---|---|
