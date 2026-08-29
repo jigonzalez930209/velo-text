@@ -122,6 +122,7 @@ export interface ColumnSlot {
   id: NodeId;
   blocks: BlockNode[];
   widthPct?: number;
+  vAlign?: "top" | "middle" | "bottom";
 }
 
 export interface ColumnsNode {

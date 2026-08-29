@@ -45,10 +45,31 @@ export function toggleLook(tbl: TableNode, key: keyof TableLook): void {
   if (key === "headerRow" && tbl.rows[0]) tbl.rows[0].header = !!look.headerRow;
 }
 
+export type CellVAlign = "top" | "middle" | "bottom";
+
+export function cellVAlign(cell: TableCell | undefined): CellVAlign {
+  const v = cell?.style?.vAlign;
+  return v === "top" || v === "bottom" ? v : "middle";
+}
+
+export function setCellVAlign(cell: TableCell, vAlign: CellVAlign): void {
+  cell.style = { ...cell.style, vAlign };
+}
+
 export function shadeCell(cell: TableCell, color: string | undefined): void {
   cell.style = { ...cell.style };
   if (color) cell.style.background = color;
   else delete cell.style.background;
+}
+
+export function clearCellStyle(cell: TableCell): void {
+  for (const bl of cell.blocks) {
+    if (bl.type === "paragraph" || bl.type === "heading" || bl.type === "quote") delete (bl as { align?: string }).align;
+  }
+  if (!cell.style) return;
+  delete cell.style.background;
+  delete cell.style.vAlign;
+  if (!Object.keys(cell.style).length) delete cell.style;
 }
 
 export function clearTableStyle(tbl: TableNode): void {
