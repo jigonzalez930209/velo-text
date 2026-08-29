@@ -54,6 +54,8 @@ export function assemblePdf(
   addObj(u8("3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj"));
   const symbolNum = addObj(u8("4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Symbol >>\nendobj"));
   const obliqueNum = addObj(u8("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>\nendobj"));
+  const boldNum = addObj(u8("6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj"));
+  const boldObliqueNum = addObj(u8("7 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique >>\nendobj"));
 
   const imageObjects = new Map<string, number>();
   for (const [id, ref] of Object.entries(assets)) {
@@ -75,7 +77,7 @@ export function assemblePdf(
   const xObjRes = imageObjects.size
     ? `/XObject << ${[...imageObjects.entries()].map(([k, n]) => `/Im${k.replace(/[^A-Za-z0-9]/g, "_")} ${n} 0 R`).join(" ")} >> `
     : "";
-  const fonts = `/Font << /F1 3 0 R /F2 ${symbolNum} 0 R /F3 ${obliqueNum} 0 R >>`;
+  const fonts = `/Font << /F1 3 0 R /F2 ${symbolNum} 0 R /F3 ${obliqueNum} 0 R /F4 ${boldNum} 0 R /F5 ${boldObliqueNum} 0 R >>`;
 
   for (const page of pages) {
     const { stream } = pageContentStream(page, doc, imageObjects);
