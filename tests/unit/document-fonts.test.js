@@ -94,6 +94,7 @@ test("exportPdf embeds Liberation TTF for all four faces", async () => {
   assert(text.includes("/BaseFont /LiberationSansNarrow"));
   assert(text.includes("/FontFile2"));
   assert(text.includes("/Widths [278"), "PDF Widths must be scaled to 1/1000 em");
+  assert(!text.includes("/Widths [569"), "must not embed raw 2048-em hmtx advances (Chrome stacks glyphs)");
   assert(/\/Fa \d+ Tf/.test(text));
   const d = collectPdfDiagnostics(doc, {});
   assert(!d.some((x) => x.code === "pdf-font-family-ignored"), JSON.stringify(d));
