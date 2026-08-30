@@ -42,12 +42,15 @@ export { themes, themeCss, allThemesCss } from "../theme/index.js";
 export { renderDocumentToHtml, renderBlocksToHtml, reconcileDom } from "../editor-web/view/index.js";
 export { createEditor, openSizePicker, openMosaicPicker, clampTableSize, placeOverlay } from "../editor-web/controller/index.js";
 export { mountVanillaEditor } from "../adapters/vanilla.js";
+export { DOCUMENT_FONTS, resolveDocumentFont } from "../fonts/catalog.js";
+export { documentFontsCss, ensureDocumentFonts } from "../fonts/index.js";
 export { createInMemoryRepository } from "../adapters/postgres-contract/index.js";
 export { collectOutline } from "../editor-web/ux/outline.js";
 export { findTextHits, replaceTextInDocument } from "../editor-web/ux/find-text.js";
 export { COLUMN_PRESETS } from "../editor-web/controller/column-presets.js";
 export { registerCommand, getCommand, listCommands } from "../editor-web/toolbar/index.js";
 export { makeToolbarNavigable } from "../editor-web/accessibility/index.js";
+export { wireToolbar, openTableMenu, openColumnsMenu } from "../editor-web/toolbar/wire-playground.js";
 export { intentToOperation } from "../editor-web/input/index.js";
 export {
   registerPlugin,
