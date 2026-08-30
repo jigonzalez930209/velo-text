@@ -1,6 +1,8 @@
 import type { Clock, PortableDocument } from "../../core/model/types.js";
 import type { DecodedImage } from "./image.js";
 import { pdfEscape, type PdfPage } from "./pdf-model.js";
+import { collectDocumentFaces } from "./fonts.js";
+import { pdfTrueTypeObjects } from "./ttf-embed.js";
 import { pageContentStream } from "./stream.js";
 
 const enc = new TextEncoder();
@@ -56,6 +58,13 @@ export function assemblePdf(
   const obliqueNum = addObj(u8("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>\nendobj"));
   const boldNum = addObj(u8("6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj"));
   const boldObliqueNum = addObj(u8("7 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique >>\nendobj"));
+  let docFontRes = "";
+  const usedFaces = collectDocumentFaces(
+    pages.flatMap((p) => p.lines.flatMap(({ line }) => line.segments.map((s) => (s.kind === "text" ? s.face : undefined)))),
+  );
+  const extra = pdfTrueTypeObjects(u8, concat, objects.length + 1, usedFaces);
+  for (const b of extra.bodies) addObj(b);
+  docFontRes = Object.entries(extra.faces).map(([k, n]) => `/${k} ${n} 0 R`).join(" ");
 
   const imageObjects = new Map<string, number>();
   for (const [id, ref] of Object.entries(assets)) {
@@ -77,7 +86,7 @@ export function assemblePdf(
   const xObjRes = imageObjects.size
     ? `/XObject << ${[...imageObjects.entries()].map(([k, n]) => `/Im${k.replace(/[^A-Za-z0-9]/g, "_")} ${n} 0 R`).join(" ")} >> `
     : "";
-  const fonts = `/Font << /F1 3 0 R /F2 ${symbolNum} 0 R /F3 ${obliqueNum} 0 R /F4 ${boldNum} 0 R /F5 ${boldObliqueNum} 0 R >>`;
+  const fonts = `/Font << /F1 3 0 R /F2 ${symbolNum} 0 R /F3 ${obliqueNum} 0 R /F4 ${boldNum} 0 R /F5 ${boldObliqueNum} 0 R${docFontRes ? ` ${docFontRes}` : ""} >>`;
 
   for (const page of pages) {
     const { stream } = pageContentStream(page, doc, imageObjects);

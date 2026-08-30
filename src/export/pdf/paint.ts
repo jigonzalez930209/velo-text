@@ -1,6 +1,18 @@
 import { helveticaWidthPt } from "./equation.js";
+import { documentFontBytes } from "../../fonts/index.js";
+import { documentFontByFace, isDocumentPdfFace, oflKeyForFace, weightForFace } from "../../fonts/catalog.js";
+import { ttfTextWidth } from "../../fonts/ttf-metrics.js";
 import { pdfEscape } from "./pdf-model.js";
 import type { PdfFace } from "./fonts.js";
+
+export function segmentWidthPt(text: string, sizePt: number, face?: PdfFace): number {
+  if (face && isDocumentPdfFace(face)) {
+    const meta = documentFontByFace(face);
+    const key = oflKeyForFace(face);
+    if (meta && key) return ttfTextWidth(documentFontBytes(meta.id, weightForFace(face)), text, sizePt);
+  }
+  return helveticaWidthPt(text, sizePt);
+}
 
 export function hexToPdfRgb(hex?: string): string | null {
   if (!hex) return null;
@@ -10,6 +22,19 @@ export function hexToPdfRgb(hex?: string): string | null {
   const n = Number.parseInt(full.slice(0, 6), 16);
   if (!Number.isFinite(n)) return null;
   return `${(((n >> 16) & 255) / 255).toFixed(3)} ${(((n >> 8) & 255) / 255).toFixed(3)} ${((n & 255) / 255).toFixed(3)}`;
+}
+
+/** Accepts `#hex`, `rgb()`, or `rgba()` — editor marks use `rgb()` from contenteditable. */
+export function cssColorToPdfRgb(color?: string): string | null {
+  if (!color) return null;
+  const c = color.trim();
+  const rgb = c.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i);
+  if (rgb) {
+    const ch = [rgb[1], rgb[2], rgb[3]].map((v) => Math.max(0, Math.min(255, Number(v))) / 255);
+    return `${ch[0]!.toFixed(3)} ${ch[1]!.toFixed(3)} ${ch[2]!.toFixed(3)}`;
+  }
+  if (c.startsWith("#") || /^[0-9a-f]{3,8}$/i.test(c)) return hexToPdfRgb(c.startsWith("#") ? c : `#${c}`);
+  return null;
 }
 
 export function paintTextRun(
@@ -26,14 +51,14 @@ export function paintTextRun(
   },
 ): { ops: string; width: number } {
   const sizePt = opts.sizePt;
-  const w = helveticaWidthPt(text, sizePt);
-  const face = opts.face ?? "F1";
+  const w = segmentWidthPt(text, sizePt, opts.face);
+  const face = opts.face ?? "Fa";
   let s = "";
-  const bg = hexToPdfRgb(opts.background);
+  const bg = cssColorToPdfRgb(opts.background);
   if (bg) {
     s += `${bg} rg ${x.toFixed(2)} ${(y - 2).toFixed(2)} ${w.toFixed(2)} ${(sizePt + 3).toFixed(2)} re f\n0 0 0 rg\n`;
   }
-  const fg = hexToPdfRgb(opts.color);
+  const fg = cssColorToPdfRgb(opts.color);
   if (fg) s += `${fg} rg\n`;
   s += `BT /${face} ${sizePt} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${pdfEscape(text)}) Tj ET\n`;
   if (fg) s += `0 0 0 rg\n`;

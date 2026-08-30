@@ -2,7 +2,7 @@ import { helveticaWidthPt, MATH_CHIP_PAD_X, mathVisualExtents, pdfLiteralString,
 import { pdfEscape, type PdfLine, type PdfPage, type TextSegment } from "./pdf-model.js";
 import type { PortableDocument } from "../../core/model/types.js";
 import { pdfImageDisplayPt } from "./layout-pages.js";
-import { hexToPdfRgb, paintTextRun } from "./paint.js";
+import { cssColorToPdfRgb, hexToPdfRgb, paintTextRun, segmentWidthPt } from "./paint.js";
 
 export function pageContentStream(
   page: PdfPage,
@@ -36,7 +36,7 @@ export function pageContentStream(
         tableState = { colW: [], row: ri, x: marginPt, y };
       }
       const fill = isTable ? parts[7] : undefined;
-      const rgb = fill && fill !== "-" ? (hexToPdfRgb("#" + fill.replace("#", "")) ?? "0.95 0.95 0.97") : null;
+      const rgb = fill && fill !== "-" ? (cssColorToPdfRgb(fill.startsWith("#") || fill.includes("rgb") ? fill : `#${fill.replace("#", "")}`) ?? "0.95 0.95 0.97") : null;
       const whiteFg = parts.includes("white");
       if (rgb) {
         s += `${rgb} rg ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re f\n0 0 0 rg\n`;
@@ -44,8 +44,6 @@ export function pageContentStream(
       if (isTable) {
         s += `0.3 w 0.45 0.45 0.45 RG\n`;
         s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
-      } else {
-        s += `0.35 w [2.5 2] 0 d 0.72 0.75 0.8 RG ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n[] 0 d\n0 0 0 RG\n`;
       }
       const rows = splitCellRows(line.segments);
       const fontSize = isTable ? 9 : 11;
@@ -63,7 +61,7 @@ export function pageContentStream(
       for (const rowSegs of rows) {
         let textW = 0;
         for (const seg of rowSegs) {
-          textW += seg.kind === "text" ? helveticaWidthPt(seg.text, seg.sizePt || fontSize) : seg.kind === "math" ? seg.math.widthPt + 8 : 0;
+          textW += seg.kind === "text" ? segmentWidthPt(seg.text, seg.sizePt || fontSize, seg.face) : seg.kind === "math" ? seg.math.widthPt + 8 : 0;
         }
         let sx = tableState.x + 4;
         if (cellAlign === "center") sx = tableState.x + Math.max(4, (cw - textW) / 2);
@@ -135,7 +133,7 @@ export function pageContentStream(
     if (line.align === "center" || line.align === "right") {
       let w = 0;
       for (const seg of segs) {
-        w += seg.kind === "text" ? helveticaWidthPt(seg.text, seg.sizePt) : seg.kind === "math" ? seg.math.widthPt : 0;
+        w += seg.kind === "text" ? segmentWidthPt(seg.text, seg.sizePt, seg.face) : seg.kind === "math" ? seg.math.widthPt : 0;
       }
       x = line.align === "center" ? (pageWidthPt - w) / 2 : pageWidthPt - marginPt - w;
     }

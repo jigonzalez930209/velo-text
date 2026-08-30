@@ -1,4 +1,5 @@
 import type { BlockNode, InlineNode, PortableDocument } from "../../core/model/types.js";
+import { resolveDocumentFont } from "../../fonts/catalog.js";
 import { parseMath } from "./equation.js";
 
 export interface PdfDiag {
@@ -27,12 +28,15 @@ function walkInlines(nodes: InlineNode[] | undefined, path: string, out: PdfDiag
       out.push({ code: "pdf-skip-inline-image", message: "Inline image is not drawn in PDF", severity: "warning", path: `${path}/${n.id}` });
     } else if (n.type === "equation") latexGap((n as { latex?: string }).latex ?? "", `${path}/${n.id}`, out);
     else if (n.type === "text" && (n as { marks?: { fontFamily?: string } }).marks?.fontFamily && !marksOnce.n) {
-      marksOnce.n = true;
-      out.push({
-        code: "pdf-font-family-ignored",
-        message: "Custom fontFamily is not embedded in PDF (Standard-14 Helvetica only unless the host supplies TTF bytes)",
-        severity: "warning",
-      });
+      const fam = (n as { marks?: { fontFamily?: string } }).marks?.fontFamily;
+      if (!resolveDocumentFont(fam)) {
+        marksOnce.n = true;
+        out.push({
+          code: "pdf-font-family-ignored",
+          message: `fontFamily "${fam}" is not a document face; PDF uses Helvetica`,
+          severity: "warning",
+        });
+      }
     } else if (n.type === "link") walkInlines((n as { children?: InlineNode[] }).children, `${path}/${n.id}`, out, marksOnce);
   }
 }

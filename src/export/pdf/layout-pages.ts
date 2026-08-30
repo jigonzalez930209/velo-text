@@ -1,9 +1,10 @@
 import type { PortableDocument } from "../../core/model/types.js";
-import { parseMath, helveticaWidthPt } from "./equation.js";
+import { parseMath } from "./equation.js";
 import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
 import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
 import { emitColumns } from "./layout-columns.js";
+import { segmentWidthPt } from "./paint.js";
 
 /** Fit an image into the page content box without overflowing. */
 export function pdfImageDisplayPt(
@@ -60,7 +61,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       if (s.kind === "text") {
         for (const part of s.text.split(/(\s+)/)) {
           if (!part) continue;
-          push({ ...s, text: part }, helveticaWidthPt(part, s.sizePt));
+          push({ ...s, text: part }, segmentWidthPt(part, s.sizePt, s.face));
         }
       } else if (s.kind === "math") push(s, s.math.widthPt + 8);
       else push(s, 0);
@@ -71,12 +72,12 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
 
   for (const b of doc.root.children) {
     if (b.type === "paragraph") wrap(inlineToSegments(b.children as never, 11), (b as { align?: string }).align ?? "left", "paragraph", 11);
-    else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2), "left", "heading", 20 - b.level * 2);
+    else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", "heading", 20 - b.level * 2);
     else if (b.type === "quote") wrap(inlineToSegments(b.children as never, 11), "left", "quote", 11);
     else if (b.type === "list") {
       for (const it of b.items) {
         const prefix = b.kind === "ordered" ? "1. " : "•  ";
-        wrap([{ kind: "text", text: prefix, sizePt: 11 }, ...inlineToSegments(it.content as never, 11)], "left", "list", 11);
+        wrap([{ kind: "text", text: prefix, sizePt: 11, face: "Fa" }, ...inlineToSegments(it.content as never, 11)], "left", "list", 11);
       }
     } else if (b.type === "table") emitTable(lines, b, maxWidth);
     else if (b.type === "columns") emitColumns(lines, b, maxWidth);

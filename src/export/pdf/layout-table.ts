@@ -3,6 +3,7 @@ import type { TextMarks } from "../../core/model/primitives.js";
 import { DENSITY_PT, cellFill, cellVAlign } from "../../core/model/table-look.js";
 import { parseMath, helveticaWidthPt, mathVisualExtents } from "./equation.js";
 import { pdfFaceForMarks } from "./fonts.js";
+import { segmentWidthPt } from "./paint.js";
 import { copyTextSeg, type PdfLine, type Segment, type TextSegment } from "./pdf-model.js";
 
 type Inline = {
@@ -14,10 +15,10 @@ type Inline = {
   children?: Array<{ text?: string; marks?: TextMarks }>;
 };
 
-function textStyle(marks: TextMarks | undefined, defaultSizePt: number): Omit<TextSegment, "kind" | "text"> {
+function textStyle(marks: TextMarks | undefined, defaultSizePt: number, headingBold?: boolean): Omit<TextSegment, "kind" | "text"> {
   return {
     sizePt: marks?.fontSizePt && marks.fontSizePt > 0 ? marks.fontSizePt : defaultSizePt,
-    face: pdfFaceForMarks(!!(marks?.bold || marks?.code), !!marks?.italic),
+    face: pdfFaceForMarks(!!(marks?.bold || marks?.code || headingBold), !!marks?.italic, marks?.fontFamily),
     color: marks?.color,
     background: marks?.background,
     underline: !!marks?.underline,
@@ -25,16 +26,16 @@ function textStyle(marks: TextMarks | undefined, defaultSizePt: number): Omit<Te
   };
 }
 
-export function inlineToSegments(children: Inline[], sizePt: number): Segment[] {
+export function inlineToSegments(children: Inline[], sizePt: number, opts?: { headingBold?: boolean }): Segment[] {
   const segs: Segment[] = [];
   let buf = "";
-  let style = textStyle(undefined, sizePt);
+  let style = textStyle(undefined, sizePt, opts?.headingBold);
   const flush = () => {
     if (buf) segs.push({ kind: "text", text: buf, ...style });
     buf = "";
   };
   const append = (text: string, marks?: TextMarks) => {
-    const next = textStyle(marks, sizePt);
+    const next = textStyle(marks, sizePt, opts?.headingBold);
     if (
       next.sizePt !== style.sizePt || next.face !== style.face || next.color !== style.color
       || next.background !== style.background || next.underline !== style.underline || next.strike !== style.strike
@@ -66,19 +67,19 @@ export function wrapSegs(segs: Segment[], maxWidth: number): Segment[][] {
   const flush = () => { if (cur.length) lines.push(cur); cur = []; curW = 0; };
   for (const s of segs) {
     if (s.kind === "rule") { flush(); continue; }
-    const w = s.kind === "text" ? helveticaWidthPt(s.text, s.sizePt) : s.kind === "math" ? s.math.widthPt + 8 : 0;
+    const w = s.kind === "text" ? segmentWidthPt(s.text, s.sizePt, s.face) : s.kind === "math" ? s.math.widthPt + 8 : 0;
     if (s.kind === "text") {
       for (const part of s.text.split(/(\s+)/)) {
         if (!part) continue;
         let rest = part;
         while (rest) {
-          const pw = helveticaWidthPt(rest, s.sizePt);
+          const pw = segmentWidthPt(rest, s.sizePt, s.face);
           if (curW + pw > maxWidth && cur.length) { flush(); continue; }
           if (pw > maxWidth && rest.length > 1) {
             let n = rest.length - 1;
-            while (n > 1 && helveticaWidthPt(rest.slice(0, n), s.sizePt) > maxWidth) n--;
+            while (n > 1 && segmentWidthPt(rest.slice(0, n), s.sizePt, s.face) > maxWidth) n--;
             cur.push(copyTextSeg(s, rest.slice(0, n)));
-            curW += helveticaWidthPt(rest.slice(0, n), s.sizePt);
+            curW += segmentWidthPt(rest.slice(0, n), s.sizePt, s.face);
             rest = rest.slice(n);
             flush();
           } else {
