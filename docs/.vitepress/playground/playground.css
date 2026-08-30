@@ -318,10 +318,18 @@
   padding: revert;
   border: revert;
   font-size: revert;
-  font-weight: revert;
   line-height: revert;
   letter-spacing: revert;
   color: inherit;
+  font-family: var(--pde-font-doc, "Velo Sans", sans-serif);
+}
+.vp-doc .pde-editor h1,
+.vp-doc .pde-editor h2,
+.vp-doc .pde-editor h3,
+.vp-doc .pde-editor h4,
+.vp-doc .pde-editor h5,
+.vp-doc .pde-editor h6 {
+  font-weight: 700;
 }
 .vp-doc .pde-editor code,
 .vp-doc .pde-editor :not(pre) > code {
