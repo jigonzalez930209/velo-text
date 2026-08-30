@@ -11,6 +11,7 @@
  */
 import type { PortableDocument, BlockNode, InlineNode, TextMarks, TableNode, TableRow, TableCell, IdGenerator } from "../../core/model/types.js";
 import { pxToUm } from "../../export/layout/units.js";
+import { resolveDocumentFont } from "../../fonts/catalog.js";
 
 export function nodeId(el: HTMLElement, idGen: IdGenerator): string {
   return el.getAttribute("data-node-id") || idGen.next();
@@ -92,7 +93,10 @@ export function parseInlines(root: HTMLElement, idGen: IdGenerator, marks: TextM
         const n = parseFloat(fs);
         extra.fontSizePt = fs.endsWith("px") ? Math.round(n * 72 / 96) : n;
       }
-      if (ff) extra.fontFamily = ff.replace(/['"]/g, "").split(",")[0]?.trim();
+      if (ff) {
+        const raw = ff.replace(/['"]/g, "").split(",")[0]?.trim();
+        extra.fontFamily = resolveDocumentFont(raw)?.cssName ?? raw;
+      }
       for (const c of Array.from(el.childNodes)) walk(c, extra);
     } else {
       for (const c of Array.from(el.childNodes)) walk(c, m);

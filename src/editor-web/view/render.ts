@@ -118,7 +118,7 @@ function renderInline(inline: InlineNode, resolve?: RenderOptions["resolveAssetU
       if (m.color) st.push(`color:${m.color}`);
       if (m.background) st.push(`background:${m.background}`);
       if (m.fontSizePt) st.push(`font-size:${m.fontSizePt}pt`);
-      if (m.fontFamily) st.push(`font-family:${m.fontFamily}`);
+      if (m.fontFamily) st.push(`font-family:"${String(m.fontFamily).replace(/"/g, '\\"')}"`);
       if (st.length) s = `<span style="${st.join(";")}">${s}</span>`;
       return s;
     }
