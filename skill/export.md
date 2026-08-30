@@ -33,7 +33,7 @@ Writers also exported: `PdfWriter`, `OdtWriter`, `DocxWriter`, `XmlWriter`, `Zip
 ## PDF specifics
 
 - Layout: µm, greedy line break, widows/orphans, keep-together for images/rows.
-- Fonts: Standard-14 Helvetica family + Symbol. Marks `color`, `fontSizePt`, bold/italic, underline/strike, highlight paint in the stream. Custom `fontFamily` → Helvetica in PDF.
+- Fonts: unmarked text is Standard-14 Helvetica + Symbol. The four document faces `Velo Sans`, `Velo Serif`, `Velo Mono`, `Velo Display` (`DOCUMENT_FONTS`) are generated TTF bytes injected as `@font-face` in the editor and embedded as `/FontFile2` in PDF — same outlines. Aliases: sans-serif, serif, monospace, cursive. Unknown families stay Helvetica with `pdf-font-family-ignored`.
 - Images: PNG area-average downscale to on-page size (96 dpi); JPEG passthrough. SVG: Office writers may PNG-fallback.
 - Diagnostics: `collectPdfDiagnostics` — unmapped LaTeX, skipped images, etc.
 - Page chrome in the editor (`setPagePreview`) uses `pdfPageMetrics` / `buildPdfPages` for size and count only.

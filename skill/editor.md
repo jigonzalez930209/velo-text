@@ -32,6 +32,8 @@ SSR/Astro: `renderDocumentToHtml` / `renderBlocksToHtml` at build; hydrate edito
 
 `insertBlock` types: paragraph, heading1–3, quote, listUnordered/Ordered, table, equationBlock, pageBreak, horizontalRule, columns.
 
+Document fonts: `DOCUMENT_FONTS` (`Velo Sans`, `Velo Serif`, `Velo Mono`, `Velo Display`). `setFontFamily` writes those names; PDF embeds the same TTF.
+
 Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells).
 
 ## DOM / input
