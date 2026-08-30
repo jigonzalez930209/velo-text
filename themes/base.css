@@ -14,6 +14,7 @@
   --pde-radius-sm: 4px;
   --pde-radius-md: 8px;
   --pde-font-ui: system-ui, sans-serif;
+  --pde-font-doc: "Velo Sans", sans-serif;
 }
 
 [data-pde-theme="light-warm"] {
@@ -32,6 +33,7 @@
   --pde-radius-sm: 4px;
   --pde-radius-md: 8px;
   --pde-font-ui: system-ui, sans-serif;
+  --pde-font-doc: "Velo Sans", sans-serif;
 }
 
 [data-pde-theme="dark-slate"] {
@@ -50,6 +52,7 @@
   --pde-radius-sm: 4px;
   --pde-radius-md: 8px;
   --pde-font-ui: system-ui, sans-serif;
+  --pde-font-doc: "Velo Sans", sans-serif;
 }
 
 [data-pde-theme="dark-contrast"] {
@@ -68,4 +71,5 @@
   --pde-radius-sm: 4px;
   --pde-radius-md: 8px;
   --pde-font-ui: system-ui, sans-serif;
+  --pde-font-doc: "Velo Sans", sans-serif;
 }

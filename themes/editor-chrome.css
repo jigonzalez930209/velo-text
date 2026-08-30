@@ -6,7 +6,7 @@
   padding: 28px 40px 48px 64px;
   background: var(--pde-color-bg);
   color: var(--pde-color-text);
-  font-family: var(--pde-font-ui);
+  font-family: var(--pde-font-doc, "Velo Sans", sans-serif);
   line-height: 1.6;
 }
 .pde-editor ::selection,
@@ -24,19 +24,22 @@
 .pde-editor > hr, .pde-editor > div {
   position: relative;
 }
-.pde-editor > p { margin: 0.85em 0; min-height: 1.2em; }
-.pde-editor > h1 { font-size: 2em; margin: 1.35em 0 0.55em; }
-.pde-editor > h2 { font-size: 1.5em; margin: 1.2em 0 0.45em; }
-.pde-editor > h3 { font-size: 1.17em; margin: 1.05em 0 0.4em; }
-.pde-editor > h4 { font-size: 1.05em; margin: 0.95em 0 0.35em; }
-.pde-editor > h5, .pde-editor > h6 { font-size: 1em; margin: 0.85em 0 0.3em; }
+.pde-editor > p { margin: 0.85em 0; min-height: 1.2em; font-family: inherit; }
+.pde-editor > h1 { font-size: 2em; margin: 1.35em 0 0.55em; font-family: inherit; font-weight: 700; }
+.pde-editor > h2 { font-size: 1.5em; margin: 1.2em 0 0.45em; font-family: inherit; font-weight: 700; }
+.pde-editor > h3 { font-size: 1.17em; margin: 1.05em 0 0.4em; font-family: inherit; font-weight: 700; }
+.pde-editor > h4 { font-size: 1.05em; margin: 0.95em 0 0.35em; font-family: inherit; font-weight: 700; }
+.pde-editor > h5, .pde-editor > h6 { font-size: 1em; margin: 0.85em 0 0.3em; font-family: inherit; font-weight: 700; }
 .pde-editor > ul, .pde-editor > ol {
   margin: 0.85em 0;
   padding-left: 1.6em;
+  font-family: inherit;
 }
+.pde-editor li { font-family: inherit; }
 .pde-editor > p:first-child,
 .pde-editor > h1:first-child { margin-top: 0; }
 .pde-editor > blockquote {
+  font-family: inherit;
   border-left: 3px solid var(--pde-color-primary, #3659e3);
   padding: 10px 14px 10px 16px;
   margin: 1.1em 0;
