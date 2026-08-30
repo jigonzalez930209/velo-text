@@ -32,10 +32,9 @@ Editor **page chrome** (`setPagePreview`) uses `pdfPageMetrics` / `buildPdfPages
 PortableDocument → validate → renderTemplate → PdfWriter (buildPdfPages + images + assemble)
 ```
 
-Page size and margins: `document.page` (same MediaBox). Fonts: Standard-14 Helvetica family + Symbol. Text marks `color`, `fontSizePt`, bold/italic, underline/strike, and highlight (`background`) are painted in the content stream. Custom `fontFamily` is still ignored until host-supplied TTF (roadmap). Images: PNG downscale / JPEG passthrough.
+Page size and margins: `document.page` (same MediaBox). Unmarked text uses Standard-14 Helvetica + Symbol. The four document faces **Velo Sans, Velo Serif, Velo Mono, Velo Display** (`DOCUMENT_FONTS`) share one generated TTF between editor `@font-face` and PDF `/FontFile2`. Marks `color`, `fontSizePt`, bold/italic, underline/strike, and highlight paint in the content stream. Images: PNG downscale / JPEG passthrough.
 
-> [!WARNING]
-> **PDF Font Limitation (v1.x):** The PDF exporter uses only the **Standard-14** font families (Helvetica, Times, Courier, Symbol). Custom `fontFamily` values set in the AST are rendered as Helvetica in PDF output. This is a known limitation — TTF embedding requires font licensing and subsetting infrastructure that is not yet included. ODT and DOCX exports correctly reference the specified font family, relying on the consuming application (LibreOffice, Word) to resolve it.
+> **Document fonts:** `createEditor` injects `ensureDocumentFonts`. `commands.setFontFamily("Velo Serif")` (aliases: `sans-serif`, `serif`, `monospace`, `cursive`) selects a face that PDF embeds. Unknown families still fall back to Helvetica (`pdf-font-family-ignored`). ODT/DOCX keep the family name for the host app to resolve.
 
 CI compares a raster of page 1 (`pdftoppm`, `pnpm run test:pdf-pages`) against `tests/visual/pdf-pages/`. That tool is not a client dependency.
 
