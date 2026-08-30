@@ -30,7 +30,7 @@ test("exportPdf: color and fontSizePt appear in the content stream", async () =>
   ]));
   const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
   const text = new TextDecoder().decode(a.bytes);
-  assert(text.includes("/F4 18 Tf"), text.slice(text.indexOf("stream"), text.indexOf("stream") + 400));
+  assert(text.includes("/Fb 18 Tf"), text.slice(text.indexOf("stream"), text.indexOf("stream") + 400));
   assert(text.includes("0.212 0.349 0.890 rg"), "color rg");
   const d = collectPdfDiagnostics(doc, {});
   assert(!d.some((x) => x.code === "pdf-marks-ignored"));

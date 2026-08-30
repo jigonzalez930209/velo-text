@@ -309,11 +309,12 @@ test("coverage90: latex, units, fonts, layout-structured", () => {
   assert(umToPx(25400) === 96);
   assert(clampUm(-1) === 0);
   assert(roundUm(1.4) === 1);
-  assert(pdfFaceForMarks(true, true) === "F5");
-  assert(pdfFontForMarks(true, false) === "Helvetica-Bold");
-  assert(pdfFontForMarks(false, true) === "Helvetica-Oblique");
-  assert(pdfFontForMarks(true, true) === "Helvetica-BoldOblique");
-  assert(pdfFontForMarks() === "Helvetica");
+  assert(pdfFaceForMarks(true, true, "Georgia") === "F5");
+  assert(pdfFontForMarks(true, false, "Georgia") === "Helvetica-Bold");
+  assert(pdfFontForMarks(false, true, "Georgia") === "Helvetica-Oblique");
+  assert(pdfFontForMarks(true, true, "Georgia") === "Helvetica-BoldOblique");
+  assert(pdfFontForMarks() === "LiberationSans");
+  assert(pdfFontForMarks(true, false) === "LiberationSans-Bold");
   const flow = {
     opts: {},
     diagnostics: [],

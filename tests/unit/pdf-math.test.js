@@ -6,6 +6,8 @@ import { decodePngImage, decodeImageForPdf, getInflate, ensureInflateLoaded } fr
 import { PdfWriter } from "../../dist/export/pdf/writer.js";
 import { buildPdfPages } from "../../dist/export/pdf/layout-pages.js";
 import { pageContentStream } from "../../dist/export/pdf/stream.js";
+import { cssColorToPdfRgb, paintTextRun } from "../../dist/export/pdf/paint.js";
+import { pdfFaceForMarks } from "../../dist/export/pdf/fonts.js";
 import { validatePdf } from "../../dist/export/validate.js";
 import { createDocument, createIdGenerator, createTable, createColumns, createParagraph, createText } from "../../dist/core/model/factories.js";
 import zlib from "node:zlib";
@@ -279,7 +281,7 @@ test("pdf: missing image placeholder does not crash", async () => {
   assert(total > 200);
 });
 
-test("pdf: custom columns stroke dashed slot boxes", () => {
+test("pdf: custom columns omit slot borders in PDF", () => {
   const g = createIdGenerator("cols");
   const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-27T12:00:00.000Z" } });
   const cols = createColumns(g, 2);
@@ -288,7 +290,7 @@ test("pdf: custom columns stroke dashed slot boxes", () => {
   doc.root.children.push(cols);
   const pages = buildPdfPages(doc);
   const { stream } = pageContentStream(pages[0], doc, new Map());
-  assert(/\[2.5 2\] 0 d/.test(stream), "dashed slot outline");
+  assert(!/\[2\.5 2\] 0 d/.test(stream), "no dashed slot outline in PDF");
   assert(stream.includes("Left") && stream.includes("Right"));
 });
 
@@ -310,4 +312,28 @@ test("pdf: image stays on one page instead of being split", () => {
   const img = page.lines.find((l) => l.line.style.startsWith("image "));
   assert(img.yPt > page.marginPt, "image top stays inside the page");
   assert(hits[0].i === pages.length - 1 || pages[hits[0].i + 1].lines.every((l) => !l.line.style.startsWith("image ")));
+});
+
+test("pdf: cssColorToPdfRgb parses rgb() marks from the editor", () => {
+  assert.equal(cssColorToPdfRgb("rgb(30, 102, 210)"), "0.118 0.400 0.824");
+  assert.equal(cssColorToPdfRgb("rgb(169, 160, 81)"), "0.663 0.627 0.318");
+  assert.equal(cssColorToPdfRgb("#1e66d2"), "0.118 0.400 0.824");
+  assert.equal(cssColorToPdfRgb("rgb(102, 112, 133)"), "0.400 0.439 0.522");
+});
+
+test("pdf: paintTextRun paints rgb foreground and background", () => {
+  const painted = paintTextRun("Kitchen sink", 72, 700, {
+    sizePt: 12,
+    color: "rgb(30, 102, 210)",
+    background: "rgb(169, 160, 81)",
+  });
+  assert(painted.ops.includes("0.118 0.400 0.824 rg"), "blue foreground");
+  assert(painted.ops.includes("0.663 0.627 0.318 rg"), "olive background");
+});
+
+test("pdf: italic uses document faces for all families", () => {
+  assert.equal(pdfFaceForMarks(false, true), "Fi");
+  assert.equal(pdfFaceForMarks(true, true, "Velo Serif"), "Fl");
+  assert.equal(pdfFaceForMarks(false, true, "Velo Mono"), "Fm");
+  assert.equal(pdfFaceForMarks(true, true, "Velo Display"), "Fp");
 });
