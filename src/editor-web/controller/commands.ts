@@ -4,7 +4,8 @@ import { createText, createImageBlock, createTable, createParagraph, createHeadi
 import type { EditorState, InsertBlockType } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import { commitInsert, commitInsertMany, deleteCurrent, insertAfterId } from "./nesting.js";
-import { indent, insertLink, setColor, setFontFamily, setFontSizePt, setHighlight } from "./format-commands.js";
+import type { SavedTextSelection } from "./format-commands.js";
+import { captureTextOffsets, captureTextSelection, indent, insertLink, restoreTextOffsets, setColor, setFontFamily, setFontSizePt, setHighlight } from "./format-commands.js";
 import { syncImageResizeOverlay } from "./image-resize.js";
 
 export function makeBlock(s: EditorState, type: InsertBlockType): BlockNode {
@@ -68,7 +69,9 @@ export function bindCommands(s: EditorState) {
       insertAfterId(s, s.blockIdOf(blockEl), makeBlock(s, type));
     },
     toggleMark(mark: string): void {
+      const saved = captureTextOffsets(s);
       s.container.focus();
+      if (saved) restoreTextOffsets(s, saved);
       const cmd = MARK_CMDS[mark];
       if (cmd) exec(s, cmd);
       else if (mark === "code") wrapSelection("code");
@@ -90,7 +93,7 @@ export function bindCommands(s: EditorState) {
       s.syncFromDom();
     },
     setAlign(align: string): void {
-      const target = alignTarget(s);
+      const target = alignTarget(s) ?? s.blockElements()[0] ?? null;
       if (!target) return;
       target.style.textAlign = align;
       if (target.matches("td, th")) {
@@ -102,7 +105,9 @@ export function bindCommands(s: EditorState) {
       syncImageResizeOverlay(s);
     },
     clearFormat(): void {
+      const saved = captureTextOffsets(s);
       s.container.focus();
+      if (saved) restoreTextOffsets(s, saved);
       exec(s, "removeFormat");
       s.syncFromDom();
     },
@@ -156,8 +161,8 @@ export function bindCommands(s: EditorState) {
     },
     setColor(color: string): void { setColor(s, color); },
     setHighlight(color: string): void { setHighlight(s, color); },
-    setFontFamily(family: string): void { setFontFamily(s, family); },
-    setFontSizePt(pt: number): void { setFontSizePt(s, pt); },
+    setFontFamily(family: string, saved?: SavedTextSelection | null): void { setFontFamily(s, family, saved); },
+    setFontSizePt(pt: number, saved?: SavedTextSelection | null): void { setFontSizePt(s, pt, saved); },
     indent(delta = 1): void { indent(s, delta); },
     insertLink(href: string): void { insertLink(s, href); },
   };

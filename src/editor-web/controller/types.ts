@@ -54,8 +54,8 @@ export interface Editor {
     deleteCurrentBlock(): void;
     setColor(color: string): void;
     setHighlight(color: string): void;
-    setFontFamily(family: string): void;
-    setFontSizePt(pt: number): void;
+    setFontFamily(family: string, saved?: { blockId: string; start: number; end: number } | null): void;
+    setFontSizePt(pt: number, saved?: { blockId: string; start: number; end: number } | null): void;
     indent(delta?: number): void;
     insertLink(href: string): void;
   };
@@ -66,6 +66,7 @@ export interface Editor {
   setPagePreview(on: boolean): void;
   getOutline(): Array<{ id: string; level: 1 | 2 | 3; text: string }>;
   focusBlock(id: string): boolean;
+  captureTextSelection(): { blockId: string; start: number; end: number } | null;
   destroy(): void;
 }
 

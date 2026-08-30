@@ -18,6 +18,8 @@ import { attachColumnsUi } from "./columns-ui.js";
 import { attachVariableUi } from "./variable-ui.js";
 import { attachEditing, composingOf } from "./host.js";
 import { attachHostUx } from "../ux/attach.js";
+import { ensureDocumentFonts } from "../../fonts/index.js";
+import { captureTextSelection } from "./format-commands.js";
 
 export type { Editor, EditorOptions, InsertBlockType } from "./types.js";
 export { openSizePicker, openMosaicPicker, clampTableSize } from "./size-picker.js";
@@ -34,6 +36,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
   const ownerDoc = container.ownerDocument;
 
   container.classList.add("pde-editor");
+  ensureDocumentFonts(ownerDoc);
   container.setAttribute("contenteditable", opts.editable === false ? "false" : "true");
   const wrapper = ownerDoc.createElement("div");
   wrapper.className = "pde-editor-wrapper";
@@ -173,6 +176,7 @@ export function createEditor(container: HTMLElement, opts: EditorOptions): Edito
     setPagePreview: ux.setPagePreview,
     getOutline: ux.getOutline,
     focusBlock: ux.focusBlock,
+    captureTextSelection: () => captureTextSelection(s),
     destroy() {
       s.destroyed = true;
       cleanup.forEach((fn) => fn());
