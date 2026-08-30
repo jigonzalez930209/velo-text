@@ -6,6 +6,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 
 ### Added
 - CLI `npx velo-text@beta skill` / `pnpx velo-text@beta skill` installs the agent skill into `.cursor/skills` and `.agents/skills`
+- Four document faces (Velo Sans / Serif / Mono / Display): same TTF in the editor and PDF FontFile2
 
 
 

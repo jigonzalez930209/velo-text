@@ -130,7 +130,7 @@ All colors/sizes via CSS variables (`--pde-*`). Override any token:
 
 ## Known Limitations
 
-- **PDF fonts:** Only Standard-14 families (Helvetica, Times, Courier, Symbol). Custom `fontFamily` falls back to Helvetica in PDF. ODT/DOCX correctly reference the font.
+- **PDF fonts:** Unmarked text uses Standard-14 Helvetica. **Velo Sans / Serif / Mono / Display** are the same generated TTF in the editor and in PDF. Other `fontFamily` values fall back to Helvetica. ODT/DOCX keep the family name.
 - **Office interop:** ODT/DOCX validated structurally (XML/ZIP) and via LibreOffice headless in CI. Full visual parity with PDF is not yet guaranteed.
 - **PostgreSQL / S3:** Adapters provide typed contracts with in-memory implementations. Real PG driver and S3 SDK are not bundled (zero-deps policy). See `docker-compose.test.yml` for local integration testing.
 
