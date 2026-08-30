@@ -22,3 +22,5 @@ import { themes, themeCss, allThemesCss } from "velo-text";
 ```
 
 Files: `themes/base.css`, `themes/components.css`. Icons via `currentColor`. Equations: `equationCss`. High-contrast / WCAG AA for the four presets (`checkContrast`).
+
+Document text faces (not UI chrome): `DOCUMENT_FONTS` — Velo Sans / Serif / Mono / Display. `createEditor` calls `ensureDocumentFonts` so `@font-face` matches PDF.

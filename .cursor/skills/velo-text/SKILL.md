@@ -40,7 +40,7 @@ Read the matching file before coding that area (one level deep):
 - Core: no `window`, `document`, `fs`. Ports only: `Clock`, `IdGenerator`, `BinarySink`, `AssetResolver`.
 - Editor DOM is **only** `createEditor` / `mountVanillaEditor`. Do not reconcile VDOM inside the host. `destroy()` on unmount. Toolbar `mousedown` → `preventDefault`.
 - One PDF engine: `exportPdf` / `previewPdf` / `exportDocument({ format: "pdf" })`. Editor `setPagePreview` is chrome (metrics), not a second paginator.
-- PDF fonts: Standard-14 (Helvetica family). Custom `fontFamily` is ignored in PDF; ODT/DOCX keep the family name.
+- PDF fonts: unmarked text is Standard-14 Helvetica + Symbol. `Velo Sans`, `Velo Serif`, `Velo Mono`, `Velo Display` are the same TTF in the editor (`ensureDocumentFonts`) and in PDF (`FontFile2`).
 - Server fill: `velo-text/api-report` + `velo-text/export` + `velo-text/backend`. Do not import `"velo-text"` on the server if you must keep the editor out of the bundle.
 - Nested `table`/`columns` max depth **3**. Variables and equations are atomic (`contenteditable=false`).
 - JSON Schema: `schemas/portable-doc-v1.json`. Locale default `es-AR`. Page default A4 µm.
