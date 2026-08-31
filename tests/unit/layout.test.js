@@ -34,10 +34,10 @@ test("text: hard break handling", () => {
   assert(lines.some((l) => l.text === "line2"));
 });
 
-test("text: findMissingGlyphs flags beyond BMP", () => {
+test("text: findMissingGlyphs flags unencodable PDF chars", () => {
   const missing = findMissingGlyphs("hello 🌍");
-  // Emoji beyond 0x1f000 should not be flagged as missing (allowed fallback)
-  assert(missing.length === 0 || missing.includes("🌍") === false);
+  assert(missing.includes("🌍"));
+  assert.equal(findMissingGlyphs("Información — Niño").length, 0);
 });
 
 test("text: font metrics deterministic", () => {

@@ -81,3 +81,30 @@ test("exportPdf: columns default va-top and include list text", async () => {
   const text = Buffer.from(a.bytes).toString("latin1");
   assert(text.includes("Narrow") && text.includes("WideItem"));
 });
+
+test("exportPdf: Spanish accents use WinAnsi with full font widths", async () => {
+  const g = createIdGenerator("pdfes");
+  const clock = { nowIso: () => "2026-08-28T12:00:00.000Z" };
+  const doc = createDocument({ idGenerator: g, clock });
+  doc.root.children.push(createParagraph(g, [
+    createText(g, "Información técnica — Niño español ¿Sí? € … «texto» −5"),
+  ]));
+  const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
+  const text = Buffer.from(a.bytes).toString("latin1");
+  const lower = text.toLowerCase();
+  assert(lower.includes("\\363") || lower.includes("00f3"), "ó encoded for PDF");
+  assert(lower.includes("\\361") || lower.includes("00f1"), "ñ encoded for PDF");
+  assert(lower.includes("\\277") || lower.includes("00bf"), "¿ encoded for PDF");
+  assert(text.includes("/LastChar 255"), "font Widths cover Latin-1");
+  assert(!text.includes("InformaciÃ"), "no UTF-8 mojibake");
+  const d = collectPdfDiagnostics(doc, {});
+  assert(!d.some((x) => x.code === "pdf-unmapped-char"), JSON.stringify(d));
+});
+
+test("collectPdfDiagnostics: unmapped Unicode in plain text", () => {
+  const g = createIdGenerator("pdfuni");
+  const doc = createDocument({ idGenerator: g, clock: { nowIso: () => "2026-08-28T12:00:00.000Z" } });
+  doc.root.children.push(createParagraph(g, [createText(g, "emoji 😀 and 中文")]));
+  const d = collectPdfDiagnostics(doc, {});
+  assert(d.some((x) => x.code === "pdf-unmapped-char"), JSON.stringify(d));
+});

@@ -28,6 +28,9 @@ test("four document fonts resolve and produce distinct OFL TTF", () => {
   const pdfW = pdfWidths1000(documentFontBytes("sans"));
   assert.equal(pdfW[0], 278, "PDF /Widths use 1/1000 text space");
   assert.equal(pdfW[65 - 32], 667, "PDF /Widths for A");
+  assert.equal(pdfW.length, 224, "PDF /Widths cover WinAnsi 32–255");
+  assert(widths[0xbf - 32] !== widths[11], "¿ must not use ASCII fallback width");
+  assert.equal(widths[0xf3 - 32], widths["o".charCodeAt(0) - 32], "ó uses cmap advance");
   const families = new Set(DOCUMENT_FONTS.map((f) => documentFontBytes(f.id).byteLength));
   assert.equal(families.size, 4);
 });
@@ -94,6 +97,8 @@ test("exportPdf embeds Liberation TTF for all four faces", async () => {
   assert(text.includes("/BaseFont /LiberationSansNarrow"));
   assert(text.includes("/FontFile2"));
   assert(text.includes("/Widths [278"), "PDF Widths must be scaled to 1/1000 em");
+  assert(text.includes("/LastChar 255"), "embedded fonts must cover WinAnsi Latin-1");
+  assert(text.includes("/ToUnicode "), "embedded fonts need ToUnicode for Chrome");
   assert(!text.includes("/Widths [569"), "must not embed raw 2048-em hmtx advances (Chrome stacks glyphs)");
   assert(/\/Fa \d+ Tf/.test(text));
   const d = collectPdfDiagnostics(doc, {});
