@@ -1,4 +1,11 @@
-/** Minimal TTF cmap format-4 + hmtx parser for WinAnsi widths (32–126). */
+import {
+  PDF_WINANSI_FIRST,
+  PDF_WINANSI_LAST,
+  mapCharToPdfWinAnsi,
+  winAnsiToUnicode,
+} from "./win-ansi.js";
+
+/** Minimal TTF cmap format-4 + hmtx parser for WinAnsi widths (32–255). */
 
 function u16(buf: Uint8Array, off: number): number {
   return (buf[off]! << 8) | buf[off + 1]!;
@@ -59,8 +66,24 @@ function cmapGlyph(buf: Uint8Array, cp: number): number {
   return 0;
 }
 
+function glyphAdvance(buf: Uint8Array, cp: number): number {
+  const maxp = tableOffset(buf, "maxp");
+  const hhea = tableOffset(buf, "hhea");
+  const hmtx = tableOffset(buf, "hmtx");
+  const numGlyphs = maxp >= 0 ? u16(buf, maxp + 4) : 0;
+  const longMetrics = hhea >= 0 ? u16(buf, hhea + 34) : numGlyphs;
+  const gid = cmapGlyph(buf, cp);
+  if (gid < longMetrics && hmtx >= 0) return u16(buf, hmtx + gid * 4);
+  if (longMetrics > 0 && hmtx >= 0) return u16(buf, hmtx + (longMetrics - 1) * 4);
+  return 600;
+}
+
+function advance1000(buf: Uint8Array, cp: number, unitsPerEm: number): number {
+  return Math.round(glyphAdvance(buf, cp) * 1000 / unitsPerEm);
+}
+
 export interface TtfMetrics {
-  /** advance widths per WinAnsi char code 32–126 */
+  /** advance widths per WinAnsi char code 32–255 */
   widths: number[];
   unitsPerEm: number;
 }
@@ -70,20 +93,11 @@ const cache = new WeakMap<Uint8Array, TtfMetrics>();
 export function parseTtfMetrics(buf: Uint8Array): TtfMetrics {
   let m = cache.get(buf);
   if (m) return m;
-  const maxp = tableOffset(buf, "maxp");
-  const hhea = tableOffset(buf, "hhea");
-  const hmtx = tableOffset(buf, "hmtx");
   const head = tableOffset(buf, "head");
-  const numGlyphs = maxp >= 0 ? u16(buf, maxp + 4) : 0;
-  const longMetrics = hhea >= 0 ? u16(buf, hhea + 34) : numGlyphs;
   const unitsPerEm = head >= 0 ? u16(buf, head + 18) : 1000;
   const widths: number[] = [];
-  for (let cp = 32; cp <= 126; cp++) {
-    const gid = cmapGlyph(buf, cp);
-    let adv = 600;
-    if (gid < longMetrics && hmtx >= 0) adv = u16(buf, hmtx + gid * 4);
-    else if (longMetrics > 0 && hmtx >= 0) adv = u16(buf, hmtx + (longMetrics - 1) * 4);
-    widths.push(adv);
+  for (let byte = PDF_WINANSI_FIRST; byte <= PDF_WINANSI_LAST; byte++) {
+    widths.push(glyphAdvance(buf, winAnsiToUnicode(byte)));
   }
   m = { widths, unitsPerEm };
   cache.set(buf, m);
@@ -91,8 +105,9 @@ export function parseTtfMetrics(buf: Uint8Array): TtfMetrics {
 }
 
 export function ttfCharWidth(buf: Uint8Array, ch: string, sizePt: number): number {
-  const cp = ch.codePointAt(0) ?? 63;
-  const idx = cp >= 32 && cp <= 126 ? cp - 32 : -1;
+  const byte = mapCharToPdfWinAnsi(ch);
+  if (byte === null) return 0;
+  const idx = byte >= PDF_WINANSI_FIRST && byte <= PDF_WINANSI_LAST ? byte - PDF_WINANSI_FIRST : -1;
   const { widths, unitsPerEm } = parseTtfMetrics(buf);
   const adv = idx >= 0 ? widths[idx]! : widths[11] ?? 600; // 'I' fallback
   return adv * sizePt / unitsPerEm;
@@ -102,6 +117,17 @@ export function ttfTextWidth(buf: Uint8Array, text: string, sizePt: number): num
   let w = 0;
   for (const ch of text) w += ttfCharWidth(buf, ch, sizePt);
   return w;
+}
+
+/** PDF CIDFont /W array for Identity-H (ASCII + Latin-1). */
+export function pdfCidWArray(buf: Uint8Array): string {
+  const head = tableOffset(buf, "head");
+  const unitsPerEm = head >= 0 ? u16(buf, head + 18) : 1000;
+  const ascii: number[] = [];
+  for (let cp = 32; cp <= 126; cp++) ascii.push(advance1000(buf, cp, unitsPerEm));
+  const latin: number[] = [];
+  for (let cp = 160; cp <= 255; cp++) latin.push(advance1000(buf, cp, unitsPerEm));
+  return `32 [${ascii.join(" ")}] 160 [${latin.join(" ")}]`;
 }
 
 /** PDF TrueType /Widths entries are in thousandths of the text space (not font units). */
