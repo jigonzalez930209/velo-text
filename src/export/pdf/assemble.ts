@@ -1,14 +1,15 @@
 import type { Clock, PortableDocument } from "../../core/model/types.js";
 import type { DecodedImage } from "./image.js";
+import { pdfLatin1 } from "./latin1.js";
 import { pdfEscape, type PdfPage } from "./pdf-model.js";
 import { collectDocumentFaces } from "./fonts.js";
 import { pdfTrueTypeObjects } from "./ttf-embed.js";
 import { pageContentStream } from "./stream.js";
 
-const enc = new TextEncoder();
+const enc = pdfLatin1;
 
 function u8(s: string): Uint8Array {
-  return enc.encode(s);
+  return enc(s);
 }
 
 function concat(parts: Uint8Array[]): Uint8Array {

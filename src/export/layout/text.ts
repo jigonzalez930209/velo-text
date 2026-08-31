@@ -5,6 +5,8 @@
  * ensuring backend/frontend parity and determinism. Real font shaping is deferred.
  */
 
+import { findUnmappedPdfChars } from "../../fonts/win-ansi.js";
+
 export interface FontMetrics {
   family: string;
   sizePt: number;
@@ -126,21 +128,8 @@ export function estimateRunWidth(run: TextRun, maxWidthUm: number): number {
 }
 
 /**
- * Check for missing glyphs — for MVP we consider all BMP characters as present.
- * Returns list of code points not in the assumed font coverage.
+ * Characters not encodable in PDF WinAnsi (will appear as "?").
  */
 export function findMissingGlyphs(text: string): string[] {
-  const missing: string[] = [];
-  for (const ch of text) {
-    const cp = ch.codePointAt(0) ?? 0;
-    // Assume font covers Basic Latin + Latin-1 + common punctuation up to 0x4FF (Cyrillic)
-    // Anything beyond is flagged as missing for diagnostics
-    if (cp > 0x4ff && cp < 0x1f000) {
-      // Allow CJK and emoji as fallback (not missing, just fallback)
-      if (cp >= 0x4e00 && cp <= 0x9fff) continue;
-      if (cp >= 0xac00 && cp <= 0xd7af) continue;
-      missing.push(ch);
-    }
-  }
-  return [...new Set(missing)];
+  return findUnmappedPdfChars(text);
 }

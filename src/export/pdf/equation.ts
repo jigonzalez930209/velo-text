@@ -10,6 +10,8 @@
  * a baseline (y=0), plus optional filled rules for fraction bars and sqrt overlines.
  */
 
+import { mapCharToPdfWinAnsi } from "../../fonts/win-ansi.js";
+
 export type MathFont = "Helvetica" | "Symbol";
 
 export interface MathRun {
@@ -298,16 +300,17 @@ export function mathVisualExtents(math: MathBox): { abovePt: number; belowPt: nu
   };
 }
 
-/**
- * PDF literal string bytes from a latin-1 string (for Symbol font glyphs > 127).
- */
+/** PDF literal string for Symbol / Type1 fonts (WinAnsi bytes, not UTF-8). */
 export function pdfLiteralString(str: string): string {
   let out = "(";
-  for (const ch of str) {
-    const c = ch.codePointAt(0)!;
-    if (c === 40 || c === 41 || c === 92) out += "\\" + ch;
-    else if (c < 128) out += ch;
-    else out += `\\${c.toString(8).padStart(3, "0")}`;
+  for (const ch of str.normalize("NFC")) {
+    const b = mapCharToPdfWinAnsi(ch);
+    if (b === null) continue;
+    if (b === 0x5c) out += "\\\\";
+    else if (b === 0x28) out += "\\(";
+    else if (b === 0x29) out += "\\)";
+    else if (b < 128) out += String.fromCharCode(b);
+    else out += `\\${b.toString(8).padStart(3, "0")}`;
   }
   return out + ")";
 }

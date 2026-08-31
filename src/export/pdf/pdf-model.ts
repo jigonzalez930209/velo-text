@@ -1,22 +1,35 @@
+import { mapCharToPdfWinAnsi } from "../../fonts/win-ansi.js";
 import type { MathBox } from "./equation.js";
 import type { PdfFace } from "./fonts.js";
 
-/** Map Unicode to WinAnsi (Helvetica) octal so bullets are not UTF-8 mojibake. */
-const WINANSI: Record<number, number> = {
-  0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x2018: 0x91, 0x2019: 0x92,
-  0x201c: 0x93, 0x201d: 0x94, 0x2026: 0x85, 0x20ac: 0x80, 0x00a0: 0x20,
-};
-
+/** Escape PDF literal strings as WinAnsi bytes (not UTF-8 mojibake). */
 export function pdfEscape(str: string): string {
   let out = "";
-  for (const ch of String(str)) {
-    if (ch === "\\" || ch === "(" || ch === ")") { out += `\\${ch}`; continue; }
-    const cp = ch.codePointAt(0) ?? 63;
-    if (cp < 128) { out += ch; continue; }
-    const b = WINANSI[cp] ?? (cp < 256 ? cp : 0x3f);
+  for (const ch of str.normalize("NFC")) {
+    const b = mapCharToPdfWinAnsi(ch);
+    if (b === null) continue;
+    if (b === 0x5c) { out += "\\\\"; continue; }
+    if (b === 0x28) { out += "\\("; continue; }
+    if (b === 0x29) { out += "\\)"; continue; }
+    if (b < 128) { out += String.fromCharCode(b); continue; }
     out += `\\${b.toString(8).padStart(3, "0")}`;
   }
   return out;
+}
+
+/** UTF-16BE hex string for Identity-H embedded fonts (Chrome-safe Unicode). */
+export function pdfUtf16Hex(str: string): string {
+  let hex = "<";
+  for (const ch of str.normalize("NFC")) {
+    const cp = ch.codePointAt(0) ?? 0x3f;
+    if (cp <= 0xffff) hex += cp.toString(16).padStart(4, "0");
+    else {
+      const adj = cp - 0x10000;
+      hex += (0xd800 + (adj >> 10)).toString(16).padStart(4, "0");
+      hex += (0xdc00 + (adj & 0x3ff)).toString(16).padStart(4, "0");
+    }
+  }
+  return `${hex}>`;
 }
 
 export type TextSegment = {
