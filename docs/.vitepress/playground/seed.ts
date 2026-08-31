@@ -15,7 +15,7 @@ import {
 } from "velo-text";
 import { samplePngBytes, sampleSvgBytes } from "./seed-assets.ts";
 
-export const PLAYGROUND_LS = "pde-playground-doc-v4";
+export const PLAYGROUND_LS = "pde-playground-doc-v5";
 const PNG_ID = "asset_png_demo";
 const SVG_ID = "asset_svg_demo";
 
@@ -69,6 +69,7 @@ export function buildSampleDocument(): { doc: PortableDocument; bytes: Record<st
       tx(g, "strike", { strike: true }), tx(g, ", "),
       tx(g, "code", { code: true }), tx(g, ", color, size, fonts, lists, table, columns, images, SVG, equations, link, break, HR."),
     ]),
+    createParagraph(g, [tx(g, "Información, Niño, ¿Sí?, ¡Hola!")]),
     createHeading(g, 2, [tx(g, "Headings")]),
     createHeading(g, 3, [tx(g, "Heading 3")]),
     createHeading(g, 4, [tx(g, "Heading 4")]),
