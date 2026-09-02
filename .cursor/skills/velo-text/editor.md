@@ -32,7 +32,7 @@ SSR/Astro: `renderDocumentToHtml` / `renderBlocksToHtml` at build; hydrate edito
 
 `insertBlock` types: paragraph, heading1–3, quote, listUnordered/Ordered, table, equationBlock, pageBreak, horizontalRule, columns.
 
-Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells).
+Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells). Toolbar and table/column bars wrap; size via `--pde-icon-size` / `--pde-control-size`.
 
 ## DOM / input
 
