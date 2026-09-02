@@ -111,13 +111,13 @@
   position: absolute;
   z-index: 28;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
   padding: 4px;
   width: max-content;
-  max-width: 100%;
-  overflow-x: auto;
+  max-width: min(100%, 28rem);
+  overflow: visible;
   border: 1px solid var(--pde-color-border);
   background: var(--pde-color-surface);
   border-radius: var(--pde-radius-md);
@@ -126,8 +126,8 @@
   font-family: var(--pde-font-ui);
 }
 .pde-table-bar button {
-  min-width: 28px;
-  height: 28px;
+  min-width: var(--pde-control-size, 28px);
+  height: var(--pde-control-size, 28px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -158,6 +158,7 @@
   padding: 8px;
   margin: 0 auto 16px;
   max-width: 860px;
+  overflow: visible;
   background: var(--pde-color-surface);
   border: 1px solid var(--pde-color-border);
   border-radius: var(--pde-radius-md);
@@ -165,6 +166,8 @@
 }
 .pde-toolbar-group {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 2px;
   padding: 0 6px;
   border-right: 1px solid var(--pde-color-border);
@@ -174,8 +177,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--pde-control-size, 28px);
+  height: var(--pde-control-size, 28px);
   border: none;
   border-radius: var(--pde-radius-sm);
   background: none;
@@ -280,8 +283,8 @@
   max-width: min(100%, 360px);
 }
 .pde-sel-bubble button {
-  min-width: 28px;
-  height: 28px;
+  min-width: var(--pde-control-size, 28px);
+  height: var(--pde-control-size, 28px);
   display: inline-flex;
   align-items: center;
   justify-content: center;

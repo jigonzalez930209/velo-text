@@ -54,7 +54,7 @@ test("equation: latexToHtml maps extra greek and operators", () => {
 test("icons: getIconSvg uses currentColor by default", () => {
   const svg = getIconSvg("bold");
   assert(svg.includes("currentColor"));
-  assert(svg.includes('width="18"'));
+  assert(svg.includes('width="16"'));
 });
 
 test("icons: color override works", () => {

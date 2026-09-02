@@ -140,7 +140,7 @@ const VIEWBOX = "0 0 24 24";
 export function getIconSvg(name: IconName, opts: IconOptions = {}): string {
   const inner = ICONS[name];
   if (!inner) throw new Error(`Unknown icon: ${name}`);
-  const size = opts.size ?? 18;
+  const size = opts.size ?? 16;
   const color = opts.color ?? "currentColor";
   const strokeWidth = opts.strokeWidth ?? 2;
   const klass = ["pde-icon", `pde-icon--${name}`, opts.className].filter(Boolean).join(" ");
@@ -166,6 +166,8 @@ export const iconCss = `
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
+  width: var(--pde-icon-size, 16px);
+  height: var(--pde-icon-size, 16px);
   color: var(--pde-icon-color, currentColor);
   pointer-events: none;
 }

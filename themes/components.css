@@ -2,6 +2,12 @@
 @import "./editor-overlays.css";
 @import "./editor-columns.css";
 
+/* Chrome metrics — override on the host (`data-pde-theme` / `.pde-host`). */
+[data-pde-theme] {
+  --pde-icon-size: 16px;
+  --pde-control-size: 28px;
+}
+
 [data-pde-theme="light-neutral"] {
   --pde-color-bg: #ffffff;
   --pde-color-surface: #f7f8fa;
@@ -120,6 +126,8 @@
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
+  width: var(--pde-icon-size, 16px);
+  height: var(--pde-icon-size, 16px);
   color: var(--pde-icon-color, currentColor);
 }
 .pde-toolbar .pde-icon {

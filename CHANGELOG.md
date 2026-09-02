@@ -8,6 +8,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 - CLI `npx velo-text@beta skill` / `pnpx velo-text@beta skill` installs the agent skill into `.cursor/skills` and `.agents/skills`
 - Four document faces (Velo Sans / Serif / Mono / Display): same TTF in the editor and PDF FontFile2
 
+### Changed
+- Toolbar and table chrome wrap instead of nested horizontal scroll
+- Chrome metrics via `--pde-icon-size` / `--pde-control-size` (default 16px / 28px); hosts override on `[data-pde-theme]`
+
 
 
 
