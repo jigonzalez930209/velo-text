@@ -34,7 +34,7 @@ SSR/Astro: `renderDocumentToHtml` / `renderBlocksToHtml` at build; hydrate edito
 
 Document fonts: `DOCUMENT_FONTS` (`Velo Sans`, `Velo Serif`, `Velo Mono`, `Velo Display`). `setFontFamily` writes those names; PDF embeds the same TTF.
 
-Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells).
+Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells). Toolbar and table/column bars wrap; size via `--pde-icon-size` / `--pde-control-size`.
 
 ## DOM / input
 

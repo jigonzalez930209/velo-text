@@ -7,6 +7,8 @@ Tokens only — no color literals outside theme CSS.
   --pde-color-bg: #ffffff;
   --pde-color-primary: /* override */;
   --pde-icon-color: currentColor;
+  --pde-icon-size: 16px;
+  --pde-control-size: 28px;
 }
 ```
 

@@ -18,7 +18,16 @@ Four presets in `src/theme/index.ts`:
 
 Each is ` [data-pde-theme="..."]` assignment. Consumers can override one or all.
 
-Icons use `currentColor` → `var(--pde-icon-color, currentColor)` → recolorable via `themes/components.css` and `src/assets/icons/index.ts:iconCss`.
+Icons use `currentColor` → `var(--pde-icon-color, currentColor)`. Chrome size is `--pde-icon-size` (default `16px`, same as typical app sidebars) and `--pde-control-size` (hit target, default `28px`). Override on the host:
+
+```css
+.pde-host, [data-pde-theme] {
+  --pde-icon-size: 1rem;
+  --pde-control-size: 1.75rem;
+}
+```
+
+Do not add a second size API on `createEditor` — CSS tokens are the contract.
 
 Equation style via `src/core/equation/index.ts:equationCss` (frac, sqrt).
 
