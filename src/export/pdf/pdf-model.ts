@@ -60,6 +60,18 @@ export interface PdfLine {
   style: string;
 }
 
+export interface PdfHeadingAnchor {
+  id: string;
+  title: string;
+  level: number;
+  yPt: number;
+}
+
+export interface PdfTocLink {
+  rectPt: [number, number, number, number];
+  headingId: string;
+}
+
 export interface PdfPage {
   lines: Array<{ line: PdfLine; yPt: number }>;
   widthPt: number;
@@ -67,6 +79,8 @@ export interface PdfPage {
   marginPt: number;
   marginRightPt?: number;
   pageNumber?: number;
+  headings?: PdfHeadingAnchor[];
+  tocLinks?: PdfTocLink[];
   objNum?: number;
 }
 

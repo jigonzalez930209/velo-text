@@ -149,7 +149,14 @@ export interface SectionBreakBlockNode {
   settings?: SectionSettings;
 }
 
-export type SectionBreakBlock = SectionBreakBlockNode;
+export interface TableOfContentsBlockNode {
+  type: "table-of-contents";
+  id: NodeId;
+  maxDepth?: 1 | 2 | 3 | 4 | 5 | 6;
+  leaderStyle?: "dots" | "line" | "none";
+}
+
+export type TableOfContentsBlock = TableOfContentsBlockNode;
 
 export type BlockNode =
   | ParagraphNode
@@ -162,7 +169,8 @@ export type BlockNode =
   | HorizontalRuleNode
   | EquationBlockNode
   | ColumnsNode
-  | SectionBreakBlockNode;
+  | SectionBreakBlockNode
+  | TableOfContentsBlockNode;
 
 export interface RootNode {
   type: "root";

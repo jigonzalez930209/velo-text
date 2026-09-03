@@ -1,6 +1,6 @@
-import type { HeaderFooterZone, InlineNode, PortableDocument, SectionSettings } from "../../core/model/types.js";
+import type { HeaderFooterZone, HeadingNode, InlineNode, PortableDocument, SectionSettings } from "../../core/model/types.js";
 import { parseMath } from "./equation.js";
-import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
+import type { PdfHeadingAnchor, PdfLine, PdfPage, PdfTocLink, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
 import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
 import { emitColumns } from "./layout-columns.js";
@@ -87,7 +87,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
 
   for (const b of doc.root.children) {
     if (b.type === "paragraph") wrap(inlineToSegments(b.children as never, 11), (b as { align?: string }).align ?? "left", "paragraph", 11);
-    else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", "heading", 20 - b.level * 2);
+    else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", `heading ${b.id} ${b.level}`, 20 - b.level * 2);
     else if (b.type === "quote") wrap(inlineToSegments(b.children as never, 11), "left", "quote", 11);
     else if (b.type === "list") {
       for (const it of b.items) {
@@ -126,6 +126,21 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         align: "left",
         style: `section-break ${JSON.stringify(b.settings ?? {})}`,
       });
+    } else if (b.type === "table-of-contents") {
+      const maxDepth = b.maxDepth ?? 3;
+      const leaderStyle = b.leaderStyle ?? "dots";
+      const headings = doc.root.children.filter((c): c is HeadingNode => c.type === "heading" && c.level <= maxDepth);
+      for (const h of headings) {
+        const title = (h.children ?? []).map((c) => (c.type === "text" ? c.text : "")).join("");
+        const indent = (h.level - 1) * 16;
+        lines.push({
+          segments: [{ kind: "text", text: title, sizePt: 10, face: h.level === 1 ? "F4" : "F1" }],
+          yPt: 0,
+          sizePt: 10,
+          align: "left",
+          style: `toc-entry ${h.id} ${h.level} ${indent} ${leaderStyle}`,
+        });
+      }
     } else if (b.type === "image") {
       const align = b.align === "center" || b.align === "right" ? b.align : "left";
       lines.push({
@@ -144,6 +159,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   let curEffectiveTopPt = effectiveTopPt;
   let curEffectiveBottomPt = effectiveBottomPt;
   let curSectionPageNum: number | undefined;
+  let curHeadings: PdfHeadingAnchor[] = [];
+  let curTocLinks: PdfTocLink[] = [];
 
   const pageOf = (rows: PdfPage["lines"]): PdfPage => {
     const pNum = curSectionPageNum !== undefined ? curSectionPageNum++ : undefined;
@@ -154,6 +171,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       marginPt: curMarginLeftPt,
       marginRightPt: curMarginRightPt,
       pageNumber: pNum,
+      headings: curHeadings,
+      tocLinks: curTocLinks,
     };
   };
 
@@ -164,6 +183,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     if (!cur.length) return;
     pages.push(pageOf(cur));
     cur = [];
+    curHeadings = [];
+    curTocLinks = [];
     y = curHeightPt - curEffectiveTopPt;
   };
   const need = (heightPt: number): void => {
@@ -249,11 +270,50 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       need(cost);
       y -= ext.above;
       cur.push({ line, yPt: y });
+      if (line.style.startsWith("heading ")) {
+        const parts = line.style.split(" ");
+        const hId = parts[1]!;
+        const hLevel = Number(parts[2]) || 1;
+        const title = line.segments.map((s) => (s.kind === "text" ? s.text : "")).join("");
+        curHeadings.push({ id: hId, title, level: hLevel, yPt: y });
+      } else if (line.style.startsWith("toc-entry ")) {
+        const parts = line.style.split(" ");
+        const hId = parts[1]!;
+        const indent = Number(parts[3]) || 0;
+        const leftX = curMarginLeftPt + indent;
+        const rightX = curWidthPt - curMarginRightPt;
+        curTocLinks.push({
+          rectPt: [leftX, y - 2, rightX, y + 12],
+          headingId: hId,
+        });
+      }
       y -= ext.below + paraGap;
     }
   }
   if (cur.length) pages.push(pageOf(cur));
   if (pages.length === 0) pages.push(pageOf([]));
+
+  // Cross-reference TOC entries with resolved heading page numbers
+  const headingPageMap = new Map<string, number>();
+  pages.forEach((page, idx) => {
+    const pNum = page.pageNumber ?? (idx + 1);
+    for (const h of page.headings ?? []) {
+      if (!headingPageMap.has(h.id)) {
+        headingPageMap.set(h.id, pNum);
+      }
+    }
+  });
+
+  for (const page of pages) {
+    for (const row of page.lines) {
+      if (row.line.style.startsWith("toc-entry ")) {
+        const parts = row.line.style.split(" ");
+        const hId = parts[1]!;
+        const targetPage = headingPageMap.get(hId) ?? 1;
+        row.line.style = `${row.line.style} ${targetPage}`;
+      }
+    }
+  }
 
   if (hf) {
     const totalPages = pages.length;

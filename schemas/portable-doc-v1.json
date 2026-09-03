@@ -138,7 +138,7 @@
         { "$ref": "#/definitions/paragraphNode" }, { "$ref": "#/definitions/headingNode" }, { "$ref": "#/definitions/quoteNode" },
         { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
-        { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }
+        { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -259,6 +259,16 @@
             "startPageNumber": { "type": "integer", "minimum": 1 }
           }
         }
+      }
+    },
+    "tableOfContentsBlockNode": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "const": "table-of-contents" },
+        "id": { "type": "string" },
+        "maxDepth": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "leaderStyle": { "enum": ["dots", "line", "none"] }
       }
     },
     "assetRef": {

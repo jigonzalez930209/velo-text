@@ -1,7 +1,8 @@
-import type { SectionSettings } from "../../core/model/types.js";
+import type { PortableDocument, SectionSettings } from "../../core/model/types.js";
 import type { LayoutPage, PageBox, PaginationOptions, PaginationResult } from "./layout-types.js";
 
 export interface LayoutFlow {
+  doc?: PortableDocument;
   opts: PaginationOptions;
   diagnostics: PaginationResult["diagnostics"];
   margin: { top: number; left: number; right: number; bottom: number };

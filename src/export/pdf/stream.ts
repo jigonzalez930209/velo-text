@@ -136,6 +136,47 @@ export function pageContentStream(
       continue;
     }
 
+    if (line.style.startsWith("toc-entry ")) {
+      const parts = line.style.split(" ");
+      const indent = Number(parts[3]) || 0;
+      const leaderStyle = parts[4] || "dots";
+      const targetPageNum = parts[5] || "1";
+      const title = line.segments.map((s) => (s.kind === "text" ? s.text : "")).join("");
+      const rightMarginPt = page.marginRightPt ?? marginPt;
+      const usableRightX = pageWidthPt - rightMarginPt;
+      const leftX = marginPt + indent;
+      const sizePt = line.sizePt || 10;
+      const face = line.segments[0]?.kind === "text" ? line.segments[0].face : undefined;
+
+      const titlePainted = paintTextRun(title, leftX, y, { sizePt, face });
+      s += titlePainted.ops;
+
+      const numW = segmentWidthPt(targetPageNum, sizePt, face);
+      const pagePainted = paintTextRun(targetPageNum, usableRightX - numW, y, { sizePt, face });
+      s += pagePainted.ops;
+
+      if (leaderStyle === "dots") {
+        const dotStart = leftX + titlePainted.width + 6;
+        const dotEnd = usableRightX - numW - 6;
+        if (dotEnd > dotStart) {
+          const dotUnit = ". ";
+          const dotUnitW = segmentWidthPt(dotUnit, sizePt);
+          const count = Math.max(1, Math.floor((dotEnd - dotStart) / dotUnitW));
+          const dots = dotUnit.repeat(count);
+          const dotsPainted = paintTextRun(dots, dotStart, y, { sizePt });
+          s += dotsPainted.ops;
+        }
+      } else if (leaderStyle === "line") {
+        const lineStart = leftX + titlePainted.width + 6;
+        const lineEnd = usableRightX - numW - 6;
+        if (lineEnd > lineStart) {
+          s += `0.5 w 0.4 0.4 0.4 RG\n${lineStart.toFixed(2)} ${(y + 2).toFixed(2)} m ${lineEnd.toFixed(2)} ${(y + 2).toFixed(2)} l S\n0 0 0 RG\n`;
+        }
+      }
+      cursorX = marginPt;
+      continue;
+    }
+
     const segs = line.segments;
     let x = marginPt;
     if (line.align === "center" || line.align === "right") {

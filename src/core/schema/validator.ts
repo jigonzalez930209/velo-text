@@ -62,6 +62,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "equation-block",
     "columns",
     "section-break",
+    "table-of-contents",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation"]);
 
@@ -209,6 +210,15 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
             }
           }
         }
+      }
+    }
+    if (node.type === "table-of-contents") {
+      const toc = node as unknown as { maxDepth?: unknown; leaderStyle?: unknown };
+      if (toc.maxDepth !== undefined && (typeof toc.maxDepth !== "number" || !Number.isInteger(toc.maxDepth) || (toc.maxDepth as number) < 1 || (toc.maxDepth as number) > 6)) {
+        err(`${path}/maxDepth`, "range", "maxDepth must be integer between 1 and 6");
+      }
+      if (toc.leaderStyle !== undefined && !["dots", "line", "none"].includes(toc.leaderStyle as string)) {
+        err(`${path}/leaderStyle`, "enum", "leaderStyle must be dots, line, or none");
       }
     }
   }

@@ -89,6 +89,20 @@ export function assemblePdf(
     : "";
   const fonts = `/Font << /F1 3 0 R /F2 ${symbolNum} 0 R /F3 ${obliqueNum} 0 R /F4 ${boldNum} 0 R /F5 ${boldObliqueNum} 0 R${docFontRes ? ` ${docFontRes}` : ""} >>`;
 
+  const baseObjCount = objects.length;
+  pages.forEach((p, idx) => {
+    (p as { objNum?: number }).objNum = baseObjCount + idx * 2 + 2;
+  });
+
+  const headingMap = new Map<string, { pageObjNum: number; yPt: number }>();
+  for (const page of pages) {
+    for (const h of page.headings ?? []) {
+      if (!headingMap.has(h.id)) {
+        headingMap.set(h.id, { pageObjNum: page.objNum!, yPt: Math.round(h.yPt) });
+      }
+    }
+  }
+
   for (const page of pages) {
     const { stream } = pageContentStream(page, doc, imageObjects);
     const streamBytes = u8(stream);
@@ -99,12 +113,56 @@ export function assemblePdf(
       u8("\nendstream\nendobj"),
     ]));
     const pageNum = objects.length + 1;
-    addObj(u8(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.widthPt} ${page.heightPt}] /Contents ${contentNum} 0 R /Resources << ${fonts} ${xObjRes}>> >>\nendobj`));
+
+    let annots = "";
+    if (page.tocLinks && page.tocLinks.length > 0) {
+      const linkDicts = page.tocLinks.map((tl) => {
+        const target = headingMap.get(tl.headingId) ?? { pageObjNum: pageNum, yPt: 0 };
+        const [x1, y1, x2, y2] = tl.rectPt;
+        return `<< /Type /Annot /Subtype /Link /Rect [${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)}] /Border [0 0 0] /Dest [${target.pageObjNum} 0 R /XYZ 0 ${target.yPt} 0] >>`;
+      });
+      annots = ` /Annots [${linkDicts.join(" ")}]`;
+    }
+
+    addObj(u8(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.widthPt} ${page.heightPt}] /Contents ${contentNum} 0 R /Resources << ${fonts} ${xObjRes}>>${annots} >>\nendobj`));
     (page as { objNum?: number }).objNum = pageNum;
   }
 
   const kids = pages.map((p) => `${p.objNum} 0 R`).join(" ");
   objects[1] = u8(`2 0 obj\n<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>\nendobj`);
+
+  // Document Outlines (Bookmarks tree)
+  const allHeadings: Array<{ title: string; pageObjNum: number; yPt: number; level: number }> = [];
+  for (const page of pages) {
+    for (const h of page.headings ?? []) {
+      if (h.title.trim()) {
+        allHeadings.push({
+          title: h.title.trim(),
+          pageObjNum: page.objNum!,
+          yPt: Math.round(h.yPt),
+          level: h.level,
+        });
+      }
+    }
+  }
+
+  if (allHeadings.length > 0) {
+    const outlinesNum = objects.length + 1;
+    const firstItemNum = outlinesNum + 1;
+    const lastItemNum = outlinesNum + allHeadings.length;
+    addObj(u8(`${outlinesNum} 0 obj\n<< /Type /Outlines /First ${firstItemNum} 0 R /Last ${lastItemNum} 0 R /Count ${allHeadings.length} >>\nendobj`));
+
+    for (let i = 0; i < allHeadings.length; i++) {
+      const item = allHeadings[i]!;
+      const itemNum = firstItemNum + i;
+      const prev = i > 0 ? ` /Prev ${itemNum - 1} 0 R` : "";
+      const next = i < allHeadings.length - 1 ? ` /Next ${itemNum + 1} 0 R` : "";
+      const dest = `[${item.pageObjNum} 0 R /XYZ 0 ${item.yPt} 0]`;
+      addObj(u8(`${itemNum} 0 obj\n<< /Title (${pdfEscape(item.title)}) /Parent ${outlinesNum} 0 R${prev}${next} /Dest ${dest} >>\nendobj`));
+    }
+
+    objects[0] = u8(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R /Outlines ${outlinesNum} 0 R >>\nendobj`);
+  }
 
   const infoNum = objects.length + 1;
   const now = clock.nowIso();

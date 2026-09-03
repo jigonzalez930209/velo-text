@@ -37,6 +37,7 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
   const flowMargin = { ...margin, top: effectiveTopUm, bottom: effectiveBottomUm };
 
   const flow: LayoutFlow = {
+    doc,
     opts,
     diagnostics,
     margin: flowMargin,
@@ -59,6 +60,38 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
   for (const block of doc.root.children) layoutBlock(flow, block);
 
   if (flow.currentPage.boxes.length > 0 || pages.length === 0) pages.push(flow.currentPage);
+
+  // Cross-reference TOC entries with resolved heading page numbers
+  const headingPageMap = new Map<string, number>();
+  pages.forEach((p, idx) => {
+    const pNum = p.pageNumber ?? (idx + 1);
+    for (const b of p.boxes) {
+      if (b.type === "heading") {
+        const hId = b.id.split("_line_")[0]!;
+        if (!headingPageMap.has(hId)) {
+          headingPageMap.set(hId, pNum);
+        }
+      }
+    }
+  });
+
+  for (const p of pages) {
+    for (const b of p.boxes) {
+      if (b.type === "toc-entry") {
+        const hId = (b as unknown as { headingId?: string }).headingId;
+        const lStyle = (b as unknown as { leaderStyle?: string }).leaderStyle ?? "dots";
+        const targetPage = hId ? (headingPageMap.get(hId) ?? 1) : 1;
+        (b as unknown as { targetPage?: number }).targetPage = targetPage;
+        if (lStyle === "dots") {
+          b.content = `${b.content ?? ""} . . . . . . . . . . . . . . . . ${targetPage}`;
+        } else if (lStyle === "line") {
+          b.content = `${b.content ?? ""} ________________ ${targetPage}`;
+        } else {
+          b.content = `${b.content ?? ""}   ${targetPage}`;
+        }
+      }
+    }
+  }
 
   // Pass 2: Decorate running headers and footers with resolved dynamic variables
   if (hf) {

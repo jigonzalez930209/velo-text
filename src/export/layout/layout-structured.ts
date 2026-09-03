@@ -1,4 +1,4 @@
-import type { BlockNode } from "../../core/model/types.js";
+import type { BlockNode, HeadingNode } from "../../core/model/types.js";
 import { breakLines } from "./text.js";
 import { box, ensureSpace, pushPage, applySectionBreak, type LayoutFlow } from "./layout-flow.js";
 
@@ -136,6 +136,33 @@ export function layoutStructuredBlock(flow: LayoutFlow, block: BlockNode): boole
   }
   if (block.type === "section-break") {
     applySectionBreak(flow, block.settings);
+    return true;
+  }
+  if (block.type === "table-of-contents") {
+    const maxDepth = block.maxDepth ?? 3;
+    const leaderStyle = block.leaderStyle ?? "dots";
+    const headings = (flow.doc?.root.children ?? []).filter(
+      (b): b is HeadingNode => b.type === "heading" && b.level <= maxDepth,
+    );
+    for (const h of headings) {
+      const title = (h.children ?? []).map((c) => (c.type === "text" ? c.text : "")).join("");
+      const indentUm = (h.level - 1) * 6000;
+      ensureSpace(flow, lineHeightDefault);
+      flow.currentPage.boxes.push(box({
+        id: `${block.id}_toc_${h.id}`,
+        type: "toc-entry",
+        xUm: margin.left + indentUm,
+        yUm: flow.cursorY,
+        widthUm: Math.max(10000, usableWidthUm - indentUm),
+        heightUm: lineHeightDefault,
+        content: title,
+      }));
+      const lastBox = flow.currentPage.boxes[flow.currentPage.boxes.length - 1] as unknown as Record<string, unknown>;
+      lastBox.headingId = h.id;
+      lastBox.leaderStyle = leaderStyle;
+      flow.cursorY += lineHeightDefault;
+    }
+    flow.cursorY += Math.round(lineHeightDefault * 0.3);
     return true;
   }
   if (block.type === "horizontal-rule") {
