@@ -179,5 +179,33 @@ export function layoutStructuredBlock(flow: LayoutFlow, block: BlockNode): boole
     flow.cursorY += 800;
     return true;
   }
+  if (block.type === "code-block") {
+    const code = block.code ?? "";
+    const lines = code.split("\n");
+    const showLineNumbers = block.showLineNumbers !== false;
+    const lineStart = block.lineStart ?? 1;
+    const codeLineHeight = Math.round(lineHeightDefault * 0.85);
+
+    flow.cursorY += Math.round(lineHeightDefault * 0.2);
+    for (let i = 0; i < lines.length; i++) {
+      ensureSpace(flow, codeLineHeight);
+      const lineNum = lineStart + i;
+      const text = lines[i]!;
+      const displayContent = showLineNumbers ? `${lineNum} | ${text}` : text;
+
+      flow.currentPage.boxes.push(box({
+        id: `${block.id}_line_${i}`,
+        type: "code-line",
+        xUm: margin.left,
+        yUm: flow.cursorY,
+        widthUm: usableWidthUm,
+        heightUm: codeLineHeight,
+        content: displayContent,
+      }));
+      flow.cursorY += codeLineHeight;
+    }
+    flow.cursorY += Math.round(lineHeightDefault * 0.4);
+    return true;
+  }
   return false;
 }

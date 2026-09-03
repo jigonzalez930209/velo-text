@@ -142,6 +142,13 @@ export function pageContentStream(
       continue;
     }
 
+    if (line.style.startsWith("code-line")) {
+      const rightMarginPt = page.marginRightPt ?? marginPt;
+      const w = pageWidthPt - marginPt - rightMarginPt;
+      const rowH = 13;
+      s += `q 0.97 0.98 0.99 rg ${marginPt.toFixed(2)} ${(y - 3).toFixed(2)} ${w.toFixed(2)} ${rowH.toFixed(2)} re f Q\n`;
+    }
+
     if (line.style.startsWith("toc-entry ")) {
       const parts = line.style.split(" ");
       const indent = Number(parts[3]) || 0;

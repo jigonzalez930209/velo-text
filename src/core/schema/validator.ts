@@ -63,6 +63,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "columns",
     "section-break",
     "table-of-contents",
+    "code-block",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation", "footnote-ref"]);
 
@@ -228,6 +229,27 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
       }
       if (toc.leaderStyle !== undefined && !["dots", "line", "none"].includes(toc.leaderStyle as string)) {
         err(`${path}/leaderStyle`, "enum", "leaderStyle must be dots, line, or none");
+      }
+    }
+    if (node.type === "code-block") {
+      const cb = node as unknown as {
+        code?: unknown;
+        language?: unknown;
+        showLineNumbers?: unknown;
+        lineStart?: unknown;
+      };
+      if (typeof cb.code !== "string") {
+        err(`${path}/code`, "type", "code must be string");
+      }
+      const validLangs = ["typescript", "javascript", "html", "css", "json", "sql", "python", "bash", "plain"];
+      if (typeof cb.language !== "string" || !validLangs.includes(cb.language)) {
+        err(`${path}/language`, "enum", `language must be one of: ${validLangs.join(", ")}`);
+      }
+      if (cb.showLineNumbers !== undefined && typeof cb.showLineNumbers !== "boolean") {
+        err(`${path}/showLineNumbers`, "type", "showLineNumbers must be boolean");
+      }
+      if (cb.lineStart !== undefined && (typeof cb.lineStart !== "number" || !Number.isInteger(cb.lineStart) || cb.lineStart < 1)) {
+        err(`${path}/lineStart`, "range", "lineStart must be integer >= 1");
       }
     }
   }

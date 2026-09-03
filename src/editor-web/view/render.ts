@@ -7,6 +7,7 @@ import type { PortableDocument, BlockNode, InlineNode } from "../../core/model/t
 import { isTableLookFill, resolvedLook, tableClassName } from "../../core/model/table-look.js";
 import { snapOfficeHex } from "../../core/model/office-colors.js";
 import { latexToHtml } from "../../core/equation/index.js";
+import { highlightCodeToHtml } from "../../core/code-highlight/index.js";
 
 export interface RenderOptions {
   theme?: string;
@@ -106,6 +107,15 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
       const latex = escapeAttr((block as unknown as { latex: string }).latex ?? "");
       const inner = latexToHtml((block as unknown as { latex: string }).latex ?? "");
       return `<div data-node-id="${id}" data-node-type="equation-block" contenteditable="false" class="pde-equation pde-equation--block" role="math" aria-label="${latex}" data-latex="${latex}">${inner}</div>`;
+    }
+    case "code-block": {
+      const codeHtml = highlightCodeToHtml(
+        block.code ?? "",
+        block.language ?? "plain",
+        block.showLineNumbers !== false,
+        block.lineStart ?? 1
+      );
+      return `<div data-node-id="${id}" data-node-type="code-block" class="pde-code-block" data-language="${block.language}">${codeHtml}</div>`;
     }
     default:
       return `<div data-node-id="${id}">[${(block as { type: string }).type}]</div>`;

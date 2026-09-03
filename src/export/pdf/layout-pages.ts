@@ -6,6 +6,7 @@ import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.
 import { emitColumns } from "./layout-columns.js";
 import { segmentWidthPt } from "./paint.js";
 import { resolveDynamicVariables } from "../layout/dynamic-vars.js";
+import { tokenizeLine } from "../../core/code-highlight/index.js";
 
 /** Fit an image into the page content box without overflowing. */
 export function pdfImageDisplayPt(
@@ -158,6 +159,46 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         segments: [{ kind: "text", text: "", sizePt: 0 }],
         yPt: 0, sizePt: 11, align, style: `image ${b.assetId} ${b.widthUm ?? 0} ${b.heightUm ?? 0}`,
       });
+    } else if (b.type === "code-block") {
+      const code = b.code ?? "";
+      const codeLines = code.split("\n");
+      const showLineNumbers = b.showLineNumbers !== false;
+      const lineStart = b.lineStart ?? 1;
+
+      for (let i = 0; i < codeLines.length; i++) {
+        const lineNum = lineStart + i;
+        const lineText = codeLines[i]!;
+        const tokens = tokenizeLine(lineText, b.language);
+        const segs: Segment[] = [];
+
+        if (showLineNumbers) {
+          segs.push({
+            kind: "text",
+            text: `${String(lineNum).padStart(3, " ")} `,
+            sizePt: 9,
+            face: "F1",
+            color: "#94a3b8",
+          });
+        }
+
+        for (const t of tokens) {
+          segs.push({
+            kind: "text",
+            text: t.text,
+            sizePt: 9,
+            face: t.kind === "keyword" ? "F4" : "F1",
+            color: t.colorHex,
+          });
+        }
+
+        lines.push({
+          segments: segs,
+          yPt: 0,
+          sizePt: 9,
+          align: "left",
+          style: `code-line ${b.id}_${i}`,
+        });
+      }
     }
   }
 

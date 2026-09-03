@@ -158,6 +158,28 @@ export interface TableOfContentsBlockNode {
 
 export type TableOfContentsBlock = TableOfContentsBlockNode;
 
+export type SupportedCodeLanguage =
+  | "typescript"
+  | "javascript"
+  | "html"
+  | "css"
+  | "json"
+  | "sql"
+  | "python"
+  | "bash"
+  | "plain";
+
+export interface CodeBlockNode {
+  type: "code-block";
+  id: NodeId;
+  code: string;
+  language: SupportedCodeLanguage;
+  showLineNumbers?: boolean;
+  lineStart?: number;
+}
+
+export type CodeBlock = CodeBlockNode;
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -170,7 +192,8 @@ export type BlockNode =
   | EquationBlockNode
   | ColumnsNode
   | SectionBreakBlockNode
-  | TableOfContentsBlockNode;
+  | TableOfContentsBlockNode
+  | CodeBlockNode;
 
 export interface RootNode {
   type: "root";

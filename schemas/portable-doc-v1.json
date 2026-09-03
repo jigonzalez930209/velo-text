@@ -160,7 +160,8 @@
         { "$ref": "#/definitions/paragraphNode" }, { "$ref": "#/definitions/headingNode" }, { "$ref": "#/definitions/quoteNode" },
         { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
-        { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" }
+        { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" },
+        { "$ref": "#/definitions/codeBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -327,6 +328,20 @@
         "evenPageFooter": { "$ref": "#/definitions/headerFooterZone" },
         "headerDistanceUm": { "type": "integer", "minimum": 0 },
         "footerDistanceUm": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "codeBlockNode": {
+      "type": "object",
+      "required": ["type", "id", "code", "language"],
+      "properties": {
+        "type": { "const": "code-block" },
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "language": {
+          "enum": ["typescript", "javascript", "html", "css", "json", "sql", "python", "bash", "plain"]
+        },
+        "showLineNumbers": { "type": "boolean" },
+        "lineStart": { "type": "integer", "minimum": 1 }
       }
     }
   }
