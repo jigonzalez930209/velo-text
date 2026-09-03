@@ -14,6 +14,7 @@ const guideSidebar = [
       { text: "Introduction", link: "/guide/introduction" },
       { text: "Architecture", link: "/guide/architecture" },
       { text: "Roadmap", link: "/guide/roadmap" },
+      { text: "Feature Specifications", link: "/guide/feature-specifications" },
     ],
   },
   {

@@ -1,6 +1,6 @@
 # Roadmap
 
-This is the **product** plan. Design notes live in the repo (`roadmap_editor_documental_portable.md`, `roadmap_usabilidad_y_adaptadores.md`). Status is honest against the code: `[x]` shipped · `[~]` partial · `[ ]` not started.
+This is the **product** plan. For comprehensive architecture and step-by-step task specifications, see [Feature Specifications & Detailed Roadmap](./feature-specifications.md). Design notes live in the repo (`roadmap_editor_documental_portable.md`, `roadmap_usabilidad_y_adaptadores.md`). Status is honest against the code: `[x]` shipped · `[~]` partial · `[ ]` not started.
 
 We are on **`1.0.0-beta`**. A frozen **1.0.0** needs the items in **Next**, not a rewrite of the core.
 
