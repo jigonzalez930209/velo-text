@@ -161,7 +161,8 @@
         { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
         { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" },
-        { "$ref": "#/definitions/codeBlockNode" }, { "$ref": "#/definitions/calloutBlockNode" }
+        { "$ref": "#/definitions/codeBlockNode" }, { "$ref": "#/definitions/calloutBlockNode" },
+        { "$ref": "#/definitions/conditionalBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -354,6 +355,17 @@
         "variant": { "enum": ["info", "tip", "warning", "danger", "note"] },
         "title": { "type": "string" },
         "children": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
+      }
+    },
+    "conditionalBlockNode": {
+      "type": "object",
+      "required": ["type", "id", "expression", "children"],
+      "properties": {
+        "type": { "const": "conditional" },
+        "id": { "type": "string" },
+        "expression": { "type": "string" },
+        "children": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } },
+        "elseChildren": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
       }
     }
   }

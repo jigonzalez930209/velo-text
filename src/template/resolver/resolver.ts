@@ -3,6 +3,7 @@
  */
 import type { PortableDocument } from "../../core/model/types.js";
 import { safeResolve, formatValue, MAX_VALUE_LENGTH } from "./format.js";
+import { evaluateExpression } from "../evaluator/index.js";
 
 export { safeResolve, formatValue } from "./format.js";
 export type { ResolveResult } from "./format.js";
@@ -30,7 +31,19 @@ export function renderTemplate(document: PortableDocument, data: Record<string, 
   const unused = new Set<string>(Object.keys(data));
 
   function walkBlocks(blocks: PortableDocument["root"]["children"]): void {
-    for (const block of blocks) walkBlock(block as unknown as Record<string, unknown>);
+    let i = 0;
+    while (i < blocks.length) {
+      const block = blocks[i] as unknown as Record<string, unknown>;
+      if (block.type === "conditional") {
+        const expr = String(block.expression ?? "");
+        const isTrue = evaluateExpression(expr, data);
+        const replacementBlocks = (isTrue ? (block.children as Array<Record<string, unknown>>) : (block.elseChildren as Array<Record<string, unknown>>)) ?? [];
+        blocks.splice(i, 1, ...(replacementBlocks as unknown as PortableDocument["root"]["children"]));
+        continue;
+      }
+      walkBlock(block);
+      i++;
+    }
   }
 
   function walkBlock(block: Record<string, unknown>): void {
@@ -59,6 +72,22 @@ export function renderTemplate(document: PortableDocument, data: Record<string, 
             const formatted = formatValue(res.value, v.format, locale, timezone);
             if (formatted.length > MAX_VALUE_LENGTH) diagnostics.push({ path: v.path, code: "value-too-long", severity: "warn" });
             out.push({ type: "text", id: `${v.id}_val`, text: formatted.slice(0, MAX_VALUE_LENGTH), marks: v.marks });
+          }
+        } else if (inline.type === "text" && typeof (inline as { text?: string }).text === "string") {
+          let text = (inline as { text: string }).text;
+          if (text.includes("{{#if ")) {
+            const ifRegex = /\{\{#if\s+([^{}]+?)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g;
+            let prevText = "";
+            while (prevText !== text && text.includes("{{#if ")) {
+              prevText = text;
+              text = text.replace(ifRegex, (_m, expr, truthy, falsy) => {
+                const isTrue = evaluateExpression(String(expr).trim(), data);
+                return isTrue ? truthy : (falsy ?? "");
+              });
+            }
+            out.push({ ...inline, text });
+          } else {
+            out.push(inline);
           }
         } else if (inline.type === "link") {
           const link = inline as unknown as { id: string; href: string; children: Array<Record<string, unknown>> };
@@ -160,6 +189,9 @@ export function renderTemplate(document: PortableDocument, data: Record<string, 
         item.content = fakeBlock.children as Array<Record<string, unknown>>;
         if (item.nested) walkBlock(item.nested as Record<string, unknown>);
       }
+    } else if (type === "callout") {
+      const co = block as unknown as { children?: PortableDocument["root"]["children"] };
+      if (co.children) walkBlocks(co.children);
     }
   }
 

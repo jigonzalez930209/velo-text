@@ -195,6 +195,16 @@ export interface CalloutBlockNode {
 
 export type CalloutBlock = CalloutBlockNode;
 
+export interface ConditionalBlockNode {
+  type: "conditional";
+  id: NodeId;
+  expression: string;
+  children: BlockNode[];
+  elseChildren?: BlockNode[];
+}
+
+export type ConditionalBlock = ConditionalBlockNode;
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -209,7 +219,8 @@ export type BlockNode =
   | SectionBreakBlockNode
   | TableOfContentsBlockNode
   | CodeBlockNode
-  | CalloutBlockNode;
+  | CalloutBlockNode
+  | ConditionalBlockNode;
 
 export interface RootNode {
   type: "root";

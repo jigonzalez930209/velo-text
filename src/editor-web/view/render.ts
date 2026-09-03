@@ -131,6 +131,10 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
       const childrenHtml = (block.children ?? []).map((b) => renderBlock(b, resolve)).join("");
       return `<aside data-node-id="${id}" data-node-type="callout" class="pde-callout pde-callout--${variant}" data-variant="${variant}">${titleHtml}${childrenHtml}</aside>`;
     }
+    case "conditional": {
+      const childrenHtml = (block.children ?? []).map((b) => renderBlock(b, resolve)).join("");
+      return `<div data-node-id="${id}" data-node-type="conditional" class="pde-conditional" data-expression="${escapeHtml(block.expression ?? "")}">${childrenHtml}</div>`;
+    }
     default:
       return `<div data-node-id="${id}">[${(block as { type: string }).type}]</div>`;
   }

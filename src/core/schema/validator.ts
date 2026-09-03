@@ -65,6 +65,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "table-of-contents",
     "code-block",
     "callout",
+    "conditional",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation", "footnote-ref"]);
 
@@ -269,6 +270,24 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
         err(`${path}/children`, "type", "children must be array");
       } else {
         co.children.forEach((b: BlockNode, i: number) => validateBlock(b, `${path}/children/${i}`));
+      }
+    }
+    if (node.type === "conditional") {
+      const cond = node as unknown as { expression?: unknown; children?: unknown; elseChildren?: unknown };
+      if (typeof cond.expression !== "string" || !cond.expression.trim()) {
+        err(`${path}/expression`, "required", "expression required");
+      }
+      if (!Array.isArray(cond.children)) {
+        err(`${path}/children`, "type", "children must be array");
+      } else {
+        cond.children.forEach((b: BlockNode, i: number) => validateBlock(b, `${path}/children/${i}`));
+      }
+      if (cond.elseChildren !== undefined) {
+        if (!Array.isArray(cond.elseChildren)) {
+          err(`${path}/elseChildren`, "type", "elseChildren must be array");
+        } else {
+          cond.elseChildren.forEach((b: BlockNode, i: number) => validateBlock(b, `${path}/elseChildren/${i}`));
+        }
       }
     }
   }
