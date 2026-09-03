@@ -66,6 +66,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "code-block",
     "callout",
     "conditional",
+    "loop",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation", "footnote-ref"]);
 

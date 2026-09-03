@@ -205,6 +205,17 @@ export interface ConditionalBlockNode {
 
 export type ConditionalBlock = ConditionalBlockNode;
 
+export interface LoopBlockNode {
+  type: "loop";
+  id: NodeId;
+  path: string;
+  alias: string;
+  children: BlockNode[];
+  emptyChildren?: BlockNode[];
+}
+
+export type LoopBlock = LoopBlockNode;
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -220,7 +231,8 @@ export type BlockNode =
   | TableOfContentsBlockNode
   | CodeBlockNode
   | CalloutBlockNode
-  | ConditionalBlockNode;
+  | ConditionalBlockNode
+  | LoopBlockNode;
 
 export interface RootNode {
   type: "root";

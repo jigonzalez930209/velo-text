@@ -162,7 +162,7 @@
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
         { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" },
         { "$ref": "#/definitions/codeBlockNode" }, { "$ref": "#/definitions/calloutBlockNode" },
-        { "$ref": "#/definitions/conditionalBlockNode" }
+        { "$ref": "#/definitions/conditionalBlockNode" }, { "$ref": "#/definitions/loopBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -366,6 +366,18 @@
         "expression": { "type": "string" },
         "children": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } },
         "elseChildren": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
+      }
+    },
+    "loopBlockNode": {
+      "type": "object",
+      "required": ["type", "id", "path", "alias", "children"],
+      "properties": {
+        "type": { "const": "loop" },
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "alias": { "type": "string" },
+        "children": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } },
+        "emptyChildren": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
       }
     }
   }
