@@ -1,6 +1,6 @@
 {
   "name": "velo-text",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Editor documental portable con variables, imágenes y exportación PDF/ODT/DOCX — cero dependencias runtime (beta)",
   "type": "module",
   "license": "MIT",
