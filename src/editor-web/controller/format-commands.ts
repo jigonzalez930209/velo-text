@@ -1,4 +1,5 @@
 import type { TextMarks } from "../../core/model/types.js";
+import { snapOfficeHex } from "../../core/model/office-colors.js";
 import type { EditorState } from "./types.js";
 import { BLOCK_SEL } from "./types.js";
 import { resolveDocumentFont } from "../../fonts/catalog.js";
@@ -125,20 +126,37 @@ function unwrapFontFamilyInRange(range: Range): void {
 }
 
 export function setColor(s: EditorState, color: string): void {
-  const saved = captureTextOffsets(s);
-  s.container.focus();
-  if (saved) restoreTextOffsets(s, saved);
-  exec(s, "foreColor", color);
-  s.syncFromDom();
+  wrapTextMark(s, (el) => { el.style.color = snapOfficeHex(color); });
 }
 
 export function setHighlight(s: EditorState, color: string): void {
-  const saved = captureTextOffsets(s);
+  wrapTextMark(s, (el) => { el.style.backgroundColor = snapOfficeHex(color); });
+}
+
+function wrapTextMark(s: EditorState, apply: (el: HTMLElement) => void): void {
+  const saved = captureTextSelection(s) ?? captureCollapsedBlockText(s, s.currentBlockEl());
+  if (!saved) return;
   s.container.focus();
-  if (saved) restoreTextOffsets(s, saved);
-  exec(s, "hiliteColor", color);
-  exec(s, "backColor", color);
+  const range = restoreTextSelection(s, saved);
+  const span = s.ownerDoc.createElement("span");
+  apply(span);
+  try {
+    range.surroundContents(span);
+  } catch {
+    const frag = range.extractContents();
+    span.appendChild(frag);
+    range.insertNode(span);
+  }
   s.syncFromDom();
+}
+
+function captureCollapsedBlockText(s: EditorState, block: HTMLElement | null): SavedTextSelection | null {
+  const blockId = block?.getAttribute("data-node-id");
+  if (!block || !blockId) return null;
+  if (!/^(P|H[1-6]|BLOCKQUOTE)$/.test(block.tagName)) return null;
+  const len = (block.textContent ?? "").length;
+  if (!len) return null;
+  return { blockId, start: 0, end: len };
 }
 
 export function setFontFamily(s: EditorState, family: string, savedSel?: SavedTextSelection | null): void {

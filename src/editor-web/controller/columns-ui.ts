@@ -8,6 +8,8 @@ import { makeBlock } from "./commands.js";
 import { wrapperRel, clampToWrapper } from "./table-resize.js";
 import { bindColumnResize, findColumnsNode, showColumnGutters } from "./column-resize.js";
 import { barAlignPad, barFlyBtn, barIconBtn, barMenuItem } from "./bar-chrome.js";
+import { parkContextBar } from "./chrome-bar.js";
+import { placeOverlay } from "./place-overlay.js";
 
 const BAR_H = 36;
 const GAP = 3;
@@ -85,7 +87,9 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
 
   function parkBar(host: HTMLElement): void {
     if (!barEl) return;
-    const t = wrapperRel(s, host);
+    if (parkContextBar(s, barEl)) return;
+    const col = live?.querySelector(`.pde-column[data-col-index="${slotIndex}"]`) as HTMLElement | null;
+    const t = wrapperRel(s, col ?? host);
     barEl.style.left = `${Math.max(4, t.left)}px`;
     s.ui.append(barEl);
     const h = barEl.offsetHeight || BAR_H;
@@ -103,6 +107,10 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
 
   function placeFly(b: HTMLButtonElement): void {
     if (!flyEl || !barEl) return;
+    if (barEl.classList.contains("pde-toolbar-group")) {
+      placeOverlay(b, flyEl);
+      return;
+    }
     const br = barEl.getBoundingClientRect();
     const wr = s.wrapper.getBoundingClientRect();
     flyEl.style.left = `${Math.max(4, b.getBoundingClientRect().left - wr.left)}px`;
@@ -127,15 +135,17 @@ export function attachColumnsUi(s: EditorState): { hideColumnsUi: () => void } {
     hint.textContent = `C${slotIndex + 1}`;
     hint.title = "Active column";
     barEl.append(hint);
-    barEl.append(barIconBtn(s.ownerDoc, "insertRowAbove", "Insert row above", () => layoutOp(() => {
-      const n = node();
-      const found = findParentList(s.getDoc(), live?.getAttribute("data-node-id") ?? "");
-      if (n && found) found.list.splice(found.index, 0, createColumns(s.idGen, n.columns.map((c) => c.widthPct ?? 50)));
-    })));
-    barEl.append(barIconBtn(s.ownerDoc, "insertRowBelow", "Insert row below", () => layoutOp(() => {
-      const n = node();
-      const found = findParentList(s.getDoc(), live?.getAttribute("data-node-id") ?? "");
-      if (n && found) found.list.splice(found.index + 1, 0, createColumns(s.idGen, n.columns.map((c) => c.widthPct ?? 50)));
+    barEl.append(barFlyBtn(s.ownerDoc, "rows3", "Rows and columns", (btn) => openFly(btn, (host) => {
+      host.append(barMenuItem(s.ownerDoc, "Insert row above", () => layoutOp(() => {
+        const n = node();
+        const found = findParentList(s.getDoc(), live?.getAttribute("data-node-id") ?? "");
+        if (n && found) found.list.splice(found.index, 0, createColumns(s.idGen, n.columns.map((c) => c.widthPct ?? 50)));
+      })));
+      host.append(barMenuItem(s.ownerDoc, "Insert row below", () => layoutOp(() => {
+        const n = node();
+        const found = findParentList(s.getDoc(), live?.getAttribute("data-node-id") ?? "");
+        if (n && found) found.list.splice(found.index + 1, 0, createColumns(s.idGen, n.columns.map((c) => c.widthPct ?? 50)));
+      })));
     })));
     const hv = slotHV();
     barEl.append(barFlyBtn(s.ownerDoc, "alignCenter", "Cell alignment", (btn) => openFly(btn, (host) => {

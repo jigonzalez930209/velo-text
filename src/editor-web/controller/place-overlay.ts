@@ -10,7 +10,7 @@ export function placeOverlay(anchor: HTMLElement, pop: HTMLElement, opts?: { gap
   if (pop.parentElement !== doc.body) doc.body.appendChild(pop);
   pop.hidden = false;
   pop.style.position = "fixed";
-  pop.style.zIndex = pop.style.zIndex || "400";
+  pop.style.zIndex = pop.style.zIndex || "10000";
   pop.style.right = "auto";
   pop.style.bottom = "auto";
   pop.style.maxWidth = `${Math.max(160, vw - pad * 2)}px`;

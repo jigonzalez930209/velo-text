@@ -1,12 +1,14 @@
 import { normalizeDocument } from "../../core/normalize/normalize.js";
-import type { TableLook, TableNode, TablePreset } from "../../core/model/types.js";
-import { applyDensity, applyPreset, cellVAlign, clearCellStyle, clearTableStyle, shadeCell, toggleLook, setCellVAlign } from "../../core/model/table-look.js";
+import type { TableNode } from "../../core/model/types.js";
+import { applyDensity, applyPreset, cellFill, cellVAlign, clearCellStyle, clearTableStyle, resolvedLook, shadeCell, toggleLook, setCellVAlign } from "../../core/model/table-look.js";
 import type { EditorState } from "./types.js";
 import { bindTableResize, findTableNode, showTableResize, wrapperRel, clampToWrapper } from "./table-resize.js";
 import { findParentList } from "./nesting.js";
-import { insertBlankRow, deleteCols, deleteRows, forPickedCells, insertCol, mergeRight, setCellTextAlign, splitCell } from "./table-ops.js";
+import { insertBlankRow, deleteCols, deleteRows, forPickedCells, insertCol, mergeRight, setCellTextAlign } from "./table-ops.js";
 import { cellPick, expandDrag, paintCellClasses, type TablePick } from "./table-select.js";
-import { barAlignPad, barFlyBtn, barIconBtn, barMenuItem } from "./bar-chrome.js";
+import { barAlignPad, barCellSwatch, barFlyBtn, barIconBtn, barMenuItem, barTableStylePad, closeCellFillPalette } from "./bar-chrome.js";
+import { parkContextBar } from "./chrome-bar.js";
+import { placeOverlay } from "./place-overlay.js";
 
 const BAR_H = 36;
 const GAP = 3;
@@ -24,9 +26,10 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
     flyEl?.remove(); resizeEl?.remove(); barEl?.remove();
     flyEl = resizeEl = barEl = null;
   };
-  function hideFly(): void { flyEl?.remove(); flyEl = null; }
+  function hideFly(): void { flyEl?.remove(); flyEl = null; closeCellFillPalette(); }
   function hideTableUi(): void {
     wipe();
+    closeCellFillPalette();
     if (liveTable) paintCellClasses(liveTable, [], null);
     liveTable = null; active = null; sel = [];
   }
@@ -65,7 +68,11 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
 
   function parkBar(host: HTMLElement): void {
     if (!barEl) return;
-    const t = wrapperRel(s, host);
+    if (parkContextBar(s, barEl)) return;
+    const cell = (active
+      ? liveTable?.querySelectorAll("tr")[active.row]?.children[active.col]
+      : null) as HTMLElement | null;
+    const t = wrapperRel(s, cell ?? host);
     barEl.style.left = `${Math.max(4, t.left)}px`;
     s.ui.append(barEl);
     const h = barEl.offsetHeight || BAR_H;
@@ -94,6 +101,10 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
 
   function placeFly(b: HTMLButtonElement): void {
     if (!flyEl || !barEl) return;
+    if (barEl.classList.contains("pde-toolbar-group")) {
+      placeOverlay(b, flyEl);
+      return;
+    }
     const br = barEl.getBoundingClientRect();
     const wr = s.wrapper.getBoundingClientRect();
     flyEl.style.left = `${Math.max(4, b.getBoundingClientRect().left - wr.left)}px`;
@@ -121,16 +132,25 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
     barEl.append(hint);
     const add = (icon: Parameters<typeof barIconBtn>[1], label: string, fn: () => void, danger = false) =>
       barEl!.append(barIconBtn(s.ownerDoc, icon, label, fn, danger));
-    add("insertRowAbove", "Insert row above", () => { const p = picks(); if (p) tableOp(() => insertBlankRow(s, p.tbl, p.row, p.row)); });
-    add("insertRowBelow", "Insert row below", () => { const p = picks(); if (p) tableOp(() => insertBlankRow(s, p.tbl, p.row, p.row + 1)); });
-    add("deleteRow", "Delete row", () => { const p = picks(); if (p) tableOp(() => deleteRows(p.tbl, p.rows)); }, true);
-    add("insertColLeft", "Insert column left", () => { const p = picks(); if (p) tableOp(() => insertCol(s, p.tbl, p.col)); });
-    add("insertColRight", "Insert column right", () => { const p = picks(); if (p) tableOp(() => insertCol(s, p.tbl, p.col + 1)); });
-    add("deleteCol", "Delete column", () => { const p = picks(); if (p) tableOp(() => deleteCols(p.tbl, p.cols)); }, true);
-    add("columns3", "Merge cell right", () => { const p = picks(); if (p) tableOp(() => mergeRight(p.tbl, p.row, p.col)); });
-    add("split", "Split merged cell", () => { const p = picks(); if (p) tableOp(() => splitCell(s, p.tbl, p.row, p.col)); });
+    barEl.append(barFlyBtn(s.ownerDoc, "rows3", "Rows and columns", (btn) => openFly("pde-block-menu pde-table-menu pde-table-rowcol-menu", btn, (host) => {
+      const iconBtn = (icon: Parameters<typeof barIconBtn>[1], label: string, fn: () => void, danger = false) => {
+        host.append(barIconBtn(s.ownerDoc, icon, label, () => { hideFly(); fn(); }, danger));
+      };
+      iconBtn("insertRowAbove", "Insert row above", () => { const p = picks(); if (p) tableOp(() => insertBlankRow(s, p.tbl, p.row, p.row)); });
+      iconBtn("insertRowBelow", "Insert row below", () => { const p = picks(); if (p) tableOp(() => insertBlankRow(s, p.tbl, p.row, p.row + 1)); });
+      iconBtn("insertColLeft", "Insert column left", () => { const p = picks(); if (p) tableOp(() => insertCol(s, p.tbl, p.col)); });
+      iconBtn("insertColRight", "Insert column right", () => { const p = picks(); if (p) tableOp(() => insertCol(s, p.tbl, p.col + 1)); });
+      const sep = s.ownerDoc.createElement("span");
+      sep.className = "pde-style-sep";
+      sep.setAttribute("aria-hidden", "true");
+      sep.textContent = "|";
+      host.append(sep);
+      iconBtn("deleteRow", "Delete row", () => { const p = picks(); if (p) tableOp(() => deleteRows(p.tbl, p.rows)); }, true);
+      iconBtn("deleteCol", "Delete column", () => { const p = picks(); if (p) tableOp(() => deleteCols(p.tbl, p.cols)); }, true);
+      iconBtn("columns3", "Merge cell right", () => { const p = picks(); if (p) tableOp(() => mergeRight(p.tbl, p.row, p.col)); });
+    })));
     const hv = cellHV();
-    const look = picks()?.tbl.style?.look ?? {};
+    const look = picks()?.tbl ? resolvedLook(picks()!.tbl) : {};
     const dens = picks()?.tbl.style?.density ?? "normal";
     barEl.append(barFlyBtn(s.ownerDoc, "alignCenter", "Cell alignment", (btn) => openFly("pde-block-menu pde-table-menu", btn, (host) => {
       const targets = () => {
@@ -146,37 +166,41 @@ export function attachTableUi(s: EditorState): { hideTableUi: () => void } {
         const p = picks();
         if (p) tableOp(() => forPickedCells(p.tbl, targets(), (c) => setCellVAlign(c, a)));
       }));
-    })));
-    for (const [icon, d, l] of [["rowHCompact", "compact", "Compact rows"], ["rowHNormal", "normal", "Normal rows"], ["rowHLarge", "large", "Large rows"]] as const) {
-      const b = barIconBtn(s.ownerDoc, icon, l, () => { const p = picks(); if (p) tableOp(() => applyDensity(p.tbl, d)); });
-      if (dens === d) b.setAttribute("aria-pressed", "true");
-      barEl.append(b);
-    }
-    barEl.append(barFlyBtn(s.ownerDoc, "sliders", "Style options", (btn) => openFly("pde-block-menu pde-table-menu", btn, (host) => {
-      const looks: Array<[keyof TableLook, string]> = [
-        ["headerRow", "Header row"], ["totalRow", "Total row"], ["bandedRows", "Banded rows"],
-        ["firstColumn", "First column"], ["lastColumn", "Last column"], ["bandedColumns", "Banded columns"],
-      ];
-      for (const [key, label] of looks) {
-        host.append(barMenuItem(s.ownerDoc, label, () => { hideFly(); const p = picks(); if (p) tableOp(() => toggleLook(p.tbl, key)); }, !!look[key]));
+    }), hv.h !== "left" || hv.v !== "middle"));
+    const densIcon = dens === "compact" ? "rowHCompact" : dens === "large" ? "rowHLarge" : "rowHNormal";
+    barEl.append(barFlyBtn(s.ownerDoc, densIcon, "Row height", (btn) => openFly("pde-block-menu pde-table-menu", btn, (host) => {
+      for (const [d, l, icon] of [
+        ["compact", "Compact rows", "rowHCompact"],
+        ["normal", "Normal rows", "rowHNormal"],
+        ["large", "Large rows", "rowHLarge"],
+      ] as const) {
+        host.append(barMenuItem(s.ownerDoc, l, () => {
+          hideFly();
+          const p = picks();
+          if (p) tableOp(() => applyDensity(p.tbl, d));
+        }, dens === d, icon));
       }
-    })));
-    barEl.append(barFlyBtn(s.ownerDoc, "table", "Word-like styles", (btn) => openFly("pde-block-menu pde-table-menu", btn, (host) => {
-      const presets: Array<[TablePreset, string]> = [
-        ["plain", "Plain"], ["grid", "Grid"], ["grid-banded", "Grid banded"],
-        ["list", "List"], ["list-header", "List header"], ["accent", "Accent"],
-      ];
-      for (const [id, label] of presets) host.append(barMenuItem(s.ownerDoc, label, () => { hideFly(); const p = picks(); if (p) tableOp(() => applyPreset(p.tbl, id)); }));
-    })));
-    add("background", "Shade selected cells", () => {
+    }), dens !== "normal"));
+    barEl.append(barFlyBtn(s.ownerDoc, "table", "Table styles", (btn) => openFly("pde-block-menu pde-table-menu pde-table-style-menu", btn, (host) => {
+      const p0 = picks();
+      const liveLook = p0 ? resolvedLook(p0.tbl) : look;
+      host.append(barTableStylePad(s.ownerDoc, liveLook, p0?.tbl.style?.preset, (key) => {
+        hideFly();
+        const p = picks();
+        if (p) tableOp(() => toggleLook(p.tbl, key));
+      }, (id) => {
+        hideFly();
+        const p = picks();
+        if (p) tableOp(() => applyPreset(p.tbl, id));
+      }));
+    }), !!(picks()?.tbl.style?.preset && picks()!.tbl.style!.preset !== "plain") || Object.values(look).some(Boolean)));
+    const picked = picks();
+    const fillLive = picked ? cellFill(picked.tbl.rows[picked.row]?.cells[picked.col], picked.tbl, picked.row, picked.col) : undefined;
+    barEl.append(barCellSwatch(s.ownerDoc, fillLive, (color) => {
       const p = picks();
       if (!p) return;
-      const color = s.ownerDoc.defaultView?.prompt("Cell fill (#hex or empty to clear)", "#dbeafe");
-      tableOp(() => {
-        const targets = sel.length ? sel : [{ row: p.row, col: p.col }];
-        for (const c of targets) shadeCell(p.tbl.rows[c.row]?.cells[c.col] as never, color?.trim() || undefined);
-      });
-    });
+      tableOp(() => forPickedCells(p.tbl, sel.length ? sel : [{ row: p.row, col: p.col }], (c) => shadeCell(c, color)));
+    }));
     add("eraser", "Clear selected cell styles", () => {
       const p = picks();
       if (!p) return;
