@@ -1,6 +1,7 @@
 import type { TableNode } from "../../core/model/types.js";
 import type { TextMarks } from "../../core/model/primitives.js";
-import { DENSITY_PT, cellFill, cellVAlign } from "../../core/model/table-look.js";
+import { DENSITY_PT, TABLE_FILLS, cellFill, cellVAlign } from "../../core/model/table-look.js";
+import { cssToHex6 } from "../../core/model/office-colors.js";
 import { parseMath, helveticaWidthPt, mathVisualExtents } from "./equation.js";
 import { pdfFaceForMarks } from "./fonts.js";
 import { segmentWidthPt } from "./paint.js";
@@ -19,8 +20,8 @@ function textStyle(marks: TextMarks | undefined, defaultSizePt: number, headingB
   return {
     sizePt: marks?.fontSizePt && marks.fontSizePt > 0 ? marks.fontSizePt : defaultSizePt,
     face: pdfFaceForMarks(!!(marks?.bold || marks?.code || headingBold), !!marks?.italic, marks?.fontFamily),
-    color: marks?.color,
-    background: marks?.background,
+    color: cssToHex6(marks?.color) ?? marks?.color,
+    background: cssToHex6(marks?.background) ?? marks?.background,
     underline: !!marks?.underline,
     strike: !!marks?.strike,
   };
@@ -138,7 +139,7 @@ export function emitTable(lines: PdfLine[], tbl: TableNode, maxWidth: number): v
       const segs: Segment[] = [];
       let img: { id: string; w: number; h: number } | null = null;
       for (const bl of cell.blocks) {
-        if (bl.type === "paragraph") segs.push(...inlineToSegments(bl.children as never, 9));
+        if (bl.type === "paragraph") segs.push(...inlineToSegments(bl.children as never, 11));
         else if (bl.type === "image") {
           img = { id: bl.assetId, w: bl.widthUm ?? 40000, h: bl.heightUm ?? 20000 };
           h = Math.max(h, Math.min(80, (img.h / 25400) * 72 + 8));
@@ -151,18 +152,19 @@ export function emitTable(lines: PdfLine[], tbl: TableNode, maxWidth: number): v
     }
     for (let ci = 0; ci < row.cells.length; ci++) {
       const cell = row.cells[ci]!;
-      const fill = cellFill(cell, tbl, ri, ci)?.replace("#", "") ?? "-";
+      const fill = cssToHex6(cellFill(cell, tbl, ri, ci) ?? "");
+      const fillTok = fill ? `F${fill}` : "F-";
       const img = imgs[ci];
       const imgBits = img ? ` ${img.id} ${img.w} ${img.h}` : " - 0 0";
       const cellAlign = row.header ? "center" : ((cell.blocks[0] as { align?: string } | undefined)?.align ?? "left");
-      const headerFg = tbl.style?.look?.headerRow && ri === 0 ? " white" : "";
+      const fgTok = fill === TABLE_FILLS.header ? " fgW" : " fgK";
       const va = cellVAlign(cell);
       lines.push({
         segments: packed[ci] ?? [],
         yPt: 0,
         sizePt: 9,
         align: cellAlign === "center" || cellAlign === "right" ? cellAlign : "left",
-        style: `table-cell ${ci} ${row.id} ${ri} ${colW[ci]} ${h} ${cellAlign} ${fill}${imgBits}${headerFg} va-${va}`,
+        style: `table-cell ${ci} ${row.id} ${ri} ${colW[ci]} ${h} ${cellAlign} ${fillTok}${imgBits}${fgTok} va-${va}`,
       });
     }
     lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 9, align: "left", style: `table-row-end ${h}` });

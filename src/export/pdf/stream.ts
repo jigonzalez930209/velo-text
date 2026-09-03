@@ -2,7 +2,15 @@ import { helveticaWidthPt, MATH_CHIP_PAD_X, mathVisualExtents, pdfLiteralString,
 import { pdfEscape, type PdfLine, type PdfPage, type TextSegment } from "./pdf-model.js";
 import type { PortableDocument } from "../../core/model/types.js";
 import { pdfImageDisplayPt } from "./layout-pages.js";
-import { cssColorToPdfRgb, hexToPdfRgb, paintTextRun, segmentWidthPt } from "./paint.js";
+import { cssColorToPdfRgb, paintTextRun, segmentWidthPt } from "./paint.js";
+
+function tableCellFillToken(parts: string[]): string | null {
+  const tagged = parts.find((p) => p.startsWith("F#") || p === "F-");
+  if (tagged) return tagged === "F-" ? null : tagged.slice(1);
+  const fill = parts[7];
+  if (!fill || fill === "-") return null;
+  return fill.startsWith("#") || fill.includes("rgb") ? fill : `#${fill.replace("#", "")}`;
+}
 
 export function pageContentStream(
   page: PdfPage,
@@ -35,9 +43,9 @@ export function pageContentStream(
       if (tableState === null || tableState.row !== ri) {
         tableState = { colW: [], row: ri, x: marginPt, y };
       }
-      const fill = isTable ? parts[7] : undefined;
-      const rgb = fill && fill !== "-" ? (cssColorToPdfRgb(fill.startsWith("#") || fill.includes("rgb") ? fill : `#${fill.replace("#", "")}`) ?? "0.95 0.95 0.97") : null;
-      const whiteFg = parts.includes("white");
+      const fill = isTable ? tableCellFillToken(parts) : undefined;
+      const rgb = fill ? cssColorToPdfRgb(fill) : null;
+      const whiteFg = parts.includes("fgW") || (parts.includes("white") && (fill ?? "").toLowerCase() === "#3659e3");
       if (rgb) {
         s += `${rgb} rg ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re f\n0 0 0 rg\n`;
       }
@@ -46,7 +54,7 @@ export function pageContentStream(
         s += `${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re S\n`;
       }
       const rows = splitCellRows(line.segments);
-      const fontSize = isTable ? 9 : 11;
+      const fontSize = 11;
       const advances = rows.map((rowSegs) => cellRowAdvance(rowSegs, isTable ? 12 : 14));
       const blockH = advances.reduce((n, a) => n + a, 0) || (isTable ? 12 : 14);
       const pad = isTable ? 8 : 12;
@@ -163,7 +171,7 @@ function paintOpts(seg: TextSegment, fallbackSize: number, whiteFg: boolean) {
   return {
     sizePt: seg.sizePt || fallbackSize,
     face: seg.face,
-    color: whiteFg ? "#ffffff" : seg.color,
+    color: seg.color || (whiteFg ? "#ffffff" : undefined),
     background: seg.background,
     underline: seg.underline,
     strike: seg.strike,
