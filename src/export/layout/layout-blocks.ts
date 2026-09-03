@@ -18,6 +18,10 @@ export function layoutBlock(flow: LayoutFlow, block: BlockNode): void {
           if (c.type === "variable") return c.source;
           if (c.type === "equation") return `$${(c as unknown as { latex: string }).latex}$`;
           if (c.type === "hard-break") return "\n";
+          if (c.type === "footnote-ref") {
+            const mark = (c as unknown as { customMark?: string }).customMark ?? "1";
+            return `[${mark}]`;
+          }
           return "";
         })
         .join("");
@@ -50,6 +54,30 @@ export function layoutBlock(flow: LayoutFlow, block: BlockNode): void {
         flow.cursorY += lineHeightDefault;
       }
       flow.cursorY += Math.round(lineHeightDefault * 0.3);
+
+      const footnoteRefs = (block.children ?? []).filter((c) => c.type === "footnote-ref");
+      for (const fnRef of footnoteRefs) {
+        const fnId = (fnRef as unknown as { footnoteId: string }).footnoteId;
+        const mark = (fnRef as unknown as { customMark?: string }).customMark ?? "1";
+        const fnDef = flow.doc?.footnotes?.[fnId];
+        if (fnDef) {
+          const fnText = fnDef.blocks
+            .map((b) => (b.type === "paragraph" ? (b.children ?? []).map((c) => (c.type === "text" ? c.text : "")).join("") : ""))
+            .join(" ");
+          const fnHeight = Math.round(lineHeightDefault * 0.9);
+          flow.footnoteReserveUm = (flow.footnoteReserveUm ?? 0) + fnHeight + 2000;
+          if (!flow.currentPage.footnoteBoxes) flow.currentPage.footnoteBoxes = [];
+          flow.currentPage.footnoteBoxes.push({
+            id: `fn_${fnId}`,
+            type: "footnote",
+            xUm: margin.left,
+            yUm: 0,
+            widthUm: usableWidthUm,
+            heightUm: fnHeight,
+            content: `${mark} ${fnText}`,
+          });
+        }
+      }
       break;
     }
     case "list": {

@@ -55,6 +55,15 @@ export function inlineToSegments(children: Inline[], sizePt: number, opts?: { he
       segs.push({ kind: "math", math: parseMath(c.latex ?? "", sizePt), sizePt });
     } else if (c.type === "link") {
       for (const child of c.children ?? []) append(child.text ?? "", child.marks);
+    } else if (c.type === "footnote-ref") {
+      flush();
+      const mark = (c as unknown as { customMark?: string }).customMark ?? "1";
+      segs.push({
+        kind: "text",
+        text: mark,
+        sizePt: Math.max(6, Math.round(sizePt * 0.7)),
+        face: "F4",
+      });
     }
   }
   flush();

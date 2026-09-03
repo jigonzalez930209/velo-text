@@ -64,7 +64,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "section-break",
     "table-of-contents",
   ]);
-  const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation"]);
+  const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation", "footnote-ref"]);
 
   function validateInline(node: InlineNode, path: string): void {
     if (!node || typeof (node as unknown as Record<string, unknown>).type !== "string") {
@@ -104,6 +104,15 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
           if (depth < 0) break;
         }
         if (depth !== 0) err(`${path}/latex`, "unbalanced-braces", "unbalanced braces in LaTeX");
+      }
+    }
+    if (node.type === "footnote-ref") {
+      const fn = node as unknown as { footnoteId?: unknown; customMark?: unknown };
+      if (typeof fn.footnoteId !== "string" || !fn.footnoteId) {
+        err(`${path}/footnoteId`, "required", "footnoteId required");
+      }
+      if (fn.customMark !== undefined && typeof fn.customMark !== "string") {
+        err(`${path}/customMark`, "type", "customMark must be string");
       }
     }
   }
@@ -236,6 +245,27 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
         err(`${p}/mediaType`, "media-type", `unsupported ${a.mediaType}`);
       if (typeof a.sha256 !== "string" || !/^[a-f0-9]{64}$/i.test(a.sha256)) err(`${p}/sha256`, "hash", "sha256 must be 64 hex");
       if (typeof a.byteLength !== "number" || a.byteLength < 0) err(`${p}/byteLength`, "type", "byteLength must be >=0");
+    }
+  }
+
+  // footnotes
+  if (doc.footnotes !== undefined) {
+    if (typeof doc.footnotes !== "object" || doc.footnotes === null) {
+      err("/footnotes", "type", "footnotes must be object");
+    } else {
+      for (const [k, fn] of Object.entries(doc.footnotes)) {
+        const p = `/footnotes/${k}`;
+        if (!fn || typeof fn !== "object") {
+          err(p, "type", "footnote definition must be object");
+          continue;
+        }
+        if (fn.id !== k) err(`${p}/id`, "id-mismatch", `footnote key ${k} != id ${fn.id}`);
+        if (!Array.isArray(fn.blocks)) {
+          err(`${p}/blocks`, "type", "footnote blocks must be array");
+        } else {
+          fn.blocks.forEach((b, i) => validateBlock(b, `${p}/blocks/${i}`));
+        }
+      }
     }
   }
 

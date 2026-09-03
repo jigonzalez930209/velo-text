@@ -93,6 +93,32 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
     }
   }
 
+  // Pass 2: Position footnote boxes at bottom of each page
+  pages.forEach((p) => {
+    if (p.footnoteBoxes && p.footnoteBoxes.length > 0) {
+      const bottomMarginUm = margin.bottom || 25400;
+      const totalFootnotesHeight = p.footnoteBoxes.reduce((sum, fb) => sum + fb.heightUm + 1000, 0);
+      let currentFnY = p.heightUm - bottomMarginUm - totalFootnotesHeight;
+      const leftMarginUm = Math.round((p.widthUm - p.usableWidthUm) / 2);
+
+      p.footnoteBoxes.unshift({
+        id: `fn_divider_${p.index}`,
+        type: "footnote-divider",
+        xUm: leftMarginUm,
+        yUm: currentFnY - 2000,
+        widthUm: 50000, // 50mm
+        heightUm: 200,
+        content: "---",
+      });
+
+      for (let i = 1; i < p.footnoteBoxes.length; i++) {
+        p.footnoteBoxes[i]!.xUm = leftMarginUm;
+        p.footnoteBoxes[i]!.yUm = currentFnY;
+        currentFnY += p.footnoteBoxes[i]!.heightUm + 1000;
+      }
+    }
+  });
+
   // Pass 2: Decorate running headers and footers with resolved dynamic variables
   if (hf) {
     const totalPages = pages.length;

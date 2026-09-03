@@ -14,12 +14,14 @@ export interface LayoutFlow {
   currentPage: LayoutPage;
   cursorY: number;
   currentSectionPageNumber?: number;
+  footnoteReserveUm?: number;
 }
 
 export function pushPage(flow: LayoutFlow): void {
   flow.pages.push(flow.currentPage);
   const nextSectionNum = flow.currentSectionPageNumber !== undefined ? flow.currentSectionPageNumber + 1 : undefined;
   flow.currentSectionPageNumber = nextSectionNum;
+  flow.footnoteReserveUm = 0;
   flow.currentPage = {
     index: flow.pages.length,
     pageNumber: nextSectionNum,
@@ -58,6 +60,7 @@ export function applySectionBreak(flow: LayoutFlow, settings?: SectionSettings):
       flow.currentSectionPageNumber = settings.startPageNumber ?? 1;
     }
   }
+  flow.footnoteReserveUm = 0;
   flow.currentPage = {
     index: flow.pages.length,
     pageNumber: flow.currentSectionPageNumber,
@@ -71,7 +74,8 @@ export function applySectionBreak(flow: LayoutFlow, settings?: SectionSettings):
 }
 
 export function ensureSpace(flow: LayoutFlow, neededHeightUm: number): boolean {
-  if (flow.cursorY + neededHeightUm > flow.margin.top + flow.usableHeightUm) {
+  const reserve = flow.footnoteReserveUm ?? 0;
+  if (flow.cursorY + neededHeightUm > flow.margin.top + flow.usableHeightUm - reserve) {
     pushPage(flow);
     return true;
   }

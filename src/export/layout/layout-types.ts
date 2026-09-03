@@ -19,6 +19,7 @@ export interface LayoutPage {
   boxes: PageBox[];
   headerBoxes?: PageBox[];
   footerBoxes?: PageBox[];
+  footnoteBoxes?: PageBox[];
 }
 
 export interface PaginationOptions {

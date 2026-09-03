@@ -45,6 +45,17 @@
     "assets": {
       "type": "object",
       "additionalProperties": { "$ref": "#/definitions/assetRef" }
+    },
+    "footnotes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "blocks"],
+        "properties": {
+          "id": { "type": "string" },
+          "blocks": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
+        }
+      }
     }
   },
   "definitions": {
@@ -69,7 +80,8 @@
         { "$ref": "#/definitions/linkNode" },
         { "$ref": "#/definitions/inlineImageNode" },
         { "$ref": "#/definitions/hardBreakNode" },
-        { "$ref": "#/definitions/inlineEquationNode" }
+        { "$ref": "#/definitions/inlineEquationNode" },
+        { "$ref": "#/definitions/footnoteRefInlineNode" }
       ]
     },
     "textNode": {
@@ -131,6 +143,16 @@
         "id": { "type": "string" },
         "latex": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "display": { "type": "boolean" }
+      }
+    },
+    "footnoteRefInlineNode": {
+      "type": "object",
+      "required": ["type", "id", "footnoteId"],
+      "properties": {
+        "type": { "const": "footnote-ref" },
+        "id": { "type": "string" },
+        "footnoteId": { "type": "string" },
+        "customMark": { "type": "string" }
       }
     },
     "blockNode": {

@@ -136,6 +136,12 @@ export function pageContentStream(
       continue;
     }
 
+    if (line.style === "footnote-divider") {
+      s += `0.5 w 0.4 0.4 0.4 RG\n${marginPt.toFixed(2)} ${y.toFixed(2)} m ${(marginPt + 141.7).toFixed(2)} ${y.toFixed(2)} l S\n0 0 0 RG\n`;
+      cursorX = marginPt;
+      continue;
+    }
+
     if (line.style.startsWith("toc-entry ")) {
       const parts = line.style.split(" ");
       const indent = Number(parts[3]) || 0;

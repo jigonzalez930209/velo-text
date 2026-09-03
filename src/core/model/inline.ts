@@ -46,4 +46,20 @@ export interface InlineEquationNode {
   display?: boolean;
 }
 
-export type InlineNode = TextNode | VariableNode | LinkNode | InlineImageNode | HardBreakNode | InlineEquationNode;
+export interface FootnoteRefInline {
+  type: "footnote-ref";
+  id: NodeId;
+  footnoteId: string;
+  customMark?: string;
+}
+
+export type FootnoteRefInlineNode = FootnoteRefInline;
+
+export type InlineNode =
+  | TextNode
+  | VariableNode
+  | LinkNode
+  | InlineImageNode
+  | HardBreakNode
+  | InlineEquationNode
+  | FootnoteRefInline;

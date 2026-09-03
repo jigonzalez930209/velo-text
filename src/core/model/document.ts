@@ -1,6 +1,6 @@
 import type { AssetId, JsonValue, PageMarginsUm, NodeId } from "./primitives.js";
 import { SCHEMA_TYPE, SCHEMA_VERSION } from "./primitives.js";
-import type { RootNode } from "./block.js";
+import type { BlockNode, RootNode } from "./block.js";
 import type { InlineNode } from "./inline.js";
 
 export interface HeaderFooterZone {
@@ -53,6 +53,11 @@ export interface AssetRef {
   variants?: Record<string, AssetVariant>;
 }
 
+export interface DocumentFootnote {
+  id: string;
+  blocks: BlockNode[];
+}
+
 export interface PortableDocument {
   schema: typeof SCHEMA_TYPE;
   schemaVersion: typeof SCHEMA_VERSION;
@@ -66,6 +71,7 @@ export interface PortableDocument {
   page: PageSettings;
   root: RootNode;
   assets: Record<string, AssetRef>;
+  footnotes?: Record<string, DocumentFootnote>;
   variableSchema?: Record<string, JsonValue>;
   extensions?: Record<string, JsonValue>;
 }

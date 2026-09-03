@@ -86,9 +86,20 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   };
 
   for (const b of doc.root.children) {
-    if (b.type === "paragraph") wrap(inlineToSegments(b.children as never, 11), (b as { align?: string }).align ?? "left", "paragraph", 11);
-    else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", `heading ${b.id} ${b.level}`, 20 - b.level * 2);
-    else if (b.type === "quote") wrap(inlineToSegments(b.children as never, 11), "left", "quote", 11);
+    if (b.type === "paragraph" || b.type === "quote") {
+      const from = lines.length;
+      wrap(inlineToSegments(b.children as never, 11), (b as { align?: string }).align ?? "left", b.type, 11);
+      const fnRefs = (b.children ?? []).filter((c) => (c as { type: string }).type === "footnote-ref");
+      for (const fnRef of fnRefs) {
+        const fnId = (fnRef as unknown as { footnoteId: string }).footnoteId;
+        const mark = (fnRef as unknown as { customMark?: string }).customMark ?? "1";
+        const fnDef = doc.footnotes?.[fnId];
+        const text = fnDef ? fnDef.blocks.map((fb) => (fb.type === "paragraph" ? (fb.children ?? []).map((x) => (x as { text?: string }).text ?? "").join("") : "")).join(" ") : "";
+        if (lines.length > from) {
+          lines[lines.length - 1]!.style += ` fn:${fnId}:${encodeURIComponent(mark)}:${encodeURIComponent(text)}`;
+        }
+      }
+    } else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", `heading ${b.id} ${b.level}`, 20 - b.level * 2);
     else if (b.type === "list") {
       for (const it of b.items) {
         const prefix = b.kind === "ordered" ? "1. " : "•  ";
@@ -176,23 +187,72 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     };
   };
 
+  let curFootnotes: Array<{ id: string; mark: string; text: string }> = [];
+  let curFootnoteReservePt = 0;
+
+  const flushFootnotesToCur = (): void => {
+    if (curFootnotes.length > 0) {
+      const dividerY = curEffectiveBottomPt + curFootnotes.length * 16 + 4;
+      cur.push({
+        line: {
+          segments: [{ kind: "rule", widthPt: 141.7 }],
+          yPt: 0,
+          sizePt: 10,
+          align: "left",
+          style: "footnote-divider",
+        },
+        yPt: dividerY,
+      });
+      for (let i = 0; i < curFootnotes.length; i++) {
+        const fn = curFootnotes[i]!;
+        const fnY = curEffectiveBottomPt + (curFootnotes.length - 1 - i) * 16;
+        cur.push({
+          line: {
+            segments: [{ kind: "text", text: `${fn.mark}  ${fn.text}`, sizePt: 9, face: "F1" }],
+            yPt: 0,
+            sizePt: 9,
+            align: "left",
+            style: `footnote ${fn.id}`,
+          },
+          yPt: fnY,
+        });
+      }
+    }
+  };
+
   const pages: PdfPage[] = [];
   let cur: Array<{ line: PdfLine; yPt: number }> = [];
   let y = curHeightPt - curEffectiveTopPt;
   const startPage = (): void => {
     if (!cur.length) return;
+    flushFootnotesToCur();
     pages.push(pageOf(cur));
     cur = [];
     curHeadings = [];
     curTocLinks = [];
+    curFootnotes = [];
+    curFootnoteReservePt = 0;
     y = curHeightPt - curEffectiveTopPt;
   };
   const need = (heightPt: number): void => {
     if (heightPt <= 0 || !cur.length) return;
-    if (y - heightPt < curEffectiveBottomPt) startPage();
+    if (y - heightPt < curEffectiveBottomPt + curFootnoteReservePt) startPage();
   };
   let tableRow = -1;
   for (const line of lines) {
+    const fnMatch = line.style.match(/fn:([^:]+):([^:]+):([^\s]+)/g);
+    if (fnMatch) {
+      for (const m of fnMatch) {
+        const parts = m.split(":");
+        const fnId = parts[1]!;
+        const mark = decodeURIComponent(parts[2]!);
+        const text = decodeURIComponent(parts[3]!);
+        if (!curFootnotes.some((x) => x.id === fnId)) {
+          curFootnotes.push({ id: fnId, mark, text });
+          curFootnoteReservePt += 18;
+        }
+      }
+    }
     if (line.style === "page-break") {
       startPage();
       y = curHeightPt - curEffectiveTopPt;
@@ -290,7 +350,10 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       y -= ext.below + paraGap;
     }
   }
-  if (cur.length) pages.push(pageOf(cur));
+  if (cur.length) {
+    flushFootnotesToCur();
+    pages.push(pageOf(cur));
+  }
   if (pages.length === 0) pages.push(pageOf([]));
 
   // Cross-reference TOC entries with resolved heading page numbers
