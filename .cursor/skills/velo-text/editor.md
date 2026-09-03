@@ -39,7 +39,7 @@ Toolbar buttons: `preventDefault` on `mousedown` (keep caret, including in cells
 - Host `contenteditable`; nodes have `data-node-id` / `data-node-type`. `reconcileDom` patches; IME uses `_pdeComposing` (do not sync mid-composition).
 - Typing stays native (`nativeTyping`). Shortcuts (`Mod+b`, undo) via `onIntent`. Paste: `handlePaste` allowlist then insert. Sync: `input` → `domToAst` → `normalizeDocument`.
 - Overlays live in sibling `.pde-ui-layer` (handles, table/column bars, image resize).
-- Tables: Tab/Shift+Tab wrap; resize col/row; merge/split; cell h/v align; look tokens. Columns: slot bar, width presets additive.
+- Tables: Tab/Shift+Tab wrap; resize col/row; merge/split; cell h/v align and cell fill; look tokens. Toolbar **Type and color** paints text only (including text inside cells), never `td`/`th` fill. Table styles menu is one horizontal icon pad (`looks | presets`). Table/column modifiers dock in `.pde-toolbar` when the host has one (not a second overlay over the page). Column layouts: slot bar, width presets additive.
 - Images: click figure → resize overlay on `<img>` (aspect lock → `widthUm`/`heightUm`). Drop PNG/JPEG/WebP/SVG via `onImageFile`.
 - Clipboard: `text/plain`, HTML allowlist, 1 MB / 500k chars; internal `application/x-pde-fragment`.
 - UX: `Ctrl/Cmd+Shift+P` or `/` in empty p → palette; `Ctrl/Cmd+F`/`H` find/replace (skips variables/raw LaTeX); `?` shortcuts; selection bubble outside tables.
