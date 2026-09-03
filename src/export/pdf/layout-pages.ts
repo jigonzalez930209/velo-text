@@ -1,10 +1,11 @@
-import type { PortableDocument } from "../../core/model/types.js";
+import type { HeaderFooterZone, InlineNode, PortableDocument } from "../../core/model/types.js";
 import { parseMath } from "./equation.js";
 import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
 import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
 import { emitColumns } from "./layout-columns.js";
 import { segmentWidthPt } from "./paint.js";
+import { resolveDynamicVariables } from "../layout/dynamic-vars.js";
 
 /** Fit an image into the page content box without overflowing. */
 export function pdfImageDisplayPt(
@@ -36,8 +37,24 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   const bottomPt = m.marginBottomPt;
   const maxWidth = pageWidthPt - m.marginLeftPt - m.marginRightPt;
   const lines: PdfLine[] = [];
+
+  const pt = (um: number): number => Math.round((um / 25400) * 72);
+  const hf = doc.page.headerFooter;
+  const headerDistPt = hf ? pt(hf.headerDistanceUm ?? 12700) : 0;
+  const footerDistPt = hf ? pt(hf.footerDistanceUm ?? 12700) : 0;
+  const effectiveTopPt = (hf?.header || hf?.firstPageHeader || hf?.evenPageHeader)
+    ? Math.max(m.marginTopPt, headerDistPt + 16)
+    : m.marginTopPt;
+  const effectiveBottomPt = (hf?.footer || hf?.firstPageFooter || hf?.evenPageFooter)
+    ? Math.max(bottomPt, footerDistPt + 16)
+    : bottomPt;
+
   const pageOf = (rows: PdfPage["lines"]): PdfPage => ({
-    lines: rows, widthPt: pageWidthPt, heightPt: pageHeightPt, marginPt,
+    lines: rows,
+    widthPt: pageWidthPt,
+    heightPt: pageHeightPt,
+    marginPt,
+    marginRightPt: m.marginRightPt,
   });
 
   const wrap = (segs: Segment[], align: string, style: string, baseSize: number): void => {
@@ -99,24 +116,24 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
 
   const pages: PdfPage[] = [];
   let cur: Array<{ line: PdfLine; yPt: number }> = [];
-  let y = pageHeightPt - m.marginTopPt;
-  const usableH = pageHeightPt - m.marginTopPt - bottomPt;
+  let y = pageHeightPt - effectiveTopPt;
+  const usableH = pageHeightPt - effectiveTopPt - effectiveBottomPt;
   const usableW = maxWidth;
   const startPage = (): void => {
     if (!cur.length) return;
     pages.push(pageOf(cur));
     cur = [];
-    y = pageHeightPt - m.marginTopPt;
+    y = pageHeightPt - effectiveTopPt;
   };
   const need = (heightPt: number): void => {
     if (heightPt <= 0 || !cur.length) return;
-    if (y - heightPt < bottomPt) startPage();
+    if (y - heightPt < effectiveBottomPt) startPage();
   };
   let tableRow = -1;
   for (const line of lines) {
     if (line.style === "page-break") {
       startPage();
-      y = pageHeightPt - m.marginTopPt;
+      y = pageHeightPt - effectiveTopPt;
       continue;
     }
     if (line.style === "table-top") {
@@ -162,5 +179,61 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   }
   if (cur.length) pages.push(pageOf(cur));
   if (pages.length === 0) pages.push(pageOf([]));
+
+  if (hf) {
+    const totalPages = pages.length;
+    const docTitle = (doc.metadata?.title as string) ?? "";
+    const docDate = (doc.metadata?.date as string) ?? (doc.createdAt ? doc.createdAt.slice(0, 10) : "");
+    const headerY = pageHeightPt - headerDistPt;
+    const footerY = footerDistPt;
+
+    pages.forEach((page, idx) => {
+      const pageNum = idx + 1;
+      const isFirst = pageNum === 1;
+      const isEven = pageNum % 2 === 0;
+
+      const hZone: HeaderFooterZone | undefined = (isFirst && hf.firstPageDifferent)
+        ? hf.firstPageHeader
+        : (isEven && hf.oddEvenDifferent ? (hf.evenPageHeader ?? hf.header) : hf.header);
+      const fZone: HeaderFooterZone | undefined = (isFirst && hf.firstPageDifferent)
+        ? hf.firstPageFooter
+        : (isEven && hf.oddEvenDifferent ? (hf.evenPageFooter ?? hf.footer) : hf.footer);
+
+      const vars = {
+        pageNumber: pageNum,
+        totalPages,
+        documentTitle: docTitle,
+        date: docDate,
+      };
+
+      const addZoneLines = (zone: HeaderFooterZone | undefined, yPt: number, kind: "header" | "footer") => {
+        if (!zone) return;
+        const addSide = (nodes: InlineNode[] | undefined, align: "left" | "center" | "right") => {
+          if (!nodes || !nodes.length) return;
+          const resolved = resolveDynamicVariables(nodes, vars);
+          const segs = inlineToSegments(resolved as never, 9);
+          if (segs.length) {
+            page.lines.push({
+              line: {
+                segments: segs,
+                yPt,
+                sizePt: 9,
+                align,
+                style: `running-${kind} ${kind}-${align}`,
+              },
+              yPt,
+            });
+          }
+        };
+        addSide(zone.left, "left");
+        addSide(zone.center, "center");
+        addSide(zone.right, "right");
+      };
+
+      addZoneLines(hZone, headerY, "header");
+      addZoneLines(fZone, footerY, "footer");
+    });
+  }
+
   return pages;
 }

@@ -143,7 +143,8 @@ export function pageContentStream(
       for (const seg of segs) {
         w += seg.kind === "text" ? segmentWidthPt(seg.text, seg.sizePt, seg.face) : seg.kind === "math" ? seg.math.widthPt : 0;
       }
-      x = line.align === "center" ? (pageWidthPt - w) / 2 : pageWidthPt - marginPt - w;
+      const rightMarginPt = page.marginRightPt ?? marginPt;
+      x = line.align === "center" ? (pageWidthPt - w) / 2 : pageWidthPt - rightMarginPt - w;
     }
     cursorX = x;
     const firstText = segs.find((seg) => seg.kind === "text" && seg.text.length > 0);

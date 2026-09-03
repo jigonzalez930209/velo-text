@@ -1,7 +1,36 @@
-import type { AssetId, JsonValue, PageSettings } from "./primitives.js";
+import type { AssetId, JsonValue, PageMarginsUm, NodeId } from "./primitives.js";
 import { SCHEMA_TYPE, SCHEMA_VERSION } from "./primitives.js";
 import type { RootNode } from "./block.js";
-import type { NodeId } from "./primitives.js";
+import type { InlineNode } from "./inline.js";
+
+export interface HeaderFooterZone {
+  left?: InlineNode[];
+  center?: InlineNode[];
+  right?: InlineNode[];
+}
+
+export interface HeaderFooterConfig {
+  header?: HeaderFooterZone;
+  footer?: HeaderFooterZone;
+  firstPageDifferent?: boolean;
+  firstPageHeader?: HeaderFooterZone;
+  firstPageFooter?: HeaderFooterZone;
+  oddEvenDifferent?: boolean;
+  evenPageHeader?: HeaderFooterZone;
+  evenPageFooter?: HeaderFooterZone;
+  headerDistanceUm?: number; // Distance from page top edge, default: 12700 (0.5 in)
+  footerDistanceUm?: number; // Distance from page bottom edge, default: 12700 (0.5 in)
+}
+
+export interface PageSettings {
+  widthUm: number;
+  heightUm: number;
+  marginUm: PageMarginsUm;
+  orientation?: "portrait" | "landscape";
+  headerFooter?: HeaderFooterConfig;
+}
+
+export type DocumentPageSettings = PageSettings;
 
 export interface AssetVariant {
   storageKey: string;

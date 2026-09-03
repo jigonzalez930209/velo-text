@@ -65,6 +65,7 @@ export interface PdfPage {
   widthPt: number;
   heightPt: number;
   marginPt: number;
+  marginRightPt?: number;
   objNum?: number;
 }
 

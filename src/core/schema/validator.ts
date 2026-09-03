@@ -198,6 +198,42 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
   if (doc.page) {
     if (typeof doc.page.widthUm !== "number" || doc.page.widthUm <= 0) err("/page/widthUm", "range", "widthUm >0");
     if (typeof doc.page.heightUm !== "number" || doc.page.heightUm <= 0) err("/page/heightUm", "range", "heightUm >0");
+    if (doc.page.headerFooter) {
+      const hf = doc.page.headerFooter;
+      if (typeof hf !== "object" || hf === null) {
+        err("/page/headerFooter", "type", "headerFooter must be object");
+      } else {
+        if (hf.headerDistanceUm !== undefined && (typeof hf.headerDistanceUm !== "number" || hf.headerDistanceUm < 0)) {
+          err("/page/headerFooter/headerDistanceUm", "range", "headerDistanceUm >= 0");
+        }
+        if (hf.footerDistanceUm !== undefined && (typeof hf.footerDistanceUm !== "number" || hf.footerDistanceUm < 0)) {
+          err("/page/headerFooter/footerDistanceUm", "range", "footerDistanceUm >= 0");
+        }
+        const validateZone = (zone: unknown, zPath: string) => {
+          if (!zone || typeof zone !== "object") {
+            err(zPath, "type", `${zPath} must be object`);
+            return;
+          }
+          const z = zone as Record<string, unknown>;
+          for (const side of ["left", "center", "right"] as const) {
+            if (z[side] !== undefined) {
+              if (!Array.isArray(z[side])) {
+                err(`${zPath}/${side}`, "type", `${side} must be array`);
+              } else {
+                (z[side] as InlineNode[]).forEach((inNode, idx) => validateInline(inNode, `${zPath}/${side}/${idx}`));
+              }
+            }
+          }
+        };
+
+        if (hf.header) validateZone(hf.header, "/page/headerFooter/header");
+        if (hf.footer) validateZone(hf.footer, "/page/headerFooter/footer");
+        if (hf.firstPageHeader) validateZone(hf.firstPageHeader, "/page/headerFooter/firstPageHeader");
+        if (hf.firstPageFooter) validateZone(hf.firstPageFooter, "/page/headerFooter/firstPageFooter");
+        if (hf.evenPageHeader) validateZone(hf.evenPageHeader, "/page/headerFooter/evenPageHeader");
+        if (hf.evenPageFooter) validateZone(hf.evenPageFooter, "/page/headerFooter/evenPageFooter");
+      }
+    }
   }
 
   // depth limit

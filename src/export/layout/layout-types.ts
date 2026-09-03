@@ -16,6 +16,8 @@ export interface LayoutPage {
   usableWidthUm: number;
   usableHeightUm: number;
   boxes: PageBox[];
+  headerBoxes?: PageBox[];
+  footerBoxes?: PageBox[];
 }
 
 export interface PaginationOptions {

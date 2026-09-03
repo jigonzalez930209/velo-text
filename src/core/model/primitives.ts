@@ -5,11 +5,11 @@ export type NodeId = string;
 export type AssetId = string;
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
 
-export interface PageSettings {
-  widthUm: number;
-  heightUm: number;
-  marginUm: { top: number; right: number; bottom: number; left: number };
-  orientation?: "portrait" | "landscape";
+export interface PageMarginsUm {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
 }
 
 export interface TextMarks {

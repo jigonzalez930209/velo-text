@@ -29,7 +29,8 @@
             "bottom": { "type": "integer", "minimum": 0 },
             "left": { "type": "integer", "minimum": 0 }
           }
-        }
+        },
+        "headerFooter": { "$ref": "#/definitions/headerFooterConfig" }
       }
     },
     "root": {
@@ -244,6 +245,29 @@
         "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "byteLength": { "type": "integer", "minimum": 0 },
         "alt": { "type": "string" }
+      }
+    },
+    "headerFooterZone": {
+      "type": "object",
+      "properties": {
+        "left": { "type": "array", "items": { "$ref": "#/definitions/inlineNode" } },
+        "center": { "type": "array", "items": { "$ref": "#/definitions/inlineNode" } },
+        "right": { "type": "array", "items": { "$ref": "#/definitions/inlineNode" } }
+      }
+    },
+    "headerFooterConfig": {
+      "type": "object",
+      "properties": {
+        "header": { "$ref": "#/definitions/headerFooterZone" },
+        "footer": { "$ref": "#/definitions/headerFooterZone" },
+        "firstPageDifferent": { "type": "boolean" },
+        "firstPageHeader": { "$ref": "#/definitions/headerFooterZone" },
+        "firstPageFooter": { "$ref": "#/definitions/headerFooterZone" },
+        "oddEvenDifferent": { "type": "boolean" },
+        "evenPageHeader": { "$ref": "#/definitions/headerFooterZone" },
+        "evenPageFooter": { "$ref": "#/definitions/headerFooterZone" },
+        "headerDistanceUm": { "type": "integer", "minimum": 0 },
+        "footerDistanceUm": { "type": "integer", "minimum": 0 }
       }
     }
   }
