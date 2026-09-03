@@ -20,7 +20,8 @@ export interface PdfHttpResult {
 
 function asBytes(data: string | number[]): Uint8Array {
   if (Array.isArray(data)) return Uint8Array.from(data);
-  const bin = atob(data);
+  const cleaned = String(data).replace(/\s/g, "");
+  const bin = atob(cleaned);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
@@ -38,10 +39,15 @@ export async function handlePdfExportJson(
     return { status: 400, headers: { "content-type": "application/json" }, error: "document envelope required" };
   }
   const assets: Record<string, { id: string; mediaType: string; data: Uint8Array }> = {};
-  for (const [id, a] of Object.entries(body.assets ?? {})) {
-    assets[id] = { id: a.id ?? id, mediaType: a.mediaType, data: asBytes(a.data) };
-  }
   try {
+    for (const [id, a] of Object.entries(body.assets ?? {})) {
+      if (!a || a.data == null) continue;
+      try {
+        assets[id] = { id: a.id ?? id, mediaType: a.mediaType, data: asBytes(a.data) };
+      } catch {
+        /* skip payloads that are not base64 / byte arrays */
+      }
+    }
     const pdf = await exportPdf({
       document: body.document,
       data: body.data ?? {},
