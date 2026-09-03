@@ -3,6 +3,7 @@ import { makeToolbarNavigable } from "../accessibility/index.js";
 import { COLUMN_PRESETS } from "../controller/column-presets.js";
 import { openMosaicPicker, openSizePicker, clampTableSize } from "../controller/size-picker.js";
 import { placeOverlay } from "../controller/place-overlay.js";
+import { mountOfficePalette } from "../controller/color-palette.js";
 import type { Editor } from "../controller/types.js";
 import type { IconName } from "../../assets/icons/index.js";
 
@@ -63,6 +64,7 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "pg-tb-item";
+      b.setAttribute("aria-label", it.label);
       b.innerHTML = itemHtml(it);
       keepEditorFocus(b);
       b.onclick = () => {
@@ -155,22 +157,39 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
     pendingTypeSel = editor.captureTextSelection();
   };
   toolbar.querySelector('button[title="Type and color"]')?.addEventListener("mousedown", stashTypeSel);
-  const colorRow = (icon: IconName, title: string, id: string, value: string, on: (v: string) => void): void => {
-    const row = document.createElement("label");
-    row.className = "pg-tb-row";
+  const colorRow = (icon: IconName, title: string, id: string, on: (v: string) => void): void => {
+    const row = document.createElement("div");
+    row.className = "pg-tb-row pg-tb-row--color";
     row.title = title;
-    const inp = document.createElement("input");
-    inp.type = "color";
-    inp.id = id;
-    inp.value = value;
-    stashOnPointerDown(inp, stashTypeSel);
-    inp.oninput = () => on(inp.value);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.id = id;
+    chip.className = "pde-color-chip";
+    chip.setAttribute("aria-label", title);
+    chip.onmousedown = (ev) => ev.preventDefault();
     row.innerHTML = `${getIconSvg(icon, { size: 16 })}<span>${title}</span>`;
-    row.appendChild(inp);
+    row.appendChild(chip);
+    row.onclick = (ev) => {
+      ev.stopPropagation();
+      stashTypeSel();
+      const existing = typeMenu.querySelector(".pde-color-palette");
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      const pal = mountOfficePalette(document, {
+        onPick: (hex) => {
+          chip.style.background = hex;
+          pal.remove();
+          on(hex);
+        },
+      });
+      typeMenu.appendChild(pal);
+    };
     typeMenu.appendChild(row);
   };
-  colorRow("color", "Text color", "fg-color", "#17191c", (v) => editor.commands.setColor(v));
-  colorRow("background", "Highlight", "bg-color", "#fff59d", (v) => editor.commands.setHighlight(v));
+  colorRow("color", "Text color", "fg-color", (v) => editor.commands.setColor(v));
+  colorRow("background", "Text highlight", "bg-color", (v) => editor.commands.setHighlight(v));
   const fontRow = document.createElement("label");
   fontRow.className = "pg-tb-row";
   fontRow.innerHTML = `${getIconSvg("fileText", { size: 16 })}<span>Font</span>`;
@@ -192,10 +211,75 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
   sizeRow.appendChild(size);
   typeMenu.appendChild(sizeRow);
 
+  const setPressed = (el: Element | null, on: boolean): void => {
+    if (!el) return;
+    if (on) el.setAttribute("aria-pressed", "true");
+    else el.removeAttribute("aria-pressed");
+  };
+  const syncChrome = (): void => {
+    const d = toolbar.ownerDocument;
+    const cmd = (name: string): boolean => {
+      try { return !!d.queryCommandState(name); } catch { return false; }
+    };
+    setPressed(toolbar.querySelector('button[aria-label="Bold"]'), cmd("bold"));
+    setPressed(toolbar.querySelector('button[aria-label="Italic"]'), cmd("italic"));
+    setPressed(toolbar.querySelector('button[aria-label="Underline"]'), cmd("underline"));
+    setPressed(typeMenu.querySelector('[aria-label="Strikethrough"]'), cmd("strikeThrough"));
+    const sel = d.getSelection();
+    const node = sel?.anchorNode;
+    let walk = (node ? (node.nodeType === 1 ? node : node.parentElement) : null) as HTMLElement | null;
+    const host = helpers.root.querySelector("[contenteditable]") as HTMLElement | null;
+    let color = "";
+    let bg = "";
+    let family = "";
+    let sizePt = 0;
+    let align = "";
+    while (walk && host?.contains(walk)) {
+      if (walk.style.color) color = walk.style.color;
+      if (walk.style.backgroundColor) bg = walk.style.backgroundColor;
+      if (walk.style.fontFamily) family = walk.style.fontFamily.replace(/['"]/g, "").split(",")[0]?.trim() ?? "";
+      if (walk.style.fontSize) {
+        const n = parseFloat(walk.style.fontSize);
+        sizePt = walk.style.fontSize.endsWith("px") ? Math.round((n * 72) / 96) : n;
+      }
+      const a = walk.style.textAlign || walk.getAttribute("data-align") || "";
+      if (a) align = a;
+      walk = walk.parentElement;
+    }
+    const fgChip = typeMenu.querySelector("#fg-color") as HTMLElement | null;
+    const bgChip = typeMenu.querySelector("#bg-color") as HTMLElement | null;
+    if (fgChip) fgChip.style.background = color || "#000";
+    if (bgChip) bgChip.style.background = bg || "transparent";
+    if (family) font.value = family;
+    if (sizePt) size.value = String(sizePt);
+    const typeOn = !!(color || bg || (family && family !== "Velo Sans") || (sizePt && sizePt !== 12));
+    setPressed(toolbar.querySelector('button[title="Type and color"]'), typeOn);
+    const colorRows = typeMenu.querySelectorAll(".pg-tb-row--color");
+    colorRows[0]?.classList.toggle("pg-tb-row--on", !!color);
+    colorRows[1]?.classList.toggle("pg-tb-row--on", !!bg);
+    fontRow.classList.toggle("pg-tb-row--on", !!(family && family !== "Velo Sans"));
+    sizeRow.classList.toggle("pg-tb-row--on", !!(sizePt && sizePt !== 12));
+    setPressed(toolbar.querySelector('button[aria-label="Align left"]'), false);
+    setPressed(toolbar.querySelector('button[aria-label="Align center"]'), align === "center");
+    setPressed(toolbar.querySelector('button[aria-label="Align right"]'), align === "right");
+    setPressed(toolbar.querySelector('button[aria-label="Justify"]'), align === "justify");
+    const tag = (host && sel?.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode as Element : sel.anchorNode.parentElement)?.closest("h1,h2,h3,blockquote,ul,ol") : null);
+    setPressed(drops.find((x) => x.btn.title === "Headings")?.menu.querySelector('[aria-label="Title (H1)"]') ?? null, tag?.tagName === "H1");
+    setPressed(drops.find((x) => x.btn.title === "Headings")?.menu.querySelector('[aria-label="Subtitle (H2)"]') ?? null, tag?.tagName === "H2");
+    setPressed(drops.find((x) => x.btn.title === "Headings")?.menu.querySelector('[aria-label="Heading 3"]') ?? null, tag?.tagName === "H3");
+    setPressed(drops.find((x) => x.btn.title === "Headings")?.menu.querySelector('[aria-label="Quote"]') ?? null, tag?.tagName === "BLOCKQUOTE");
+    setPressed(drops.find((x) => x.btn.title === "Headings")?.btn ?? null, !!tag && tag.tagName !== "UL" && tag.tagName !== "OL");
+    setPressed(drops.find((x) => x.btn.title === "Lists")?.menu.querySelector('[aria-label="Bullet list"]') ?? null, tag?.tagName === "UL");
+    setPressed(drops.find((x) => x.btn.title === "Lists")?.menu.querySelector('[aria-label="Numbered list"]') ?? null, tag?.tagName === "OL");
+    setPressed(drops.find((x) => x.btn.title === "Lists")?.btn ?? null, tag?.tagName === "UL" || tag?.tagName === "OL");
+  };
+
   const navOff = makeToolbarNavigable(toolbar);
   const onDocDown = (ev: Event): void => {
     const t = ev.target as Node | null;
     if (!t) return;
+    const el = t as HTMLElement;
+    if (el.closest?.(".pde-color-palette, .pde-cell-swatch, .pde-cell-swatch-wrap")) return;
     if (drops.some((d) => d.menu.contains(t) || d.btn.contains(t))) return;
     for (const d of drops) {
       d.menu.hidden = true;
@@ -206,10 +290,13 @@ export function wireToolbar(editor: Editor, toolbar: HTMLElement, helpers: {
     for (const d of drops) if (!d.menu.hidden) placeOverlay(d.btn, d.menu);
   };
   toolbar.ownerDocument.addEventListener("mousedown", onDocDown, true);
+  toolbar.ownerDocument.addEventListener("selectionchange", syncChrome);
+  toolbar.addEventListener("click", () => queueMicrotask(syncChrome));
   toolbar.ownerDocument.defaultView?.addEventListener("resize", onResize);
   return () => {
     navOff();
     toolbar.ownerDocument.removeEventListener("mousedown", onDocDown, true);
+    toolbar.ownerDocument.removeEventListener("selectionchange", syncChrome);
     toolbar.ownerDocument.defaultView?.removeEventListener("resize", onResize);
     for (const d of drops) d.menu.remove();
   };
