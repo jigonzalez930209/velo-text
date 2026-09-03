@@ -4,7 +4,8 @@
  * DOM is a reflection of the AST; AST is the source of truth.
  */
 import type { PortableDocument, BlockNode, InlineNode } from "../../core/model/types.js";
-import { tableClassName } from "../../core/model/table-look.js";
+import { isTableLookFill, resolvedLook, tableClassName } from "../../core/model/table-look.js";
+import { snapOfficeHex } from "../../core/model/office-colors.js";
 import { latexToHtml } from "../../core/equation/index.js";
 
 export interface RenderOptions {
@@ -46,18 +47,25 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
           return `<col data-col-id="${c.id}" data-col-width-um="${c.widthUm}"${style} />`;
         })
         .join("");
+      const look = resolvedLook(block);
       const rows = block.rows
-        .map((row) => {
+        .map((row, ri) => {
+          const headerFg = Boolean(look.headerRow && ri === 0);
+          const isHeaderRow = headerFg || Boolean(row.header);
           const hPx = row.heightUm ? ` style="height:${Math.round((row.heightUm / 25400) * 96)}px" data-height-um="${row.heightUm}"` : "";
-          const hdr = row.header ? ` data-header="true"` : "";
+          const hdr = isHeaderRow ? ` data-header="true"` : "";
           const cells = row.cells
             .map((cell, colIndex) => {
-              const tag = row.header ? "th" : "td";
+              const tag = isHeaderRow ? "th" : "td";
               const inner = cell.blocks.map((bl) => renderBlock(bl, resolve)).join("") || "<p><br></p>";
-              const bg = typeof cell.style?.background === "string" ? `background:${cell.style.background}` : "";
+              const rawBg = typeof cell.style?.background === "string" ? cell.style.background : "";
+              const custom = rawBg && !isTableLookFill(rawBg) ? snapOfficeHex(rawBg) : "";
               const vaRaw = typeof cell.style?.vAlign === "string" ? cell.style.vAlign : "middle";
               const va = vaRaw === "top" || vaRaw === "bottom" ? vaRaw : "middle";
-              const st = [bg, `vertical-align:${va}`].filter(Boolean).join(";");
+              const st = [
+                custom ? `background:${custom}` : "",
+                `vertical-align:${va}`,
+              ].filter(Boolean).join(";");
               const styleAttr = ` style="${st}"`;
               return `<${tag} data-node-id="${cell.id}" colspan="${cell.colSpan}" rowspan="${cell.rowSpan}" data-col-index="${colIndex}" data-valign="${va}"${styleAttr}>${inner}</${tag}>`;
             })
@@ -65,7 +73,8 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
           return `<tr data-node-id="${row.id}"${hPx}${hdr}>${cells}</tr>`;
         })
         .join("");
-      return `<table class="${tableClassName(block)}" data-node-id="${id}" data-node-type="table" style="table-layout:fixed;width:100%"><colgroup>${colsHtml}</colgroup><tbody>${rows}</tbody></table>`;
+      const lookJson = block.style?.look ? ` data-look="${escapeAttr(JSON.stringify(block.style.look))}"` : "";
+      return `<table class="${tableClassName(block)}" data-node-id="${id}" data-node-type="table"${lookJson} style="table-layout:fixed;width:100%"><colgroup>${colsHtml}</colgroup><tbody>${rows}</tbody></table>`;
     }
     case "image": {
       const wUm = block.widthUm ?? 150000;

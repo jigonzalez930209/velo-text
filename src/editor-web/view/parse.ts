@@ -1,11 +1,21 @@
 /**
  * DOM → AST parser — parses contenteditable DOM into PortableDocument.
  */
-import type { PortableDocument, BlockNode, TableNode, TableRow, TableCell, TableLook, TablePreset, TableStyle, IdGenerator } from "../../core/model/types.js";
+import type { PortableDocument, BlockNode, TableNode, TableRow, TableCell, TablePreset, TableStyle, IdGenerator } from "../../core/model/types.js";
+import { isTableLookFill, lookFromTableClass } from "../../core/model/table-look.js";
+import { snapOfficeHex } from "../../core/model/office-colors.js";
 import { pxToUm } from "../../export/layout/units.js";
 import { parseInlines, nodeId } from "./parse-inlines.js";
 
 export { parseInlines } from "./parse-inlines.js";
+
+function cellBackgroundFromEl(tdEl: HTMLElement): string {
+  const fromStyle = (tdEl.style.backgroundColor || tdEl.style.background || "").trim();
+  if (fromStyle) return fromStyle;
+  const attr = tdEl.getAttribute("style") ?? "";
+  const m = /(?:^|;)\s*background(?:-color)?:\s*([^;]+)/i.exec(attr);
+  return m?.[1]?.trim() ?? "";
+}
 
 const BLOCK_TAGS = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "BLOCKQUOTE", "UL", "OL", "TABLE", "HR", "FIGURE", "DIV"]);
 
@@ -173,7 +183,8 @@ function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
       }
       flushText();
       if (!blocks.length) blocks.push({ type: "paragraph", id: `${tdId}_p`, children: [] });
-      const bg = (tdEl.style.backgroundColor || tdEl.style.background || "").trim();
+      const bgRaw = cellBackgroundFromEl(tdEl);
+      const bg = bgRaw && !isTableLookFill(bgRaw) ? snapOfficeHex(bgRaw) : "";
       const vaAttr = tdEl.getAttribute("data-valign") || tdEl.style.verticalAlign;
       const vAlign = vaAttr === "top" || vaAttr === "bottom" ? vaAttr as "top" | "bottom" : undefined;
       const cellStyle = { ...(bg ? { background: bg } : {}), ...(vAlign ? { vAlign } : {}) };
@@ -189,26 +200,24 @@ function parseTable(el: HTMLElement, idGen: IdGenerator): TableNode {
     columns = Array.from({ length: colCount }, () => ({ id: idGen.next(), widthUm: 40000 }));
   }
 
-  const style = tableStyleFromClass(el.className);
+  const style = tableStyleFromEl(el);
   return { type: "table", id, columns, rows, ...(style ? { style } : {}) };
 }
 
-function tableStyleFromClass(className: string): TableStyle | undefined {
+function tableStyleFromEl(el: HTMLElement): TableStyle | undefined {
+  const className = el.className;
   const density = (["compact", "normal", "large"] as const).find((d) => className.includes(`pde-table--${d}`));
   const preset = (["grid-banded", "list-header", "accent", "plain", "grid", "list"] as const).find((p) =>
     className.includes(`pde-table--${p}`),
   ) as TablePreset | undefined;
-  const look: TableLook = {};
-  if (className.includes("pde-table--banded-rows")) look.bandedRows = true;
-  if (className.includes("pde-table--banded-cols")) look.bandedColumns = true;
-  if (className.includes("pde-table--first-col")) look.firstColumn = true;
-  if (className.includes("pde-table--last-col")) look.lastColumn = true;
-  if (className.includes("pde-table--total-row")) look.totalRow = true;
-  if (preset === "grid" || preset === "grid-banded" || preset === "list" || preset === "list-header" || preset === "accent") {
-    look.headerRow = true;
+  const lookAttr = el.getAttribute("data-look");
+  let look: TableStyle["look"] = undefined;
+  if (lookAttr) {
+    try { look = JSON.parse(lookAttr) as TableStyle["look"]; } catch { look = undefined; }
   }
-  if (!density && !preset && !Object.keys(look).length) return undefined;
-  return { ...(density ? { density } : {}), ...(preset ? { preset } : {}), ...(Object.keys(look).length ? { look } : {}) };
+  if (!look) look = lookFromTableClass(className, preset);
+  if (!density && !preset && !Object.keys(look ?? {}).length) return undefined;
+  return { ...(density ? { density } : {}), ...(preset ? { preset } : {}), ...(look && Object.keys(look).length ? { look } : {}) };
 }
 
 /**
