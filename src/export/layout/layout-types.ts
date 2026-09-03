@@ -11,6 +11,7 @@ export interface PageBox {
 
 export interface LayoutPage {
   index: number;
+  pageNumber?: number;
   widthUm: number;
   heightUm: number;
   usableWidthUm: number;

@@ -67,7 +67,7 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
     const docDate = (doc.metadata?.date as string) ?? (doc.createdAt ? doc.createdAt.slice(0, 10) : "");
 
     pages.forEach((p, idx) => {
-      const pageNum = idx + 1;
+      const pageNum = p.pageNumber ?? (idx + 1);
       const isFirst = pageNum === 1;
       const isEven = pageNum % 2 === 0;
 
@@ -90,14 +90,15 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
 
       const makeBoxes = (zone: HeaderFooterZone | undefined, yUm: number, target: PageBox[], type: "header" | "footer") => {
         if (!zone) return;
+        const pageLeftUm = Math.round((p.widthUm - p.usableWidthUm) / 2);
         if (zone.left?.length) {
           const resolved = resolveDynamicVariables(zone.left, vars);
           target.push({
             id: `${type}_left_${pageNum}`,
             type: `${type}-left`,
-            xUm: margin.left,
+            xUm: pageLeftUm,
             yUm,
-            widthUm: usableWidthUm,
+            widthUm: p.usableWidthUm,
             heightUm: headerHeightUm,
             content: inlineNodesToText(resolved),
           });
@@ -107,9 +108,9 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
           target.push({
             id: `${type}_center_${pageNum}`,
             type: `${type}-center`,
-            xUm: margin.left,
+            xUm: pageLeftUm,
             yUm,
-            widthUm: usableWidthUm,
+            widthUm: p.usableWidthUm,
             heightUm: headerHeightUm,
             content: inlineNodesToText(resolved),
           });
@@ -119,9 +120,9 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
           target.push({
             id: `${type}_right_${pageNum}`,
             type: `${type}-right`,
-            xUm: margin.left,
+            xUm: pageLeftUm,
             yUm,
-            widthUm: usableWidthUm,
+            widthUm: p.usableWidthUm,
             heightUm: headerHeightUm,
             content: inlineNodesToText(resolved),
           });
@@ -129,7 +130,7 @@ export function paginateDocument(doc: PortableDocument, opts: PaginationOptions 
       };
 
       makeBoxes(hZone, headerDistUm, p.headerBoxes, "header");
-      makeBoxes(fZone, pageHeightUm - footerDistUm - footerHeightUm, p.footerBoxes, "footer");
+      makeBoxes(fZone, p.heightUm - footerDistUm - footerHeightUm, p.footerBoxes, "footer");
     });
   }
 

@@ -138,7 +138,7 @@
         { "$ref": "#/definitions/paragraphNode" }, { "$ref": "#/definitions/headingNode" }, { "$ref": "#/definitions/quoteNode" },
         { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
-        { "$ref": "#/definitions/columnsNode" }
+        { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -233,6 +233,33 @@
       "type": "object",
       "required": ["type", "id", "columns"],
       "properties": { "type": { "const": "columns" }, "id": { "type": "string" }, "columns": { "type": "array" }, "gapUm": { "type": "integer" } }
+    },
+    "sectionBreakBlockNode": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "const": "section-break" },
+        "id": { "type": "string" },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "orientation": { "enum": ["portrait", "landscape"] },
+            "widthUm": { "type": "integer", "minimum": 1 },
+            "heightUm": { "type": "integer", "minimum": 1 },
+            "marginsUm": {
+              "type": "object",
+              "properties": {
+                "top": { "type": "integer", "minimum": 0 },
+                "right": { "type": "integer", "minimum": 0 },
+                "bottom": { "type": "integer", "minimum": 0 },
+                "left": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "restartPageNumbering": { "type": "boolean" },
+            "startPageNumber": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
     },
     "assetRef": {
       "type": "object",

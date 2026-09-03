@@ -1,6 +1,6 @@
 import type { BlockNode } from "../../core/model/types.js";
 import { breakLines } from "./text.js";
-import { box, ensureSpace, pushPage, type LayoutFlow } from "./layout-flow.js";
+import { box, ensureSpace, pushPage, applySectionBreak, type LayoutFlow } from "./layout-flow.js";
 
 export function layoutStructuredBlock(flow: LayoutFlow, block: BlockNode): boolean {
   const { margin, usableWidthUm, usableHeightUm, lineHeightDefault, diagnostics } = flow;
@@ -132,6 +132,10 @@ export function layoutStructuredBlock(flow: LayoutFlow, block: BlockNode): boole
   }
   if (block.type === "page-break") {
     pushPage(flow);
+    return true;
+  }
+  if (block.type === "section-break") {
+    applySectionBreak(flow, block.settings);
     return true;
   }
   if (block.type === "horizontal-rule") {

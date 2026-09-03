@@ -82,6 +82,24 @@ interface InlineNodeLike {
 
 function normalizeRoot(root: RootNode): void {
   if (!root.children) root.children = [];
+  const collapsed: BlockNode[] = [];
+  for (const block of root.children) {
+    if (block.type === "section-break") {
+      const last = collapsed[collapsed.length - 1];
+      if (last && last.type === "section-break") {
+        collapsed[collapsed.length - 1] = {
+          ...block,
+          settings: {
+            ...(last.settings ?? {}),
+            ...(block.settings ?? {}),
+          },
+        };
+        continue;
+      }
+    }
+    collapsed.push(block);
+  }
+  root.children = collapsed;
   for (const block of root.children) normalizeBlock(block);
 }
 

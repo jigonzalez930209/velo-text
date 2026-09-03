@@ -1,4 +1,4 @@
-import type { AssetId, JsonValue, NodeId } from "./primitives.js";
+import type { AssetId, JsonValue, NodeId, PageMarginsUm } from "./primitives.js";
 import type { InlineNode } from "./inline.js";
 
 export interface ParagraphNode {
@@ -132,6 +132,25 @@ export interface ColumnsNode {
   gapUm?: number;
 }
 
+export type PageOrientation = "portrait" | "landscape";
+
+export interface SectionSettings {
+  orientation?: PageOrientation;
+  widthUm?: number;
+  heightUm?: number;
+  marginsUm?: PageMarginsUm;
+  restartPageNumbering?: boolean;
+  startPageNumber?: number;
+}
+
+export interface SectionBreakBlockNode {
+  type: "section-break";
+  id: NodeId;
+  settings?: SectionSettings;
+}
+
+export type SectionBreakBlock = SectionBreakBlockNode;
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -142,7 +161,8 @@ export type BlockNode =
   | PageBreakNode
   | HorizontalRuleNode
   | EquationBlockNode
-  | ColumnsNode;
+  | ColumnsNode
+  | SectionBreakBlockNode;
 
 export interface RootNode {
   type: "root";

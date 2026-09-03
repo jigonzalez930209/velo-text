@@ -1,4 +1,4 @@
-import type { HeaderFooterZone, InlineNode, PortableDocument } from "../../core/model/types.js";
+import type { HeaderFooterZone, InlineNode, PortableDocument, SectionSettings } from "../../core/model/types.js";
 import { parseMath } from "./equation.js";
 import type { PdfLine, PdfPage, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
@@ -49,15 +49,13 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     ? Math.max(bottomPt, footerDistPt + 16)
     : bottomPt;
 
-  const pageOf = (rows: PdfPage["lines"]): PdfPage => ({
-    lines: rows,
-    widthPt: pageWidthPt,
-    heightPt: pageHeightPt,
-    marginPt,
-    marginRightPt: m.marginRightPt,
-  });
+  let activeWidthPt = pageWidthPt;
+  let activeHeightPt = pageHeightPt;
+  let activeMarginLeftPt = marginPt;
+  let activeMarginRightPt = m.marginRightPt;
+  let activeMaxWidth = maxWidth;
 
-  const wrap = (segs: Segment[], align: string, style: string, baseSize: number): void => {
+  const wrap = (segs: Segment[], align: string, style: string, baseSize: number, maxW = activeMaxWidth): void => {
     const from = lines.length;
     let cur: Segment[] = [];
     let curW = 0;
@@ -70,7 +68,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       curW = 0;
     };
     const push = (seg: Segment, w: number): void => {
-      if (curW + w > maxWidth && cur.length) flushLine();
+      if (curW + w > maxW && cur.length) flushLine();
       cur.push(seg);
       curW += w;
     };
@@ -96,8 +94,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
         const prefix = b.kind === "ordered" ? "1. " : "•  ";
         wrap([{ kind: "text", text: prefix, sizePt: 11, face: "Fa" }, ...inlineToSegments(it.content as never, 11)], "left", "list", 11);
       }
-    } else if (b.type === "table") emitTable(lines, b, maxWidth);
-    else if (b.type === "columns") emitColumns(lines, b, maxWidth);
+    } else if (b.type === "table") emitTable(lines, b, activeMaxWidth);
+    else if (b.type === "columns") emitColumns(lines, b, activeMaxWidth);
     else if (b.type === "equation-block") {
       const math = parseMath(b.latex ?? "", 12);
       lines.push({ segments: [{ kind: "math", math, sizePt: 12 }], yPt: 0, sizePt: 12, align: "center", style: "equation-block" });
@@ -105,6 +103,29 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 11, align: "left", style: "hr" });
     } else if (b.type === "page-break") {
       lines.push({ segments: [{ kind: "rule", widthPt: 0 }], yPt: 0, sizePt: 11, align: "left", style: "page-break" });
+    } else if (b.type === "section-break") {
+      const s = b.settings ?? {};
+      let wPt = s.widthUm ? pt(s.widthUm) : pageWidthPt;
+      let hPt = s.heightUm ? pt(s.heightUm) : pageHeightPt;
+      if (s.orientation === "landscape" && wPt < hPt) {
+        const tmp = wPt; wPt = hPt; hPt = tmp;
+      } else if (s.orientation === "portrait" && wPt > hPt) {
+        const tmp = wPt; wPt = hPt; hPt = tmp;
+      }
+      activeWidthPt = wPt;
+      activeHeightPt = hPt;
+      if (s.marginsUm) {
+        activeMarginLeftPt = pt(s.marginsUm.left);
+        activeMarginRightPt = pt(s.marginsUm.right);
+      }
+      activeMaxWidth = activeWidthPt - activeMarginLeftPt - activeMarginRightPt;
+      lines.push({
+        segments: [{ kind: "rule", widthPt: 0 }],
+        yPt: 0,
+        sizePt: 11,
+        align: "left",
+        style: `section-break ${JSON.stringify(b.settings ?? {})}`,
+      });
     } else if (b.type === "image") {
       const align = b.align === "center" || b.align === "right" ? b.align : "left";
       lines.push({
@@ -114,26 +135,78 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     }
   }
 
+  let curWidthPt = pageWidthPt;
+  let curHeightPt = pageHeightPt;
+  let curMarginLeftPt = marginPt;
+  let curMarginRightPt = m.marginRightPt;
+  let curMarginTopPt = m.marginTopPt;
+  let curMarginBottomPt = bottomPt;
+  let curEffectiveTopPt = effectiveTopPt;
+  let curEffectiveBottomPt = effectiveBottomPt;
+  let curSectionPageNum: number | undefined;
+
+  const pageOf = (rows: PdfPage["lines"]): PdfPage => {
+    const pNum = curSectionPageNum !== undefined ? curSectionPageNum++ : undefined;
+    return {
+      lines: rows,
+      widthPt: curWidthPt,
+      heightPt: curHeightPt,
+      marginPt: curMarginLeftPt,
+      marginRightPt: curMarginRightPt,
+      pageNumber: pNum,
+    };
+  };
+
   const pages: PdfPage[] = [];
   let cur: Array<{ line: PdfLine; yPt: number }> = [];
-  let y = pageHeightPt - effectiveTopPt;
-  const usableH = pageHeightPt - effectiveTopPt - effectiveBottomPt;
-  const usableW = maxWidth;
+  let y = curHeightPt - curEffectiveTopPt;
   const startPage = (): void => {
     if (!cur.length) return;
     pages.push(pageOf(cur));
     cur = [];
-    y = pageHeightPt - effectiveTopPt;
+    y = curHeightPt - curEffectiveTopPt;
   };
   const need = (heightPt: number): void => {
     if (heightPt <= 0 || !cur.length) return;
-    if (y - heightPt < effectiveBottomPt) startPage();
+    if (y - heightPt < curEffectiveBottomPt) startPage();
   };
   let tableRow = -1;
   for (const line of lines) {
     if (line.style === "page-break") {
       startPage();
-      y = pageHeightPt - effectiveTopPt;
+      y = curHeightPt - curEffectiveTopPt;
+      continue;
+    }
+    if (line.style.startsWith("section-break")) {
+      startPage();
+      const settingsStr = line.style.slice("section-break ".length);
+      let s: SectionSettings = {};
+      try { s = JSON.parse(settingsStr); } catch {}
+      let wPt = s.widthUm ? pt(s.widthUm) : pageWidthPt;
+      let hPt = s.heightUm ? pt(s.heightUm) : pageHeightPt;
+      if (s.orientation === "landscape" && wPt < hPt) {
+        const tmp = wPt; wPt = hPt; hPt = tmp;
+      } else if (s.orientation === "portrait" && wPt > hPt) {
+        const tmp = wPt; wPt = hPt; hPt = tmp;
+      }
+      curWidthPt = wPt;
+      curHeightPt = hPt;
+      if (s.marginsUm) {
+        curMarginLeftPt = pt(s.marginsUm.left);
+        curMarginRightPt = pt(s.marginsUm.right);
+        curMarginTopPt = pt(s.marginsUm.top);
+        curMarginBottomPt = pt(s.marginsUm.bottom);
+      }
+      curEffectiveTopPt = (hf?.header || hf?.firstPageHeader || hf?.evenPageHeader)
+        ? Math.max(curMarginTopPt, headerDistPt + 16)
+        : curMarginTopPt;
+      curEffectiveBottomPt = (hf?.footer || hf?.firstPageFooter || hf?.evenPageFooter)
+        ? Math.max(curMarginBottomPt, footerDistPt + 16)
+        : curMarginBottomPt;
+      if (s.restartPageNumbering) {
+        curSectionPageNum = s.startPageNumber ?? 1;
+      }
+      y = curHeightPt - curEffectiveTopPt;
       continue;
     }
     if (line.style === "table-top") {
@@ -162,6 +235,8 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       tableRow = -1;
     } else if (line.style.startsWith("image ")) {
       const parts = line.style.split(" ");
+      const usableW = curWidthPt - curMarginLeftPt - curMarginRightPt;
+      const usableH = curHeightPt - curEffectiveTopPt - curEffectiveBottomPt;
       const { hPt } = pdfImageDisplayPt(Number(parts[2]) || 0, Number(parts[3]) || 0, usableW, usableH);
       const cost = hPt + 13;
       need(cost);
@@ -184,13 +259,13 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     const totalPages = pages.length;
     const docTitle = (doc.metadata?.title as string) ?? "";
     const docDate = (doc.metadata?.date as string) ?? (doc.createdAt ? doc.createdAt.slice(0, 10) : "");
-    const headerY = pageHeightPt - headerDistPt;
-    const footerY = footerDistPt;
 
     pages.forEach((page, idx) => {
-      const pageNum = idx + 1;
+      const pageNum = page.pageNumber ?? (idx + 1);
       const isFirst = pageNum === 1;
       const isEven = pageNum % 2 === 0;
+      const headerY = page.heightPt - headerDistPt;
+      const footerY = footerDistPt;
 
       const hZone: HeaderFooterZone | undefined = (isFirst && hf.firstPageDifferent)
         ? hf.firstPageHeader

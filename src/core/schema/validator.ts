@@ -61,6 +61,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "horizontal-rule",
     "equation-block",
     "columns",
+    "section-break",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation"]);
 
@@ -174,6 +175,40 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
           if (depth < 0) break;
         }
         if (depth !== 0) err(`${path}/latex`, "unbalanced-braces", "unbalanced braces");
+      }
+    }
+    if (node.type === "section-break") {
+      const s = (node as unknown as { settings?: Record<string, unknown> }).settings;
+      if (s !== undefined && (typeof s !== "object" || s === null)) {
+        err(`${path}/settings`, "type", "section settings must be object");
+      } else if (s) {
+        if (s.orientation !== undefined && s.orientation !== "portrait" && s.orientation !== "landscape") {
+          err(`${path}/settings/orientation`, "enum", "orientation must be portrait or landscape");
+        }
+        if (s.widthUm !== undefined && (typeof s.widthUm !== "number" || s.widthUm <= 0)) {
+          err(`${path}/settings/widthUm`, "range", "widthUm must be > 0");
+        }
+        if (s.heightUm !== undefined && (typeof s.heightUm !== "number" || s.heightUm <= 0)) {
+          err(`${path}/settings/heightUm`, "range", "heightUm must be > 0");
+        }
+        if (s.restartPageNumbering !== undefined && typeof s.restartPageNumbering !== "boolean") {
+          err(`${path}/settings/restartPageNumbering`, "type", "restartPageNumbering must be boolean");
+        }
+        if (s.startPageNumber !== undefined && (typeof s.startPageNumber !== "number" || s.startPageNumber < 1)) {
+          err(`${path}/settings/startPageNumber`, "range", "startPageNumber must be >= 1");
+        }
+        if (s.marginsUm !== undefined) {
+          const m = s.marginsUm as Record<string, unknown>;
+          if (typeof m !== "object" || m === null) {
+            err(`${path}/settings/marginsUm`, "type", "marginsUm must be object");
+          } else {
+            for (const side of ["top", "right", "bottom", "left"] as const) {
+              if (m[side] !== undefined && (typeof m[side] !== "number" || (m[side] as number) < 0)) {
+                err(`${path}/settings/marginsUm/${side}`, "range", `${side} margin must be >= 0`);
+              }
+            }
+          }
+        }
       }
     }
   }
