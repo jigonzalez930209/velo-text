@@ -64,6 +64,7 @@
 .pde-editor td, .pde-editor th {
   display: table-cell;
   border: 1px solid var(--pde-color-border, #d8dce3);
+  background-clip: padding-box;
   padding: 8px 10px;
   vertical-align: middle;
   min-width: 64px;
@@ -79,34 +80,30 @@
 .pde-editor table.pde-table--compact th { padding: 2px 6px; }
 .pde-editor table.pde-table--large td,
 .pde-editor table.pde-table--large th { padding: 14px 12px; }
-.pde-editor table.pde-table th { background: var(--pde-color-surface); font-weight: 600; text-align: center; }
-.pde-editor table.pde-table--list td,
-.pde-editor table.pde-table--list th,
-.pde-editor table.pde-table--list-header td,
-.pde-editor table.pde-table--list-header th {
-  border-left: none;
-  border-right: none;
-}
-.pde-editor table.pde-table--banded-rows tbody tr:nth-child(even) td,
-.pde-editor table.pde-table--banded-rows tbody tr:nth-child(even) th {
-  background: color-mix(in srgb, var(--pde-color-primary) 10%, var(--pde-color-bg));
-}
-.pde-editor table.pde-table--banded-cols td:nth-child(even),
-.pde-editor table.pde-table--banded-cols th:nth-child(even) {
-  background: color-mix(in srgb, var(--pde-color-surface) 80%, var(--pde-color-bg));
-}
-.pde-editor table.pde-table--first-col td:first-child,
-.pde-editor table.pde-table--first-col th:first-child,
-.pde-editor table.pde-table--list-header td:first-child {
-  background: var(--pde-color-variable-bg);
+.pde-editor table.pde-table th {
   font-weight: 600;
 }
-.pde-editor table.pde-table--last-col td:last-child,
-.pde-editor table.pde-table--last-col th:last-child {
-  background: var(--pde-color-variable-bg);
+.pde-editor table.pde-table--header-row tr[data-header] th,
+.pde-editor table.pde-table--header-row tr[data-header] th p {
+  background: #3659e3;
+  color: #ffffff;
+}
+.pde-editor table.pde-table--banded-rows tbody tr:nth-child(2n+3) td {
+  background: #f4f7ff;
+}
+.pde-editor table.pde-table--banded-cols td:nth-child(even) {
+  background: #f7f8fa;
+}
+.pde-editor table.pde-table--first-col td:first-child,
+.pde-editor table.pde-table--list-header td:first-child {
+  background: #eef2ff;
+  font-weight: 600;
+}
+.pde-editor table.pde-table--last-col td:last-child {
+  background: #eef2ff;
 }
 .pde-editor table.pde-table--total-row tr:last-child td {
-  background: color-mix(in srgb, var(--pde-color-primary) 14%, var(--pde-color-bg));
+  background: #e8efff;
   font-weight: 600;
 }
 .pde-editor table.pde-table--grid th,
@@ -114,12 +111,11 @@
 .pde-editor table.pde-table--accent th,
 .pde-editor table.pde-table--list th,
 .pde-editor table.pde-table--list-header th {
-  background: var(--pde-color-primary);
-  color: var(--pde-color-primary-contrast);
-  border-color: var(--pde-color-primary);
+  background: #3659e3;
+  color: #ffffff;
 }
 .pde-editor table.pde-table--accent td:first-child {
-  background: var(--pde-color-variable-bg);
+  background: #eef2ff;
   font-weight: 600;
 }
 .pde-editor td.pde-cell-sel,
