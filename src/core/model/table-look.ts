@@ -1,4 +1,5 @@
 import type { TableCell, TableDensity, TableLook, TableNode, TablePreset } from "./types.js";
+import { cssToHex6, snapOfficeHex } from "./office-colors.js";
 
 export const DENSITY_UM: Record<TableDensity, number> = { compact: 7000, normal: 11000, large: 16000 };
 export const DENSITY_PT: Record<TableDensity, number> = { compact: 18, normal: 28, large: 42 };
@@ -12,12 +13,19 @@ const PRESET_LOOK: Record<TablePreset, TableLook> = {
   accent: { headerRow: true, bandedRows: true, firstColumn: true },
 };
 
+export function resolvedLook(tbl: TableNode): TableLook {
+  const preset = tbl.style?.preset;
+  const fromPreset = preset && preset !== "plain" ? PRESET_LOOK[preset] : {};
+  return { ...fromPreset, ...(tbl.style?.look ?? {}) };
+}
+
 export function tableClassName(block: TableNode): string {
   const st = block.style ?? {};
-  const look = st.look ?? {};
+  const look = resolvedLook(block);
   const parts = ["pde-table"];
   if (st.density) parts.push(`pde-table--${st.density}`);
   if (st.preset) parts.push(`pde-table--${st.preset}`);
+  if (look.headerRow) parts.push("pde-table--header-row");
   if (look.bandedRows) parts.push("pde-table--banded-rows");
   if (look.bandedColumns) parts.push("pde-table--banded-cols");
   if (look.firstColumn) parts.push("pde-table--first-col");
@@ -39,7 +47,7 @@ export function applyPreset(tbl: TableNode, preset: TablePreset): void {
 }
 
 export function toggleLook(tbl: TableNode, key: keyof TableLook): void {
-  const look = { ...(tbl.style?.look ?? {}) };
+  const look = { ...resolvedLook(tbl) };
   look[key] = !look[key];
   tbl.style = { ...tbl.style, look };
   if (key === "headerRow" && tbl.rows[0]) tbl.rows[0].header = !!look.headerRow;
@@ -58,7 +66,7 @@ export function setCellVAlign(cell: TableCell, vAlign: CellVAlign): void {
 
 export function shadeCell(cell: TableCell, color: string | undefined): void {
   cell.style = { ...cell.style };
-  if (color) cell.style.background = color;
+  if (color) cell.style.background = snapOfficeHex(color);
   else delete cell.style.background;
 }
 
@@ -83,6 +91,44 @@ export function clearTableStyle(tbl: TableNode): void {
   }
 }
 
+/** Shared editor + PDF fills. Do not persist these on `cell.style.background`. */
+export const TABLE_FILLS = {
+  header: "#3659e3",
+  firstCol: "#eef2ff",
+  total: "#e8efff",
+  bandedRow: "#f4f7ff",
+  bandedCol: "#f7f8fa",
+} as const;
+
+export const TABLE_HEADER_FG = "#ffffff";
+
+const LOOK_CLASS: Record<keyof TableLook, string> = {
+  headerRow: "pde-table--header-row",
+  bandedRows: "pde-table--banded-rows",
+  bandedColumns: "pde-table--banded-cols",
+  firstColumn: "pde-table--first-col",
+  lastColumn: "pde-table--last-col",
+  totalRow: "pde-table--total-row",
+};
+
+export function lookFromTableClass(className: string, _preset?: TablePreset): TableLook {
+  const look: TableLook = {};
+  (Object.keys(LOOK_CLASS) as Array<keyof TableLook>).forEach((key) => {
+    if (className.includes(LOOK_CLASS[key])) look[key] = true;
+  });
+  return look;
+}
+
+export function cssColorToHex(color: string): string | undefined {
+  return cssToHex6(color);
+}
+
+export function isTableLookFill(color: string): boolean {
+  const hex = cssColorToHex(color);
+  if (!hex) return false;
+  return (Object.values(TABLE_FILLS) as string[]).includes(hex);
+}
+
 export function hexToRgb01(hex: string): [number, number, number] | null {
   const h = hex.replace("#", "");
   if (h.length !== 6 && h.length !== 3) return null;
@@ -94,14 +140,14 @@ export function hexToRgb01(hex: string): [number, number, number] | null {
 
 export function cellFill(cell: TableCell | undefined, tbl: TableNode, ri: number, ci: number): string | undefined {
   const custom = cell?.style?.background;
-  if (typeof custom === "string" && custom) return custom;
-  const look = tbl.style?.look ?? {};
+  if (typeof custom === "string" && custom) return snapOfficeHex(custom);
+  const look = resolvedLook(tbl);
   const last = tbl.rows.length - 1;
-  if (look.headerRow && ri === 0) return "#3659e3";
-  if (look.totalRow && ri === last) return "#e8efff";
-  if (look.firstColumn && ci === 0 && ri > 0) return "#eef2ff";
-  if (look.lastColumn && ci === (tbl.columns.length - 1) && ri > 0) return "#eef2ff";
-  if (look.bandedRows && ri > 0 && ri % 2 === 0) return "#f4f7ff";
-  if (look.bandedColumns && ci % 2 === 1 && ri > 0) return "#f7f8fa";
+  if (look.headerRow && ri === 0) return TABLE_FILLS.header;
+  if (look.totalRow && ri === last) return TABLE_FILLS.total;
+  if (look.firstColumn && ci === 0 && ri > 0) return TABLE_FILLS.firstCol;
+  if (look.lastColumn && ci === (tbl.columns.length - 1) && ri > 0) return TABLE_FILLS.firstCol;
+  if (look.bandedRows && ri > 0 && ri % 2 === 0) return TABLE_FILLS.bandedRow;
+  if (look.bandedColumns && ci % 2 === 1 && ri > 0) return TABLE_FILLS.bandedCol;
   return undefined;
 }
