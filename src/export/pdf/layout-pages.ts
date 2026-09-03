@@ -1,6 +1,6 @@
 import type { HeaderFooterZone, HeadingNode, InlineNode, PortableDocument, SectionSettings } from "../../core/model/types.js";
 import { parseMath } from "./equation.js";
-import type { PdfHeadingAnchor, PdfLine, PdfPage, PdfTocLink, Segment } from "./pdf-model.js";
+import type { PdfHeadingAnchor, PdfLine, PdfPage, PdfTocLink, PdfUriLink, Segment } from "./pdf-model.js";
 import { pdfPageMetrics } from "./page-metrics.js";
 import { emitTable, inlineToSegments, lineVerticalExtent } from "./layout-table.js";
 import { emitColumns } from "./layout-columns.js";
@@ -259,6 +259,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
   let curSectionPageNum: number | undefined;
   let curHeadings: PdfHeadingAnchor[] = [];
   let curTocLinks: PdfTocLink[] = [];
+  let curUriLinks: PdfUriLink[] = [];
 
   const pageOf = (rows: PdfPage["lines"]): PdfPage => {
     const pNum = curSectionPageNum !== undefined ? curSectionPageNum++ : undefined;
@@ -271,6 +272,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
       pageNumber: pNum,
       headings: curHeadings,
       tocLinks: curTocLinks,
+      uriLinks: curUriLinks,
     };
   };
 
@@ -317,6 +319,7 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     cur = [];
     curHeadings = [];
     curTocLinks = [];
+    curUriLinks = [];
     curFootnotes = [];
     curFootnoteReservePt = 0;
     y = curHeightPt - curEffectiveTopPt;
@@ -433,6 +436,20 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
           rectPt: [leftX, y - 2, rightX, y + 12],
           headingId: hId,
         });
+      }
+
+      let segX = curMarginLeftPt;
+      for (const seg of line.segments) {
+        const segW = seg.kind === "text"
+          ? segmentWidthPt(seg.text, seg.sizePt, seg.face)
+          : (seg.kind === "math" ? seg.math.widthPt + 8 : (seg.kind === "rule" ? seg.widthPt : 0));
+        if (seg.kind === "text" && seg.linkHref) {
+          curUriLinks.push({
+            rectPt: [segX, y - 2, segX + segW, y + seg.sizePt + 2],
+            uri: seg.linkHref,
+          });
+        }
+        segX += segW;
       }
       y -= ext.below + paraGap;
     }

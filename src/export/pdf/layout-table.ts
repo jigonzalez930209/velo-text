@@ -16,7 +16,13 @@ type Inline = {
   children?: Array<{ text?: string; marks?: TextMarks }>;
 };
 
-function textStyle(marks: TextMarks | undefined, defaultSizePt: number, headingBold?: boolean): Omit<TextSegment, "kind" | "text"> {
+export function isAllowedUri(url?: string): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim().toLowerCase();
+  return trimmed.startsWith("https://") || trimmed.startsWith("http://") || trimmed.startsWith("mailto:");
+}
+
+function textStyle(marks: TextMarks | undefined, defaultSizePt: number, headingBold?: boolean, linkHref?: string): Omit<TextSegment, "kind" | "text"> {
   return {
     sizePt: marks?.fontSizePt && marks.fontSizePt > 0 ? marks.fontSizePt : defaultSizePt,
     face: pdfFaceForMarks(!!(marks?.bold || marks?.code || headingBold), !!marks?.italic, marks?.fontFamily),
@@ -24,6 +30,7 @@ function textStyle(marks: TextMarks | undefined, defaultSizePt: number, headingB
     background: cssToHex6(marks?.background) ?? marks?.background,
     underline: !!marks?.underline,
     strike: !!marks?.strike,
+    linkHref,
   };
 }
 
@@ -35,11 +42,12 @@ export function inlineToSegments(children: Inline[], sizePt: number, opts?: { he
     if (buf) segs.push({ kind: "text", text: buf, ...style });
     buf = "";
   };
-  const append = (text: string, marks?: TextMarks) => {
-    const next = textStyle(marks, sizePt, opts?.headingBold);
+  const append = (text: string, marks?: TextMarks, linkHref?: string) => {
+    const next = textStyle(marks, sizePt, opts?.headingBold, linkHref);
     if (
       next.sizePt !== style.sizePt || next.face !== style.face || next.color !== style.color
       || next.background !== style.background || next.underline !== style.underline || next.strike !== style.strike
+      || next.linkHref !== style.linkHref
     ) {
       flush();
       style = next;
@@ -54,7 +62,11 @@ export function inlineToSegments(children: Inline[], sizePt: number, opts?: { he
       flush();
       segs.push({ kind: "math", math: parseMath(c.latex ?? "", sizePt), sizePt });
     } else if (c.type === "link") {
-      for (const child of c.children ?? []) append(child.text ?? "", child.marks);
+      const href = (c as unknown as { href?: string }).href;
+      const validHref = isAllowedUri(href) ? href : undefined;
+      for (const child of c.children ?? []) {
+        append(child.text ?? "", { ...child.marks, underline: true, color: child.marks?.color ?? "#2563eb" }, validHref);
+      }
     } else if (c.type === "footnote-ref") {
       flush();
       const mark = (c as unknown as { customMark?: string }).customMark ?? "1";

@@ -41,6 +41,7 @@ export type TextSegment = {
   background?: string;
   underline?: boolean;
   strike?: boolean;
+  linkHref?: string;
 };
 
 export type Segment =
@@ -72,6 +73,11 @@ export interface PdfTocLink {
   headingId: string;
 }
 
+export interface PdfUriLink {
+  rectPt: [number, number, number, number];
+  uri: string;
+}
+
 export interface PdfPage {
   lines: Array<{ line: PdfLine; yPt: number }>;
   widthPt: number;
@@ -81,6 +87,7 @@ export interface PdfPage {
   pageNumber?: number;
   headings?: PdfHeadingAnchor[];
   tocLinks?: PdfTocLink[];
+  uriLinks?: PdfUriLink[];
   objNum?: number;
 }
 

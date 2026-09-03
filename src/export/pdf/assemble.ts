@@ -114,15 +114,21 @@ export function assemblePdf(
     ]));
     const pageNum = objects.length + 1;
 
-    let annots = "";
+    const annotDicts: string[] = [];
     if (page.tocLinks && page.tocLinks.length > 0) {
-      const linkDicts = page.tocLinks.map((tl) => {
+      for (const tl of page.tocLinks) {
         const target = headingMap.get(tl.headingId) ?? { pageObjNum: pageNum, yPt: 0 };
         const [x1, y1, x2, y2] = tl.rectPt;
-        return `<< /Type /Annot /Subtype /Link /Rect [${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)}] /Border [0 0 0] /Dest [${target.pageObjNum} 0 R /XYZ 0 ${target.yPt} 0] >>`;
-      });
-      annots = ` /Annots [${linkDicts.join(" ")}]`;
+        annotDicts.push(`<< /Type /Annot /Subtype /Link /Rect [${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)}] /Border [0 0 0] /Dest [${target.pageObjNum} 0 R /XYZ 0 ${target.yPt} 0] >>`);
+      }
     }
+    if (page.uriLinks && page.uriLinks.length > 0) {
+      for (const ul of page.uriLinks) {
+        const [x1, y1, x2, y2] = ul.rectPt;
+        annotDicts.push(`<< /Type /Annot /Subtype /Link /Rect [${x1.toFixed(2)} ${y1.toFixed(2)} ${x2.toFixed(2)} ${y2.toFixed(2)}] /Border [0 0 0] /A << /S /URI /URI (${pdfEscape(ul.uri)}) >> >>`);
+      }
+    }
+    const annots = annotDicts.length > 0 ? ` /Annots [${annotDicts.join(" ")}]` : "";
 
     addObj(u8(`${pageNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.widthPt} ${page.heightPt}] /Contents ${contentNum} 0 R /Resources << ${fonts} ${xObjRes}>>${annots} >>\nendobj`));
     (page as { objNum?: number }).objNum = pageNum;
