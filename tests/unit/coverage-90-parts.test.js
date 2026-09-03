@@ -239,7 +239,8 @@ test("coverage90: table-look", () => {
   const tbl = createTable(g, 3, 3);
   applyDensity(tbl, "compact");
   applyPreset(tbl, "accent");
-  tableClassName(tbl);
+  assert(tableClassName(tbl).includes("pde-table--header-row"));
+  assert(tableClassName(tbl).includes("pde-table--first-col"));
   toggleLook(tbl, "bandedColumns");
   toggleLook(tbl, "lastColumn");
   toggleLook(tbl, "totalRow");
@@ -399,6 +400,11 @@ test("coverage90: backend sendPdfHttpResult variants", async () => {
     assets: { a: { mediaType: "image/png", data: b64 } },
   });
   assert(filled.status === 200 || filled.status === 422);
+  const skipped = await handlePdfExportJson({
+    document,
+    assets: { bad: { mediaType: "image/png", data: "not-base64!!!" } },
+  });
+  assert(skipped.status === 200 || skipped.status === 422);
   let code = 0;
   let ended = "";
   await sendPdfHttpResult(

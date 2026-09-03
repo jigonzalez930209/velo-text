@@ -155,7 +155,8 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   const bar = root.querySelector(".pde-table-bar");
   assert(bar, "table bar present");
   assert(firstCell.classList.contains("pde-cell-active"), "active cell marked");
-  const btn = bar.querySelector('button[aria-label="Insert row below"]');
+  bar.querySelector('button[aria-label="Rows and columns"]').click();
+  const btn = root.querySelector('button[aria-label="Insert row below"]');
   assert(btn, "insert row on bar");
   btn.click();
   const d1 = editor.getDocument();
@@ -183,7 +184,12 @@ test("controller-ui: table menu insert/delete row and col resize", () => {
   const table3 = el.querySelector('table[data-node-type="table"]');
   const cell3 = table3.querySelector("td, th");
   cell3.dispatchEvent(ev(dom.window, "click", { target: cell3 }));
-  const merge = root.querySelector('.pde-table-bar button[aria-label="Merge cell right"]');
+  root.querySelector('.pde-table-bar button[aria-label="Rows and columns"]').click();
+  const rowcol = root.querySelector(".pde-table-rowcol-menu");
+  assert(rowcol.querySelector(".pde-style-sep")?.textContent === "|");
+  assert(rowcol.querySelectorAll("button").length === 7);
+  const merge = root.querySelector('button[aria-label="Merge cell right"]');
+  assert(merge.querySelector(".pde-icon"), "row menu shows icons");
   merge.click();
   assert(editor.getDocument().root.children[0].rows[0].cells[0].colSpan === 2);
   editor.destroy();
@@ -220,6 +226,105 @@ test("controller-ui: cell alignment top and text center", () => {
   const t = editor.getDocument().root.children[0];
   assert(t.rows[0].cells[0].style.vAlign === "top");
   assert(t.rows[0].cells[0].blocks[0].align === "center");
+  editor.destroy();
+  teardown();
+});
+
+test("controller-ui: table styles pad is horizontal with a | between looks and presets", () => {
+  const { el, root } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("st");
+  doc.root.children.push({
+    type: "table", id: "tbst",
+    columns: [{ id: g.next(), widthUm: 40000 }, { id: g.next(), widthUm: 40000 }],
+    rows: [{
+      id: g.next(),
+      cells: [
+        { id: g.next(), colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "a" }] }] },
+        { id: g.next(), colSpan: 1, rowSpan: 1, blocks: [{ type: "paragraph", id: g.next(), children: [] }] },
+      ],
+    }],
+  });
+  const editor = createEditor(el, { document: doc });
+  const cell = el.querySelector("td, th");
+  cell.dispatchEvent(ev(globalThis.window, "click", { target: cell }));
+  root.querySelector('.pde-table-bar button[aria-label="Table styles"]').click();
+  const menu = root.querySelector(".pde-table-style-menu");
+  assert(menu, "style menu");
+  const pad = menu.querySelector(".pde-style-pad");
+  assert(pad.querySelector(".pde-style-sep")?.textContent === "|");
+  assert(pad.querySelectorAll(".pde-style-row").length === 2);
+  assert(menu.querySelectorAll(".pde-style-sep").length === 1);
+  assert(!menu.querySelector('button[aria-label="Cell fill"]'), "cell fill is not in style menu");
+  const headerBtn = Array.from(menu.querySelectorAll("button")).find((b) => b.getAttribute("aria-label") === "Header row");
+  const listBtn = Array.from(menu.querySelectorAll("button")).find((b) => b.getAttribute("aria-label") === "List header");
+  assert(headerBtn && listBtn);
+  listBtn.click();
+  const tbl = editor.getDocument().root.children[0];
+  assert(tbl.style?.preset === "list-header");
+  editor.destroy();
+  teardown();
+});
+
+test("controller-ui: cell fill lives in the table menu, not Type and color", () => {
+  const { el, root } = setup();
+  const doc = baseDoc();
+  const g = createIdGenerator("cf");
+  doc.root.children.push({
+    type: "table", id: "tbcf",
+    columns: [{ id: g.next(), widthUm: 40000 }],
+    rows: [{
+      id: g.next(),
+      cells: [{
+        id: g.next(), colSpan: 1, rowSpan: 1,
+        blocks: [{ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "a" }] }],
+      }],
+    }],
+  });
+  const editor = createEditor(el, { document: doc });
+  const cell = el.querySelector("td, th");
+  cell.dispatchEvent(ev(globalThis.window, "click", { target: cell }));
+  const swatch = root.querySelector('.pde-table-bar button[aria-label="Cell fill"]')
+    ?? el.ownerDocument.querySelector('button[aria-label="Cell fill"]');
+  assert(swatch, "cell fill picker");
+  swatch.dispatchEvent(new el.ownerDocument.defaultView.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  const hexBtn = el.ownerDocument.querySelector('[data-office-hex="#ff0000"]');
+  assert(hexBtn, "office red");
+  hexBtn.click();
+  const fill = editor.getDocument().root.children[0].rows[0].cells[0].style?.background;
+  assert(fill === "#ff0000", `cell fill ${fill}`);
+  editor.destroy();
+  teardown();
+});
+
+test("controller-ui: table chrome docks in host toolbar", () => {
+  const { el, root } = setup();
+  const tb = el.ownerDocument.createElement("div");
+  tb.className = "pde-toolbar";
+  el.insertAdjacentElement("beforebegin", tb);
+  const doc = baseDoc();
+  const g = createIdGenerator("dock");
+  doc.root.children.push({
+    type: "table", id: "tbdock",
+    columns: [{ id: g.next(), widthUm: 40000 }],
+    rows: [{
+      id: g.next(),
+      cells: [{
+        id: g.next(), colSpan: 1, rowSpan: 1,
+        blocks: [{ type: "paragraph", id: g.next(), children: [{ type: "text", id: g.next(), text: "x" }] }],
+      }],
+    }],
+  });
+  const editor = createEditor(el, { document: doc });
+  const cell = el.querySelector("td, th");
+  cell.dispatchEvent(ev(globalThis.window, "click", { target: cell }));
+  const bar = tb.querySelector(".pde-table-bar");
+  assert(bar, "bar lives in toolbar");
+  assert(bar.classList.contains("pde-toolbar-group"), "docked as toolbar group");
+  assert(!el.querySelector(".pde-ui-layer .pde-table-bar"), "not overlayed on the page");
+  assert(bar.querySelector('button[aria-label="Rows and columns"]'));
+  assert(bar.querySelector('button[aria-label="Row height"]'));
+  assert(!bar.querySelector('button[aria-label="Compact rows"]'), "row height is a dropdown");
   editor.destroy();
   teardown();
 });

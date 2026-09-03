@@ -87,7 +87,8 @@ test("controller-columns: insert row below stacks another layout", () => {
   const slot = el.querySelector(".pde-column");
   slot.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
   assert(el.querySelector('.pde-column[data-valign="top"]'), "default top");
-  root.querySelector('.pde-columns-bar button[aria-label="Insert row below"]').click();
+  root.querySelector('.pde-columns-bar button[aria-label="Rows and columns"]').click();
+  root.querySelector('button[aria-label="Insert row below"]').click();
   assert(editor.getDocument().root.children.filter((b) => b.type === "columns").length === 2);
   editor.destroy();
   teardown();

@@ -4,6 +4,7 @@ import { createEditor } from "../../dist/editor-web/controller/index.js";
 import { mountVanillaEditor } from "../../dist/adapters/vanilla.js";
 import { findTextHits, replaceTextInDocument } from "../../dist/editor-web/ux/find-text.js";
 import { renderBlocksToHtml } from "../../dist/editor-web/view/index.js";
+import { applyPreset, toggleLook, isTableLookFill, lookFromTableClass, cellFill, shadeCell } from "../../dist/core/model/table-look.js";
 
 function setup() {
   const dom = new JSDOM(`<!DOCTYPE html><body><div id="ed"></div></body>`, { pretendToBeVisual: true });
@@ -228,6 +229,79 @@ test("ux: renderBlocksToHtml sets image src from resolver", () => {
   const html = renderBlocksToHtml(doc, (id) => id === "a1" ? "blob:preview-test" : undefined);
   assert(html.includes('src="blob:preview-test"'));
   assert(!renderBlocksToHtml(doc).includes("src="));
+});
+
+test("ux: table header and first-column fills match PDF look", () => {
+  const g = createIdGenerator("tlk");
+  const doc = docWith(g, (d) => {
+    const tbl = createTable(g, 2, 2);
+    tbl.style = { preset: "list-header", density: "compact" };
+    tbl.rows[0].cells[0].blocks[0].children[0].text = "Lote";
+    tbl.rows[1].cells[0].blocks[0].children[0].text = "Cliente";
+    d.root.children.push(tbl);
+  });
+  const html = renderBlocksToHtml(doc);
+  assert(html.includes("pde-table--header-row"));
+  assert(html.includes("pde-table--first-col"));
+  assert(html.includes("<th "));
+  assert(!html.includes("background:#3659e3"));
+  assert(!html.includes("background:#eef2ff"));
+});
+
+test("ux: look fills are not custom cell colors and toggleLook uses the preset", () => {
+  assert(isTableLookFill("#3659e3"));
+  assert(isTableLookFill("rgb(54, 89, 227)"));
+  assert(!isTableLookFill("#dbeafe"));
+  const look = lookFromTableClass("pde-table pde-table--list-header pde-table--first-col", "list-header");
+  assert(look.headerRow !== true);
+  assert(look.firstColumn === true);
+  const g = createIdGenerator("tgl");
+  const tbl = createTable(g, 2, 2);
+  applyPreset(tbl, "list-header");
+  toggleLook(tbl, "headerRow");
+  assert(tbl.style.look.headerRow === false);
+  assert(cellFill(tbl.rows[0].cells[0], tbl, 0, 0) === undefined);
+});
+
+test("ux: shading one cell keeps look classes on the table", () => {
+  const { el } = setup();
+  const g = createIdGenerator("shd");
+  const tbl = createTable(g, 2, 2);
+  applyPreset(tbl, "list-header");
+  shadeCell(tbl.rows[1].cells[1], "#ffff00");
+  const ast = docWith(g, (d) => { d.root.children.push(tbl); });
+  const editor = createEditor(el, { document: ast });
+  const table = el.querySelector("table.pde-table");
+  assert(table.className.includes("pde-table--first-col"));
+  assert(table.className.includes("pde-table--header-row"));
+  assert(table.outerHTML.includes("background:#ffff00"));
+  const parsed = editor.getDocument().root.children[0];
+  assert(parsed.style.preset === "list-header");
+  assert(parsed.style.look?.firstColumn !== false);
+  assert(!parsed.rows[1].cells[0].style?.background);
+  editor.destroy();
+  teardown();
+});
+
+test("ux: text highlight does not paint table cell fill", () => {
+  const { el } = setup();
+  const g = createIdGenerator("hl");
+  const tbl = createTable(g, 1, 1);
+  tbl.rows[0].cells[0].blocks[0].children[0].text = "Lote";
+  const ast = docWith(g, (d) => { d.root.children.push(tbl); });
+  const editor = createEditor(el, { document: ast });
+  const p = el.querySelector("td p, th p");
+  const range = el.ownerDocument.createRange();
+  range.selectNodeContents(p);
+  const sel = el.ownerDocument.getSelection() ?? el.ownerDocument.defaultView.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  editor.commands.setHighlight("#ffff00");
+  const cell = editor.getDocument().root.children[0].rows[0].cells[0];
+  assert(!cell.style?.background, "cell fill unchanged");
+  assert(cell.blocks[0].children.some((c) => c.marks?.background), "text highlight applied");
+  editor.destroy();
+  teardown();
 });
 
 test("ux: drag image into table cell and column", () => {

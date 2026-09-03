@@ -18,6 +18,7 @@ import {
   hexToRgb01,
   cellFill,
 } from "../../dist/core/model/table-look.js";
+import { snapOfficeHex } from "../../dist/core/model/office-colors.js";
 import { latexToHtml, validateLatex, latexToPlainText } from "../../dist/core/equation/index.js";
 import { mountVanillaEditor } from "../../dist/adapters/vanilla.js";
 
@@ -106,7 +107,7 @@ test("branches: table look styles", () => {
 
   // cellFill
   assert(typeof cellFill(cell, table, 0, 0) === "string" || cellFill(cell, table, 0, 0) === undefined);
-  assert(cellFill({ id: "c", colSpan: 1, rowSpan: 1, blocks: [], style: { background: "#123456" } }, table, 1, 1) === "#123456");
+  assert(cellFill({ id: "c", colSpan: 1, rowSpan: 1, blocks: [], style: { background: "#123456" } }, table, 1, 1) === snapOfficeHex("#123456"));
 
   // hexToRgb01
   assert(hexToRgb01("#ffffff") !== null);

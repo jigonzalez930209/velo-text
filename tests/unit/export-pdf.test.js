@@ -1,4 +1,5 @@
-import { createDocument, createIdGenerator, createParagraph, createText, createEquation } from "../../dist/core/model/factories.js";
+import { createDocument, createIdGenerator, createParagraph, createText, createEquation, createTable } from "../../dist/core/model/factories.js";
+import { applyPreset, shadeCell } from "../../dist/core/model/table-look.js";
 import { exportPdf, collectPdfDiagnostics } from "../../dist/export/pdf/export-pdf.js";
 import { exportDocument } from "../../dist/export/index.js";
 import { createBufferSink } from "../../dist/adapters/backend/index.js";
@@ -19,6 +20,53 @@ test("exportPdf: playground and backend share one generator", async () => {
   assert(a.byteLength === b.byteLength);
   assert(a.bytes.length === viaDoc.length);
   for (let i = 0; i < a.bytes.length; i++) assert(a.bytes[i] === viaDoc[i], "byte " + i);
+});
+
+test("pdf: list-header fills match editor hex (no gray+white header)", async () => {
+  const g = createIdGenerator("pdfth");
+  const clock = { nowIso: () => "2026-08-28T12:00:00.000Z" };
+  const doc = createDocument({ idGenerator: g, clock });
+  const tbl = createTable(g, 2, 2);
+  applyPreset(tbl, "list-header");
+  tbl.rows[0].cells[0].blocks[0].children[0].text = "Lote";
+  tbl.rows[1].cells[0].blocks[0].children[0].text = "Cliente";
+  doc.root.children.push(tbl);
+  const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
+  const text = new TextDecoder().decode(a.bytes);
+  assert(text.includes("0.212 0.349 0.890 rg"), "header #3659e3");
+  assert(text.includes("0.933 0.949 1.000 rg"), "first-col #eef2ff");
+  assert(!text.includes("0.95 0.95 0.97 rg"), "no gray fill fallback");
+});
+
+test("pdf: custom cell fill rgb() becomes office hex in the stream", async () => {
+  const g = createIdGenerator("pdfcell");
+  const clock = { nowIso: () => "2026-08-28T12:00:00.000Z" };
+  const doc = createDocument({ idGenerator: g, clock });
+  const tbl = createTable(g, 1, 1);
+  shadeCell(tbl.rows[0].cells[0], "rgb(255, 0, 0)");
+  tbl.rows[0].cells[0].blocks[0].children[0].text = "X";
+  doc.root.children.push(tbl);
+  const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
+  const text = new TextDecoder().decode(a.bytes);
+  assert(text.includes("1.000 0.000 0.000 rg"), "red cell fill");
+});
+
+test("pdf: header cell keeps custom text color instead of forcing white", async () => {
+  const g = createIdGenerator("pdfhdrfg");
+  const clock = { nowIso: () => "2026-08-28T12:00:00.000Z" };
+  const doc = createDocument({ idGenerator: g, clock });
+  const tbl = createTable(g, 2, 2);
+  applyPreset(tbl, "list-header");
+  tbl.rows[0].cells[0].blocks[0].children[0].text = "Lote";
+  tbl.rows[0].cells[1].blocks[0].children[0].text = "LOT";
+  tbl.rows[0].cells[1].blocks[0].children[0].marks = { color: "#ff0000", bold: true };
+  tbl.rows[1].cells[0].blocks[0].children[0].text = "Cliente";
+  doc.root.children.push(tbl);
+  const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
+  const text = new TextDecoder().decode(a.bytes);
+  assert(text.includes("0.212 0.349 0.890 rg"), "header fill");
+  assert(text.includes("1.000 0.000 0.000 rg"), "red header text");
+  assert(text.includes("1.000 1.000 1.000 rg"), "unmarked header text stays white");
 });
 
 test("exportPdf: color and fontSizePt appear in the content stream", async () => {
