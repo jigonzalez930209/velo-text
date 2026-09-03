@@ -207,5 +207,71 @@ export function layoutStructuredBlock(flow: LayoutFlow, block: BlockNode): boole
     flow.cursorY += Math.round(lineHeightDefault * 0.4);
     return true;
   }
+  if (block.type === "callout") {
+    const indentUm = 8000;
+    const innerWidthUm = Math.max(10000, usableWidthUm - indentUm - 4000);
+    const variant = block.variant ?? "info";
+
+    flow.cursorY += Math.round(lineHeightDefault * 0.3);
+
+    if (block.title) {
+      ensureSpace(flow, lineHeightDefault);
+      flow.currentPage.boxes.push(box({
+        id: `${block.id}_title`,
+        type: "callout-title",
+        xUm: margin.left + indentUm,
+        yUm: flow.cursorY,
+        widthUm: innerWidthUm,
+        heightUm: lineHeightDefault,
+        content: `[${variant.toUpperCase()}] ${block.title}`,
+      }));
+      flow.cursorY += lineHeightDefault;
+    }
+
+    for (let ci = 0; ci < (block.children ?? []).length; ci++) {
+      const child = block.children[ci]!;
+      if (child.type === "paragraph" || child.type === "heading" || child.type === "quote") {
+        const text = (child.children ?? [])
+          .map((c) => (c as { text?: string; source?: string }).text ?? (c as { source?: string }).source ?? "")
+          .join("");
+        const lines = breakLines(text, { maxWidthUm: innerWidthUm });
+        for (let li = 0; li < lines.length; li++) {
+          ensureSpace(flow, lineHeightDefault);
+          flow.currentPage.boxes.push(box({
+            id: `${child.id}_line_${li}`,
+            type: "callout-line",
+            xUm: margin.left + indentUm,
+            yUm: flow.cursorY,
+            widthUm: innerWidthUm,
+            heightUm: lineHeightDefault,
+            content: lines[li]!.text,
+          }));
+          flow.cursorY += lineHeightDefault;
+        }
+      } else if (child.type === "code-block") {
+        const codeLines = (child.code ?? "").split("\n");
+        const codeLineH = Math.round(lineHeightDefault * 0.85);
+        for (let cli = 0; cli < codeLines.length; cli++) {
+          ensureSpace(flow, codeLineH);
+          flow.currentPage.boxes.push(box({
+            id: `${child.id}_line_${cli}`,
+            type: "code-line",
+            xUm: margin.left + indentUm,
+            yUm: flow.cursorY,
+            widthUm: innerWidthUm,
+            heightUm: codeLineH,
+            content: codeLines[cli]!,
+          }));
+          flow.cursorY += codeLineH;
+        }
+      } else {
+        ensureSpace(flow, lineHeightDefault);
+        flow.cursorY += lineHeightDefault;
+      }
+    }
+
+    flow.cursorY += Math.round(lineHeightDefault * 0.4);
+    return true;
+  }
   return false;
 }

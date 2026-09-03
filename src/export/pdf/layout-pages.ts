@@ -199,6 +199,42 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
           style: `code-line ${b.id}_${i}`,
         });
       }
+    } else if (b.type === "callout") {
+      const variant = b.variant ?? "info";
+      const iconLabels: Record<string, string> = {
+        info: "ⓘ INFO",
+        tip: "✦ TIP",
+        warning: "▲ WARNING",
+        danger: "● DANGER",
+        note: "■ NOTE",
+      };
+      const accentColors: Record<string, string> = {
+        info: "#3b82f6",
+        tip: "#10b981",
+        warning: "#f59e0b",
+        danger: "#f43f5e",
+        note: "#64748b",
+      };
+      const label = iconLabels[variant] ?? "INFO";
+      const accent = accentColors[variant] ?? "#3b82f6";
+
+      if (b.title) {
+        lines.push({
+          segments: [{ kind: "text", text: `  ${label}: ${b.title}`, sizePt: 10, face: "F4", color: accent }],
+          yPt: 0,
+          sizePt: 10,
+          align: "left",
+          style: `callout-title ${variant} ${b.id}`,
+        });
+      }
+
+      for (const child of b.children ?? []) {
+        if (child.type === "paragraph" || child.type === "quote") {
+          const segs = inlineToSegments(child.children as never, 10);
+          const indentedSegs: Segment[] = [{ kind: "text", text: "  ", sizePt: 10, face: "F1" }, ...segs];
+          wrap(indentedSegs, "left", `callout-line ${variant} ${b.id}`, 10);
+        }
+      }
     }
   }
 

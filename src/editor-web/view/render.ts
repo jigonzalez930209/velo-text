@@ -117,6 +117,14 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
       );
       return `<div data-node-id="${id}" data-node-type="code-block" class="pde-code-block" data-language="${block.language}">${codeHtml}</div>`;
     }
+    case "callout": {
+      const variant = block.variant ?? "info";
+      const titleHtml = block.title
+        ? `<div class="pde-callout-title" data-callout-title="true"><strong>${escapeHtml(block.title)}</strong></div>`
+        : "";
+      const childrenHtml = (block.children ?? []).map((b) => renderBlock(b, resolve)).join("");
+      return `<aside data-node-id="${id}" data-node-type="callout" class="pde-callout pde-callout--${variant}" data-variant="${variant}">${titleHtml}${childrenHtml}</aside>`;
+    }
     default:
       return `<div data-node-id="${id}">[${(block as { type: string }).type}]</div>`;
   }

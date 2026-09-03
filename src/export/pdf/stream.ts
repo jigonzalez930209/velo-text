@@ -149,6 +149,34 @@ export function pageContentStream(
       s += `q 0.97 0.98 0.99 rg ${marginPt.toFixed(2)} ${(y - 3).toFixed(2)} ${w.toFixed(2)} ${rowH.toFixed(2)} re f Q\n`;
     }
 
+    if (line.style.startsWith("callout-")) {
+      const parts = line.style.split(" ");
+      const variant = parts[1] || "info";
+      const rightMarginPt = page.marginRightPt ?? marginPt;
+      const w = pageWidthPt - marginPt - rightMarginPt;
+      const rowH = 15;
+
+      const tints: Record<string, string> = {
+        info: "0.937 0.965 1.000",
+        tip: "0.925 0.992 0.961",
+        warning: "1.000 0.984 0.922",
+        danger: "1.000 0.945 0.949",
+        note: "0.973 0.980 0.988",
+      };
+      const strokes: Record<string, string> = {
+        info: "0.231 0.510 0.965",
+        tip: "0.063 0.725 0.506",
+        warning: "0.961 0.620 0.043",
+        danger: "0.957 0.247 0.369",
+        note: "0.392 0.455 0.545",
+      };
+      const tint = tints[variant] ?? tints.info!;
+      const stroke = strokes[variant] ?? strokes.info!;
+
+      s += `q ${tint} rg ${marginPt.toFixed(2)} ${(y - 4).toFixed(2)} ${w.toFixed(2)} ${rowH.toFixed(2)} re f Q\n`;
+      s += `q 2.5 w ${stroke} RG ${marginPt.toFixed(2)} ${(y - 4).toFixed(2)} m ${marginPt.toFixed(2)} ${(y + 11).toFixed(2)} l S Q\n`;
+    }
+
     if (line.style.startsWith("toc-entry ")) {
       const parts = line.style.split(" ");
       const indent = Number(parts[3]) || 0;

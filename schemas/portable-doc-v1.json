@@ -161,7 +161,7 @@
         { "$ref": "#/definitions/listNode" }, { "$ref": "#/definitions/tableNode" }, { "$ref": "#/definitions/imageBlockNode" },
         { "$ref": "#/definitions/pageBreakNode" }, { "$ref": "#/definitions/horizontalRuleNode" }, { "$ref": "#/definitions/equationBlockNode" },
         { "$ref": "#/definitions/columnsNode" }, { "$ref": "#/definitions/sectionBreakBlockNode" }, { "$ref": "#/definitions/tableOfContentsBlockNode" },
-        { "$ref": "#/definitions/codeBlockNode" }
+        { "$ref": "#/definitions/codeBlockNode" }, { "$ref": "#/definitions/calloutBlockNode" }
       ]
     },
     "paragraphNode": {
@@ -342,6 +342,17 @@
         },
         "showLineNumbers": { "type": "boolean" },
         "lineStart": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "calloutBlockNode": {
+      "type": "object",
+      "required": ["type", "id", "variant", "children"],
+      "properties": {
+        "type": { "const": "callout" },
+        "id": { "type": "string" },
+        "variant": { "enum": ["info", "tip", "warning", "danger", "note"] },
+        "title": { "type": "string" },
+        "children": { "type": "array", "items": { "$ref": "#/definitions/blockNode" } }
       }
     }
   }

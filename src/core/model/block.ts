@@ -180,6 +180,18 @@ export interface CodeBlockNode {
 
 export type CodeBlock = CodeBlockNode;
 
+export type CalloutVariant = "info" | "tip" | "warning" | "danger" | "note";
+
+export interface CalloutBlockNode {
+  type: "callout";
+  id: NodeId;
+  variant: CalloutVariant;
+  title?: string;
+  children: BlockNode[];
+}
+
+export type CalloutBlock = CalloutBlockNode;
+
 export type BlockNode =
   | ParagraphNode
   | HeadingNode
@@ -193,7 +205,8 @@ export type BlockNode =
   | ColumnsNode
   | SectionBreakBlockNode
   | TableOfContentsBlockNode
-  | CodeBlockNode;
+  | CodeBlockNode
+  | CalloutBlockNode;
 
 export interface RootNode {
   type: "root";

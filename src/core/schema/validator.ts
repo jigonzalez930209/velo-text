@@ -64,6 +64,7 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
     "section-break",
     "table-of-contents",
     "code-block",
+    "callout",
   ]);
   const validInlineTypes = new Set<InlineNode["type"]>(["text", "variable", "link", "inline-image", "hard-break", "equation", "footnote-ref"]);
 
@@ -250,6 +251,21 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
       }
       if (cb.lineStart !== undefined && (typeof cb.lineStart !== "number" || !Number.isInteger(cb.lineStart) || cb.lineStart < 1)) {
         err(`${path}/lineStart`, "range", "lineStart must be integer >= 1");
+      }
+    }
+    if (node.type === "callout") {
+      const co = node as unknown as { variant?: unknown; title?: unknown; children?: unknown };
+      const validVariants = ["info", "tip", "warning", "danger", "note"];
+      if (typeof co.variant !== "string" || !validVariants.includes(co.variant)) {
+        err(`${path}/variant`, "enum", `variant must be one of: ${validVariants.join(", ")}`);
+      }
+      if (co.title !== undefined && typeof co.title !== "string") {
+        err(`${path}/title`, "type", "title must be string");
+      }
+      if (!Array.isArray(co.children)) {
+        err(`${path}/children`, "type", "children must be array");
+      } else {
+        co.children.forEach((b: BlockNode, i: number) => validateBlock(b, `${path}/children/${i}`));
       }
     }
   }

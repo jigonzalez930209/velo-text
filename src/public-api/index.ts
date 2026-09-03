@@ -71,5 +71,5 @@ export type { ExportPdfResult, PdfDiag } from "../export/pdf/export-pdf.js";
 export type { IconName, IconOptions } from "../assets/icons/index.js";
 export type { PluginDef } from "../core/plugin/index.js";
 export type { Editor, EditorOptions } from "../editor-web/controller/types.js";
-export type { SupportedCodeLanguage, CodeBlockNode, CodeBlock } from "../core/model/block.js";
+export type { SupportedCodeLanguage, CodeBlockNode, CodeBlock, CalloutVariant, CalloutBlockNode, CalloutBlock } from "../core/model/block.js";
 export type { CodeToken, TokenKind } from "../core/code-highlight/index.js";
