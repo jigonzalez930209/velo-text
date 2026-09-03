@@ -208,7 +208,8 @@
       "required": ["id", "content"],
       "properties": {
         "id": { "type": "string" },
-        "content": { "type": "array", "items": { "$ref": "#/definitions/inlineNode" } }
+        "content": { "type": "array", "items": { "$ref": "#/definitions/inlineNode" } },
+        "checked": { "type": "boolean" }
       }
     },
     "tableNode": {

@@ -135,6 +135,9 @@ export function validateDocument(doc: PortableDocument, opts: ValidateOptions = 
       else
         node.items.forEach((it, i) => {
           checkId(it.id, `${path}/items/${i}/id`);
+          if (it.checked !== undefined && typeof it.checked !== "boolean") {
+            err(`${path}/items/${i}/checked`, "type", "checked must be boolean");
+          }
           if (Array.isArray(it.content)) it.content.forEach((c, j) => validateInline(c, `${path}/items/${i}/content/${j}`));
           if (it.nested) validateBlock(it.nested, `${path}/items/${i}/nested`);
         });

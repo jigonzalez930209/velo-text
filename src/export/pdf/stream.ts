@@ -177,6 +177,16 @@ export function pageContentStream(
       s += `q 2.5 w ${stroke} RG ${marginPt.toFixed(2)} ${(y - 4).toFixed(2)} m ${marginPt.toFixed(2)} ${(y + 11).toFixed(2)} l S Q\n`;
     }
 
+    if (line.style.startsWith("list-task")) {
+      const isChecked = line.style.includes("checked") && !line.style.includes("unchecked");
+      s += `q 0.8 w 0.4 0.4 0.4 RG ${marginPt.toFixed(2)} ${(y - 1).toFixed(2)} 10.00 10.00 re S Q\n`;
+      if (isChecked) {
+        const bx = marginPt;
+        const by = y - 1;
+        s += `q 1.2 w 0.1 0.6 0.2 RG ${(bx + 2).toFixed(2)} ${(by + 5).toFixed(2)} m ${(bx + 4.5).toFixed(2)} ${(by + 2.5).toFixed(2)} l ${(bx + 8).toFixed(2)} ${(by + 8).toFixed(2)} l S Q\n`;
+      }
+    }
+
     if (line.style.startsWith("toc-entry ")) {
       const parts = line.style.split(" ");
       const indent = Number(parts[3]) || 0;

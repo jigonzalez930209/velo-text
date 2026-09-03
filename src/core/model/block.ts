@@ -27,7 +27,10 @@ export interface ListItemNode {
   id: NodeId;
   content: InlineNode[];
   nested?: ListNode;
+  checked?: boolean;
 }
+
+export type ListItem = ListItemNode;
 
 export interface ListNode {
   type: "list";

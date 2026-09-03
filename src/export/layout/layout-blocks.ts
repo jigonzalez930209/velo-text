@@ -89,7 +89,10 @@ export function layoutBlock(flow: LayoutFlow, block: BlockNode): void {
             return cc.text ?? cc.source ?? "";
           })
           .join("");
-        const prefix = block.kind === "ordered" ? "1. " : "• ";
+        let prefix = block.kind === "ordered" ? "1. " : "• ";
+        if (item.checked !== undefined) {
+          prefix = item.checked ? "[x] " : "[ ] ";
+        }
         const lines = breakLines(prefix + text, { maxWidthUm: usableWidthUm });
         for (const line of lines) {
           ensureSpace(flow, lineHeightDefault);

@@ -36,7 +36,13 @@ function renderBlock(block: BlockNode, resolve?: RenderOptions["resolveAssetUrl"
     case "list": {
       const tag = block.kind === "ordered" ? "ol" : "ul";
       const items = block.items
-        .map((it) => `<li data-node-id="${it.id}">${it.content.map((n) => renderInline(n, resolve)).join("")}${it.nested ? renderBlock(it.nested, resolve) : ""}</li>`)
+        .map((it) => {
+          const checkHtml = it.checked !== undefined
+            ? `<input type="checkbox" class="pde-task-checkbox" data-task-item-id="${it.id}"${it.checked ? " checked" : ""}> `
+            : "";
+          const cls = it.checked !== undefined ? ` class="pde-task-item"` : "";
+          return `<li data-node-id="${it.id}"${cls}>${checkHtml}${it.content.map((n) => renderInline(n, resolve)).join("")}${it.nested ? renderBlock(it.nested, resolve) : ""}</li>`;
+        })
         .join("");
       return `<${tag} data-node-id="${id}" data-node-type="list">${items}</${tag}>`;
     }

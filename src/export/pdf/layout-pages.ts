@@ -103,8 +103,18 @@ export function buildPdfPages(doc: PortableDocument): PdfPage[] {
     } else if (b.type === "heading") wrap(inlineToSegments(b.children as never, 20 - b.level * 2, { headingBold: true }), "left", `heading ${b.id} ${b.level}`, 20 - b.level * 2);
     else if (b.type === "list") {
       for (const it of b.items) {
-        const prefix = b.kind === "ordered" ? "1. " : "•  ";
-        wrap([{ kind: "text", text: prefix, sizePt: 11, face: "Fa" }, ...inlineToSegments(it.content as never, 11)], "left", "list", 11);
+        if (it.checked !== undefined) {
+          const checkState = it.checked ? "checked" : "unchecked";
+          wrap(
+            [{ kind: "text", text: "    ", sizePt: 11, face: "Fa" }, ...inlineToSegments(it.content as never, 11)],
+            "left",
+            `list-task ${checkState}`,
+            11
+          );
+        } else {
+          const prefix = b.kind === "ordered" ? "1. " : "•  ";
+          wrap([{ kind: "text", text: prefix, sizePt: 11, face: "Fa" }, ...inlineToSegments(it.content as never, 11)], "left", "list", 11);
+        }
       }
     } else if (b.type === "table") emitTable(lines, b, activeMaxWidth);
     else if (b.type === "columns") emitColumns(lines, b, activeMaxWidth);
