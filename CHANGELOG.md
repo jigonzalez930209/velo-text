@@ -11,6 +11,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and [
 ### Changed
 - Toolbar and table chrome wrap instead of nested horizontal scroll
 - Chrome metrics via `--pde-icon-size` / `--pde-control-size` (default 16px / 28px); hosts override on `[data-pde-theme]`
+- Table/column chrome docks in the main toolbar when present; row/column ops and row height are dropdowns
+- Table styles flyout: look icons and grid presets in one horizontal pad, `|` between the two groups
+- Office theme + standard palette for text, highlight, and cell fill; PDF cell fills encode as `#hex` (no `rgb()` tokens)
 
 
 
