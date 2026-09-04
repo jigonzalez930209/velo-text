@@ -244,13 +244,13 @@ test("ux: table header and first-column fills match PDF look", () => {
   assert(html.includes("pde-table--header-row"));
   assert(html.includes("pde-table--first-col"));
   assert(html.includes("<th "));
-  assert(!html.includes("background:#3659e3"));
-  assert(!html.includes("background:#eef2ff"));
+  assert(!html.includes("background:#15803d"));
+  assert(!html.includes("background:#ecfdf5"));
 });
 
 test("ux: look fills are not custom cell colors and toggleLook uses the preset", () => {
-  assert(isTableLookFill("#3659e3"));
-  assert(isTableLookFill("rgb(54, 89, 227)"));
+  assert(isTableLookFill("#15803d"));
+  assert(isTableLookFill("rgb(21, 128, 61)"));
   assert(!isTableLookFill("#dbeafe"));
   const look = lookFromTableClass("pde-table pde-table--list-header pde-table--first-col", "list-header");
   assert(look.headerRow !== true);

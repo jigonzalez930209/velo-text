@@ -33,8 +33,8 @@ test("pdf: list-header fills match editor hex (no gray+white header)", async () 
   doc.root.children.push(tbl);
   const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
   const text = new TextDecoder().decode(a.bytes);
-  assert(text.includes("0.212 0.349 0.890 rg"), "header #3659e3");
-  assert(text.includes("0.933 0.949 1.000 rg"), "first-col #eef2ff");
+  assert(text.includes("0.082 0.502 0.239 rg"), "header #15803d");
+  assert(text.includes("0.925 0.992 0.961 rg"), "first-col #ecfdf5");
   assert(!text.includes("0.95 0.95 0.97 rg"), "no gray fill fallback");
 });
 
@@ -64,7 +64,7 @@ test("pdf: header cell keeps custom text color instead of forcing white", async 
   doc.root.children.push(tbl);
   const a = await exportPdf({ document: doc, data: {}, options: { strict: false }, clock });
   const text = new TextDecoder().decode(a.bytes);
-  assert(text.includes("0.212 0.349 0.890 rg"), "header fill");
+  assert(text.includes("0.082 0.502 0.239 rg"), "header fill");
   assert(text.includes("1.000 0.000 0.000 rg"), "red header text");
   assert(text.includes("1.000 1.000 1.000 rg"), "unmarked header text stays white");
 });
