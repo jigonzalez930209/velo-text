@@ -93,10 +93,10 @@ export function clearTableStyle(tbl: TableNode): void {
 
 /** Shared editor + PDF fills. Do not persist these on `cell.style.background`. */
 export const TABLE_FILLS = {
-  header: "#3659e3",
-  firstCol: "#eef2ff",
-  total: "#e8efff",
-  bandedRow: "#f4f7ff",
+  header: "#15803d",
+  firstCol: "#ecfdf5",
+  total: "#d1fae5",
+  bandedRow: "#f0fdf4",
   bandedCol: "#f7f8fa",
 } as const;
 
