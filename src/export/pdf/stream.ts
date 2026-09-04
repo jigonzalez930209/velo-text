@@ -3,6 +3,7 @@ import { pdfEscape, type PdfLine, type PdfPage, type TextSegment } from "./pdf-m
 import type { PortableDocument } from "../../core/model/types.js";
 import { pdfImageDisplayPt } from "./layout-pages.js";
 import { cssColorToPdfRgb, paintTextRun, segmentWidthPt } from "./paint.js";
+import { TABLE_FILLS } from "../../core/model/table-look.js";
 
 function tableCellFillToken(parts: string[]): string | null {
   const tagged = parts.find((p) => p.startsWith("F#") || p === "F-");
@@ -45,7 +46,7 @@ export function pageContentStream(
       }
       const fill = isTable ? tableCellFillToken(parts) : undefined;
       const rgb = fill ? cssColorToPdfRgb(fill) : null;
-      const whiteFg = parts.includes("fgW") || (parts.includes("white") && (fill ?? "").toLowerCase() === "#3659e3");
+      const whiteFg = parts.includes("fgW") || (parts.includes("white") && (fill ?? "").toLowerCase() === TABLE_FILLS.header);
       if (rgb) {
         s += `${rgb} rg ${tableState.x.toFixed(2)} ${(y - rowH).toFixed(2)} ${cw.toFixed(2)} ${rowH.toFixed(2)} re f\n0 0 0 rg\n`;
       }
