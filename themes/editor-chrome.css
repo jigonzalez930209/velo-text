@@ -85,25 +85,25 @@
 }
 .pde-editor table.pde-table--header-row tr[data-header] th,
 .pde-editor table.pde-table--header-row tr[data-header] th p {
-  background: #3659e3;
+  background: #15803d;
   color: #ffffff;
 }
 .pde-editor table.pde-table--banded-rows tbody tr:nth-child(2n+3) td {
-  background: #f4f7ff;
+  background: #f0fdf4;
 }
 .pde-editor table.pde-table--banded-cols td:nth-child(even) {
   background: #f7f8fa;
 }
 .pde-editor table.pde-table--first-col td:first-child,
 .pde-editor table.pde-table--list-header td:first-child {
-  background: #eef2ff;
+  background: #ecfdf5;
   font-weight: 600;
 }
 .pde-editor table.pde-table--last-col td:last-child {
-  background: #eef2ff;
+  background: #ecfdf5;
 }
 .pde-editor table.pde-table--total-row tr:last-child td {
-  background: #e8efff;
+  background: #d1fae5;
   font-weight: 600;
 }
 .pde-editor table.pde-table--grid th,
@@ -111,11 +111,11 @@
 .pde-editor table.pde-table--accent th,
 .pde-editor table.pde-table--list th,
 .pde-editor table.pde-table--list-header th {
-  background: #3659e3;
+  background: #15803d;
   color: #ffffff;
 }
 .pde-editor table.pde-table--accent td:first-child {
-  background: #eef2ff;
+  background: #ecfdf5;
   font-weight: 600;
 }
 .pde-editor td.pde-cell-sel,
